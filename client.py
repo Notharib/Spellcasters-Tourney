@@ -121,7 +121,21 @@ if __name__ == '__main__':
     running = True
 
     while running:
-        screen.fill((0,0,0))
+        screen.fill((255,255,255))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+        clientPlayer.move()
+        
+        collisions = pygame.sprite.groupcollide(players, platforms,True,False)
+        for play,plat_list in collisions.items():
+            for platform in plat_list:
+                X = platform.X
+                Y = platform.Y
+                position = [X,Y]
+                height = platform.height
+                width = platform.width
+                size = [height,width]
+                
