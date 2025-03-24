@@ -85,54 +85,62 @@ class Character(pygame.sprite.Sprite):
         self.rect.y = self.Y
         self.characterNo = playerNo
         self.lastMoveMade = []
+        self.lastNonColPos =[]
 
-    def move(self, cl, collided):
-        if not collided:
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP] == True:
-                self.rect.y -= 4
-                if self.rect.y < 0:
-                    self.rect.y = 0
-                else:
-                    self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
-                    cl.sendData(moveMessage)
-            if keys[pygame.K_RIGHT] == True:
-                self.rect.x += 2
-                if self.rect.x > 800:
-                    self.rect.x = 800 - self.rect.x
-                else:
-                    self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
-                    cl.sendData(moveMessage)
-            if keys[pygame.K_LEFT] == True:
-                self.rect.x -= 2
-                if self.rect.x < 0:
-                    self.rect.x = 0
-                else:
-                    self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
-                    cl.sendData(moveMessage)
-        else:
-            if self.lastMoveMade[0] == "y":
-                self.rect.y -= self.lastMoveMade[1]
-                self.lastMoveMade = ["y",1]
+    def move(self, cl,  platform, collided):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP] == True:
+            self.rect.y -= 4
+            if self.rect.y < 0:
+                self.rect.y = 0
             else:
-                self.rect.x -= self.lastMoveMade[1]
-                self.lastMoveMade = ["y",2]
+                self.lastMoveMade = ["y",-4]
+                moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
+                cl.sendData(moveMessage)
+        if keys[pygame.K_RIGHT] == True:
+            self.rect.x += 2
+            if self.rect.x > 800:
+                self.rect.x = 800 - self.rect.x
+            else:
+                self.lastMoveMade = ["x", 2]
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                cl.sendData(moveMessage)
+        if keys[pygame.K_LEFT] == True:
+            self.rect.x -= 2
+            if self.rect.x < 0:
+                self.rect.x = 0
+            else:
+                self.lastMoveMade = ["x", -2]
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                cl.sendData(moveMessage)
+        if collided:
+            score = False
+            if platform.rect.bottom == self.rect.top:
+                self.rect.y = self.lastNonColPos[1]
+            if platform.rect.right == self.rect.left:
+                self.rect.x = self.lastNonColPos[0]
+            if platform.rect.left == self.rect.right:
+                self.rect.x = self.lastNonColPos[0]
+            if not score:
+                self.lastNonColPos = [self.rect.x, self.rect.y]
+        else:
+            self.lastNonColPos = [self.rect.x,self.rect.y]
 
 
-
-    def gravity(self, collided,cl):
+    def gravity(self, cl, platform, collided):
         if not collided:
             if self.lastMoveMade != ["y",2]:
                 self.rect.y += 1
                 if self.rect.y > 800 - self.height:
                     self.rect.y = 800 - self.height
                 else:
-                    self.lastMoveMade = ["y", 1]
+                    #self.lastMoveMade = ["y", 1]
                     moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
                     cl.sendData(moveMessage)
+        if collided:
+            if platform.rect.top == self.rect.bottom:
+                self.rect.y -= 1
+
 
 
 if __name__ == '__main__':
@@ -158,13 +166,13 @@ if __name__ == '__main__':
     clientPlayer = players.sprites()[0]
     print("Player added!")
 
-    # platforms.add(Platform([300,200], [20,500]))
 
     running = True
 
     while running:
 
         collided = False
+        plat = None
 
         screen.fill(WHITE)
         for event in pygame.event.get():
@@ -173,17 +181,17 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
 
-
-        collisions = pygame.sprite.groupcollide(platforms,players,True,False)
-        for platform,player_list in collisions.items():
+        collisions = pygame.sprite.groupcollide(platforms, players, True, False)
+        for platform, player_list in collisions.items():
             for player in player_list:
-                platformPosition = [platform.X,platform.Y]
-                platformSize = [platform.height,platform.width]
+                platformPosition = [platform.X, platform.Y]
+                platformSize = [platform.height, platform.width]
                 collided = True
                 platforms.add(Platform(platformPosition, platformSize))
+                plat = platform
 
-        clientPlayer.gravity(collided, c)
-        clientPlayer.move(c, collided)
+        clientPlayer.gravity(c, plat, collided)
+        clientPlayer.move(c, plat, collided)
         platforms.draw(screen)
         players.draw(screen)
         clock.tick(60)
