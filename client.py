@@ -1,4 +1,4 @@
-import socket, json, threading, pygame
+import socket, json, threading, pygame, sys
 from time import sleep
 
 class Client:
@@ -23,19 +23,34 @@ class Client:
             if not data:
                 break
             else:
-                msg = dict(json.loads(data.decode()))
-                if msg["type"] == "clientNo":
-                    self.clientNo = msg["data"]["clientNo"]
-                    addCharacter(msg["data"])
-                if msg["type"] == "playerJoin":
-                    addCharacter(msg["data"])
-                if msg["type"] == "movement":
-                    pass
+                try:
+                    msg = dict(json.loads(data.decode()))
+
+                    if msg["type"] == "clientNo":
+                        print("client player created")
+                        self.clientNo = msg["data"]["clientNo"]
+                        addCharacter(msg["data"])
+                    if msg["type"] == "playerJoin":
+                        print("external player added")
+                        addCharacter(msg["data"])
+                    if msg["type"] == "movement":
+                        movedPlayer = players.sprites()[msg["data"]["clientNo"] - 1]
+                        if msg["data"]["direction"] == "y":
+                            movedPlayer.rect.y = msg["data"]["position"]
+                        elif msg["data"]["direction"] == "x":
+                            movedPlayer.rect.x = msg["data"]["position"]
+                        players.sprites()[msg["data"]["clientNo"] - 1] = movedPlayer
+                    if msg["type"] == "createPlat":
+                        print("Created platform")
+                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]]))
+                except json.JSONDecodeError as err:
+                    print(data.decode())
+                    print("JSON Syntax Error:", err)
+
 
 
 def addCharacter(data):
-    players.add(Character(data["position"],data["colour"],data["clientNo"]))
-
+    players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size):
@@ -69,29 +84,55 @@ class Character(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
         self.characterNo = playerNo
+        self.lastMoveMade = []
 
-    def move(self, cl):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP] == True:
-            self.rect.y -= 1
-            if self.rect.y < 0:
-                self.rect.y = 0
-        moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
-        cl.sendData(moveMessage)
-        if keys[pygame.K_DOWN] == True :
-            self.rect.y += 1
-            if self.rect.y > 800 - self.height:
-                self.rect.y = 800 - self.height
-            moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
-            cl.sendData(moveMessage)
-        if keys[pygame.K_RIGHT] == True:
-            self.rect.x += 1
-            if self.rect.x > 800:
-                self.rect.x = 800 - self.rect.x
-        if keys[pygame.K_LEFT] == True:
-            self.rect.x -= 1
-            if self.rect.x < 0:
-                self.rect.x = 0
+    def move(self, cl, collided):
+        if not collided:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP] == True:
+                self.rect.y -= 4
+                if self.rect.y < 0:
+                    self.rect.y = 0
+                else:
+                    self.lastMoveMade = ["y",-4]
+                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
+                    cl.sendData(moveMessage)
+            if keys[pygame.K_RIGHT] == True:
+                self.rect.x += 2
+                if self.rect.x > 800:
+                    self.rect.x = 800 - self.rect.x
+                else:
+                    self.lastMoveMade = ["x", 2]
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                    cl.sendData(moveMessage)
+            if keys[pygame.K_LEFT] == True:
+                self.rect.x -= 2
+                if self.rect.x < 0:
+                    self.rect.x = 0
+                else:
+                    self.lastMoveMade = ["x", -2]
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                    cl.sendData(moveMessage)
+        else:
+            if self.lastMoveMade[0] == "y":
+                self.rect.y -= self.lastMoveMade[1]
+                self.lastMoveMade = ["y",1]
+            else:
+                self.rect.x -= self.lastMoveMade[1]
+                self.lastMoveMade = ["y",2]
+
+
+
+    def gravity(self, collided,cl):
+        if not collided:
+            if self.lastMoveMade != ["y",2]:
+                self.rect.y += 1
+                if self.rect.y > 800 - self.height:
+                    self.rect.y = 800 - self.height
+                else:
+                    self.lastMoveMade = ["y", 1]
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                    cl.sendData(moveMessage)
 
 
 if __name__ == '__main__':
@@ -102,6 +143,7 @@ if __name__ == '__main__':
     GREEN = (2, 249, 0)
     BLUE = (0, 0, 240)
     PURPLE = (160, 32, 240)
+    WHITE = (255,255,255)
 
     screen = pygame.display.set_mode(WINDOW_SIZE)
     clock = pygame.time.Clock()
@@ -116,26 +158,35 @@ if __name__ == '__main__':
     clientPlayer = players.sprites()[0]
     print("Player added!")
 
-    platforms.add(Platform([199,199], [20,200]))
+    # platforms.add(Platform([300,200], [20,500]))
 
     running = True
 
     while running:
-        screen.fill((255,255,255))
+
+        collided = False
+
+        screen.fill(WHITE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
-        clientPlayer.move()
-        
-        collisions = pygame.sprite.groupcollide(players, platforms,True,False)
-        for play,plat_list in collisions.items():
-            for platform in plat_list:
-                X = platform.X
-                Y = platform.Y
-                position = [X,Y]
-                height = platform.height
-                width = platform.width
-                size = [height,width]
-                
+
+
+        collisions = pygame.sprite.groupcollide(platforms,players,True,False)
+        for platform,player_list in collisions.items():
+            for player in player_list:
+                platformPosition = [platform.X,platform.Y]
+                platformSize = [platform.height,platform.width]
+                collided = True
+                platforms.add(Platform(platformPosition, platformSize))
+
+        clientPlayer.gravity(collided, c)
+        clientPlayer.move(c, collided)
+        platforms.draw(screen)
+        players.draw(screen)
+        clock.tick(60)
+        pygame.display.update()
+
+    sys.exit()
