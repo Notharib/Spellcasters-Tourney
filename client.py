@@ -1,4 +1,5 @@
 import socket, json, threading, pygame, sys
+import time
 from time import sleep
 
 class Client:
@@ -51,6 +52,7 @@ class Client:
 
 def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
+    print("Player created!")
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size):
@@ -89,7 +91,37 @@ class Character(pygame.sprite.Sprite):
 
     def move(self, cl,  platform, collided):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP] == True:
+
+        if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
+            self.rect.y -= 4
+            self.rect.x -= 2
+            if self.rect.y < 0:
+                self.rect.y = 0
+            elif self.rect.x < 0:
+                self.rect.x = 0
+            else:
+                self.lastMoveMade = ["y", -4]
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                cl.sendData(moveMessage)
+                time.sleep(0.01)
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                cl.sendData(moveMessage)
+        elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
+            self.rect.y -= 4
+            self.rect.x += 2
+            if self.rect.y < 0:
+                self.rect.y = 0
+            elif self.rect.x > 800:
+                self.rect.x = 800 - self.rect.x
+            else:
+                self.lastMoveMade = ["y", -4]
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                cl.sendData(moveMessage)
+                time.sleep(0.01)
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                cl.sendData(moveMessage)
+
+        elif keys[pygame.K_UP] == True:
             self.rect.y -= 4
             if self.rect.y < 0:
                 self.rect.y = 0
@@ -97,7 +129,7 @@ class Character(pygame.sprite.Sprite):
                 self.lastMoveMade = ["y",-4]
                 moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
                 cl.sendData(moveMessage)
-        if keys[pygame.K_RIGHT] == True:
+        elif keys[pygame.K_RIGHT] == True:
             self.rect.x += 2
             if self.rect.x > 800:
                 self.rect.x = 800 - self.rect.x
@@ -105,7 +137,7 @@ class Character(pygame.sprite.Sprite):
                 self.lastMoveMade = ["x", 2]
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
                 cl.sendData(moveMessage)
-        if keys[pygame.K_LEFT] == True:
+        elif keys[pygame.K_LEFT] == True:
             self.rect.x -= 2
             if self.rect.x < 0:
                 self.rect.x = 0
@@ -161,7 +193,7 @@ if __name__ == '__main__':
     c = Client()
     c.connect()
 
-    sleep(2)
+    sleep(3)
 
     clientPlayer = players.sprites()[0]
     print("Player added!")
