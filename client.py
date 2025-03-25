@@ -35,12 +35,12 @@ class Client:
                         print("external player added")
                         addCharacter(msg["data"])
                     if msg["type"] == "movement":
-                        movedPlayer = players.sprites()[msg["data"]["clientNo"] - 1]
+                        movedPlayer = players.sprites()[msg["data"]["playerNo"]]
                         if msg["data"]["direction"] == "y":
-                            movedPlayer.rect.y = msg["data"]["position"]
+                            movedPlayer.rect.y = msg["data"]["movedTo"]
                         elif msg["data"]["direction"] == "x":
-                            movedPlayer.rect.x = msg["data"]["position"]
-                        players.sprites()[msg["data"]["clientNo"] - 1] = movedPlayer
+                            movedPlayer.rect.x = msg["data"]["movedTo"]
+                        players.sprites()[msg["data"]["playerNo"]] = movedPlayer
                     if msg["type"] == "createPlat":
                         print("Created platform")
                         platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]]))
@@ -129,6 +129,7 @@ class Character(pygame.sprite.Sprite):
                 self.lastMoveMade = ["y",-4]
                 moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
                 cl.sendData(moveMessage)
+                time.sleep(0.01)
         elif keys[pygame.K_RIGHT] == True:
             self.rect.x += 2
             if self.rect.x > 800:
@@ -137,6 +138,7 @@ class Character(pygame.sprite.Sprite):
                 self.lastMoveMade = ["x", 2]
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
                 cl.sendData(moveMessage)
+                time.sleep(0.01)
         elif keys[pygame.K_LEFT] == True:
             self.rect.x -= 2
             if self.rect.x < 0:
@@ -145,6 +147,7 @@ class Character(pygame.sprite.Sprite):
                 self.lastMoveMade = ["x", -2]
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
                 cl.sendData(moveMessage)
+                time.sleep(0.01)
         if collided:
             score = False
             if platform.rect.bottom == self.rect.top:
