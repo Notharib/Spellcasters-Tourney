@@ -104,27 +104,28 @@ class Character(pygame.sprite.Sprite):
 
 
     def checkIfLegal(self,direction, amount):
-        if direction == "y":
-            for platform in platforms.sprites():
-                if (self.rect.y - amount) - 40 == platform.rect.bottom:
-                    print("Top bounce")
-                    return False
-                else:
-                    return True
-        else:
-            if amount * 1 <= -1:
-                remover = 40
-            else:
-                remover = -40
-            for platform in platforms.sprites():
-                if (self.rect.x - amount) - remover == platform.rect.left:
-                    print("Left bounce")
-                    return False
-                elif (self.rect.x - amount) - remover == platform.rect.right:
-                    print("Right bounce")
-                    return False
-                else:
-                    return True
+        return True
+        # if direction == "y":
+        #     for platform in platforms.sprites():
+        #         if (self.rect.y - amount) - 40 == platform.rect.bottom:
+        #             print("Top bounce")
+        #             return False
+        #         else:
+        #             return True
+        # else:
+        #     if amount * 1 <= -1:
+        #         remover = 40
+        #     else:
+        #         remover = -40
+        #     for platform in platforms.sprites():
+        #         if (self.rect.x - amount) - remover == platform.rect.left:
+        #             print("Left bounce")
+        #             return False
+        #         elif (self.rect.x - amount) - remover == platform.rect.right:
+        #             print("Right bounce")
+        #             return False
+        #         else:
+        #             return True
 
 
     def move(self, cl,  platform, collided):

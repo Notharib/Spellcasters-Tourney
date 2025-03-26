@@ -7,6 +7,17 @@ class Client:
         self.colour = colour
         self.clientNo = clientNo
 
+class Platform:
+    def __init__(self, position, colour, platformId):
+        self.position = position
+        self.colour = colour
+        self.platformId = platformId
+        self.top = None
+        self.bottom = None
+        self.left = None
+        self.right = None
+
+
 class Server:
     def __init__(self):
         self.__HOST = '127.0.0.1'
@@ -53,7 +64,7 @@ class Server:
 
     def createStage(self,connection):
         platformSize = [20,500]
-        platformPositions =[[300,200],[200,300],[500,200]]
+        platformPositions =[[300,200],[200,300]]
         for position in platformPositions:
             positionX = position[0]
             positionY = position[1]
@@ -78,8 +89,10 @@ class Server:
 
                         if message["data"]["direction"] == "y":
                             self.__clientList[clPos].position[1] = message["data"]["movedTo"]
+                            # print("changed player position")
                         else:
                             self.__clientList[clPos].position[0] = message["data"]["movedTo"]
+                            # print("player position changed")
                     for client in self.__clientList:
                         if client.client != conn:
                             client.client.send(data)
