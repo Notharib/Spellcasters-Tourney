@@ -5,7 +5,7 @@ import time
 class Client:
     def __init__(self):
         self.__HOST = '127.0.0.1'
-        self.__PORT = 50000
+        self.__PORT = 50001
         self.clientNo = None
         self.__socket = None
 
@@ -35,19 +35,37 @@ class Client:
                         print("external player added")
                         addCharacter(msg["data"])
                     if msg["type"] == "movement":
-                        movedPlayer = players.sprites()[msg["data"]["playerNo"]]
+                        if len(players.sprites()) == 2:
+                            movedPlayer = players.sprites()[1]
+                        else:
+                            iteration = 0
+                            for player in players.sprites():
+                                if iteration == 0:
+                                    pass
+                                else:
+                                    if player.characterNo == msg["data"]["playerNo"]:
+                                        print("found moved player")
+                                        movedPlayer = player
+                                        break
                         if msg["data"]["direction"] == "y":
                             movedPlayer.rect.y = msg["data"]["movedTo"]
                         elif msg["data"]["direction"] == "x":
                             movedPlayer.rect.x = msg["data"]["movedTo"]
-                        players.sprites()[msg["data"]["playerNo"]] = movedPlayer
+
                     if msg["type"] == "createPlat":
                         print("Created platform")
                         platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]]))
+                    if msg["type"] == "disconn":
+                        players.remove(players.sprites()[msg["data"]["clientNo"]])
+                        print("Player Disconnected")
+
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
 
+    def tellServerDisconn(self):
+        msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
+        self.sendData(msgDict)
 
 
 def addCharacter(data):
@@ -252,7 +270,7 @@ if __name__ == '__main__':
     time.sleep(3)
 
     clientPlayer = players.sprites()[0]
-    print("Player added!")
+    #print("Player added!")
 
 
     running = True
@@ -265,24 +283,21 @@ if __name__ == '__main__':
         screen.fill(WHITE)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                c.tellServerDisconn()
+                exit()
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
 
-        collisions = pygame.sprite.groupcollide(platforms, players, True, False)
+        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
-                platformPosition = [platform.X, platform.Y]
-                platformSize = [platform.height, platform.width]
                 collided = True
-                platforms.add(Platform(platformPosition, platformSize))
-                plat = platform
+
 
         clientPlayer.gravity(c, plat, collided)
         clientPlayer.move(c, plat, collided)
         platforms.draw(screen)
         players.draw(screen)
         clock.tick(60)
+        # print("event loop ran")
         pygame.display.update()
-
-    sys.exit()
