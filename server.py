@@ -1,7 +1,8 @@
 import socket, json, threading, random, time
 
 class Client:
-    def __init__(self, position,colour,cl,clientNo):
+    def __init__(self, position,colour,cl,clientNo, address):
+        self.addr = address
         self.client = cl
         self.position = position
         self.colour = colour
@@ -21,7 +22,7 @@ class Platform:
 class Server:
     def __init__(self):
         self.__HOST = '127.0.0.1'
-        self.__PORT = 50000
+        self.__PORT = 50001
         self.__clientList = []
         self.__spawnPoints = [[250,250], [350,350],[450,450]]
 
@@ -45,8 +46,9 @@ class Server:
                 if len(self.__clientList) != 0:
                     self.createAlreadyJoinedPlayers(conn)
 
-                self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1))
+                self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
                 time.sleep(0.1)
+                self.notifyClientsOfConn(conn,colour,position)
                 self.createStage(conn)
                 threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
@@ -72,6 +74,12 @@ class Server:
             connection.send(positionMessage.encode())
             time.sleep(0.2)
 
+    def tellClientsOfDisconn(self,clientToDisconn):
+        for client in self.__clientList:
+            if client != self.__clientList[clientToDisconn]:
+                messageDict = {"type":"disconn","data":{"clientNo":clientToDisconn}}
+                client.client.send(json.dumps(messageDict).encode())
+
     def recv_from_client(self, conn):
         while True:
             data = conn.recv(1024)
@@ -93,8 +101,14 @@ class Server:
                         else:
                             self.__clientList[clPos].position[0] = message["data"]["movedTo"]
                             # print("player position changed")
+                    if message["type"] == "disconn":
+                        self.tellClientsOfDisconn(message["data"]["clientNo"]-1)
+                        self.__clientList[message["data"]["clientNo"]-1] = None
+                        print("player disconnected")
+
+
                     for client in self.__clientList:
-                        if client.client != conn:
+                        if client is not None and client.client != conn:
                             client.client.send(data)
                 except json.JSONDecodeError as err:
                     print(data.decode())
