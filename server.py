@@ -9,9 +9,10 @@ class Client:
         self.clientNo = clientNo
 
 class Platform:
-    def __init__(self, position, colour, platformId):
+    def __init__(self, position, platformId, colour=(0,255,0),platformSize=[20,500]):
         self.position = position
         self.colour = colour
+        self.platformSize = platformSize
         self.platformId = platformId
         self.top = None
         self.bottom = None
@@ -25,6 +26,7 @@ class Server:
         self.__PORT = 50001
         self.__clientList = []
         self.__spawnPoints = [[250,250], [350,350],[450,450]]
+        self.__platforms = [Platform([300,200],0),Platform([200,300],1)]
 
 
     def start(self):
@@ -67,11 +69,13 @@ class Server:
     def createStage(self,connection):
         platformSize = [20,500]
         platformPositions =[[300,200],[200,300]]
+        iterator = 0
         for position in platformPositions:
             positionX = position[0]
             positionY = position[1]
-            positionMessage = json.dumps({"type":"createPlat", "data": {"positionX":positionX, "positionY":positionY, "sizeHeight":platformSize[0],"sizeWidth":platformSize[1]}})
+            positionMessage = json.dumps({"type":"createPlat", "data": {"positionX":positionX, "positionY":positionY, "sizeHeight":platformSize[0],"sizeWidth":platformSize[1], "platformNo":iterator}})
             connection.send(positionMessage.encode())
+            iterator += 1
             time.sleep(0.2)
 
     def tellClientsOfDisconn(self,clientToDisconn):
@@ -106,9 +110,45 @@ class Server:
                         self.__clientList[message["data"]["clientNo"]-1] = None
                         print("player disconnected")
 
+                    if message["type"] == "platformInfo":
+                        iterator = 0
+                        for platform in message["data"]:
+                            self.__platforms[iterator].top = platform["platformTop"]
+                            self.__platforms[iterator].bottom = platform["platformBottom"]
+                            self.__platforms[iterator].left = platform["platformLeft"]
+                            self.__platforms[iterator].right = platform["platformRight"]
+                            iterator += 1
 
+                    if message["type"] == "legalCheck":
+                        messageData = message["data"]
+                        clientMove = self.__clientList[messageData["clientNo"]-1]
+                        closestPlat = None
+                        for platform in self.__platforms:
+                            if closestPlat is None:
+                                closestPlat = platform
+                            else:
+                                if messageData["direction"] == "y":
+                                    if (platform.top >= clientMove.position[1]-messageData["amount"] or platform.top <= clientMove.position[1]-messageData["amount"]) and closestPlat.top - platform.top < 0:
+                                        closestPlat = platform
+                                else:
+                                    if (platform.top >= clientMove.position[0]-messageData["amount"] or platform.top <= clientMove.position[0]-messageData["amount"]) and closestPlat.top - platform.top < 0:
+                                        closestPlat = platform
+
+                        if closestPlat is not None:
+                            if messageData["direction"] == "y":
+                                if clientMove.position[1] - messageData["amount"] == closestPlat.top or clientMove.position[1] - messageData["amount"] <= closestPlat.bottom:
+                                    clientMove.client.send(json.dumps({"type":"MOVENOTLEGAL"}).encode())
+                                    print("illegal move")
+                                else:
+                                    clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
+                            else:
+                                if clientMove.position[0] - messageData["amount"] == closestPlat.left or clientMove.position[0] - messageData["amount"] <= closestPlat.right:
+                                    clientMove.client.send(json.dumps({"type":"MOVENOTLEGAL"}).encode())
+                                    print("illegal move")
+                                else:
+                                    clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
                     for client in self.__clientList:
-                        if client is not None and client.client != conn:
+                        if client is not None and client.client != conn and (message["type"] != "platformInfo" or message["type"] != "legalCheck"):
                             client.client.send(data)
                 except json.JSONDecodeError as err:
                     print(data.decode())

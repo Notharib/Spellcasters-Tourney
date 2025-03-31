@@ -8,6 +8,7 @@ class Client:
         self.__PORT = 50001
         self.clientNo = None
         self.__socket = None
+        self.__noOfPlatforms = 0
 
     def connect(self):
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,10 +55,18 @@ class Client:
 
                     if msg["type"] == "createPlat":
                         print("Created platform")
-                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]]))
+                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
+                        self.__noOfPlatforms += 1
                     if msg["type"] == "disconn":
                         players.remove(players.sprites()[msg["data"]["clientNo"]])
                         print("Player Disconnected")
+
+                    if msg["type"] == "MOVELEGAL":
+                        #global clientPlayer
+                        clientPlayer.legalMove()
+                    if msg["type"] == "MOVENOTLEGAL":
+                        #global clientPlayer
+                        clientPlayer.illegalMove()
 
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -73,13 +82,14 @@ def addCharacter(data):
     print("Player created!")
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self,position, size):
+    def __init__(self,position, size, platformNo):
         super().__init__()
         self.height = size[0]
         self.width = size[1]
         self.X = position[0]
         self.Y = position[1]
         self.colour = (0,255,0)
+        self.platformNo = platformNo
         self.image = pygame.Surface([self.width,self.height])
         self.image.fill(self.colour)
         pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
@@ -104,8 +114,16 @@ class Character(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
         self.characterNo = playerNo
-        self.lastMoveMade = []
-        self.lastNonColPos =[]
+        self.lastPos = []
+        self.lastLegalPos = []
+
+    def legalMove(self):
+        self.lastLegalPos = self.lastPos
+
+    def illegalMove(self):
+        self.lastPos = self.lastLegalPos
+        self.rect.x = self.lastPos[0]
+        self.rect.y = self.lastPos[1]
 
     def checkClosestPlat(self):
         closestPlat = None
@@ -120,40 +138,19 @@ class Character(pygame.sprite.Sprite):
                     if platform.rect.x < closestPlatX and (platform.rect.x >= closestPlatX or platform.rect.x <= closestPlatX):
                         closestPlatX = platform.rect.x
 
-
-    def checkIfLegal(self,direction, amount):
+    def checkIfLegal(self,direction,amount, client):
+        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":client.clientNo}}
+        client.sendData(checkIfLegalDict)
+        time.sleep(0.01)
         return True
-        # if direction == "y":
-        #     for platform in platforms.sprites():
-        #         if (self.rect.y - amount) - 40 == platform.rect.bottom:
-        #             print("Top bounce")
-        #             return False
-        #         else:
-        #             return True
-        # else:
-        #     if amount * 1 <= -1:
-        #         remover = 40
-        #     else:
-        #         remover = -40
-        #     for platform in platforms.sprites():
-        #         if (self.rect.x - amount) - remover == platform.rect.left:
-        #             print("Left bounce")
-        #             return False
-        #         elif (self.rect.x - amount) - remover == platform.rect.right:
-        #             print("Right bounce")
-        #             return False
-        #         else:
-        #             return True
 
-
-    def move(self, cl,  platform, collided):
+    def move(self, cl, platform, collided):
         keys = pygame.key.get_pressed()
-
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
-            legalMove = self.checkIfLegal("y",4)
+            legalMove = self.checkIfLegal("y",4, cl)
             if legalMove:
                 self.rect.y -= 4
-                legalMove = self.checkIfLegal("x",2)
+                legalMove = self.checkIfLegal("x",2, cl)
                 if legalMove:
                     self.rect.x -= 2
                     if self.rect.y < 0:
@@ -162,16 +159,17 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 0
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":collided}}
                         cl.sendData(moveMessage)
                         time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
                         cl.sendData(moveMessage)
+                        self.lastPos = [self.rect.x, self.rect.y]
         elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
-            legalMove = self.checkIfLegal("y", 4)
+            legalMove = self.checkIfLegal("y", 4, cl)
             if legalMove:
                 self.rect.y -= 4
-                legalMove = self.checkIfLegal("x", -2)
+                legalMove = self.checkIfLegal("x", -2, cl)
                 if legalMove:
                     self.rect.x += 2
                     if self.rect.y < 0:
@@ -180,74 +178,71 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 800 - self.rect.x
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":collided}}
                         cl.sendData(moveMessage)
                         time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
                         cl.sendData(moveMessage)
+                        self.lastPos = [self.rect.x, self.rect.y]
 
         elif keys[pygame.K_UP] == True:
-            legalMove = self.checkIfLegal("y", 4)
+            legalMove = self.checkIfLegal("y", 4, cl)
             if legalMove:
                 self.rect.y -= 4
                 if self.rect.y < 0:
                     self.rect.y = 0
                 else:
                     self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y}}
+                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y, "collided":collided}}
                     cl.sendData(moveMessage)
+                    self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
         elif keys[pygame.K_RIGHT] == True:
-            legalMove = self.checkIfLegal("x", -2)
+            legalMove = self.checkIfLegal("x", -2, cl)
             if legalMove:
                 self.rect.x += 2
                 if self.rect.x > 800:
                     self.rect.x = 800 - self.rect.x
                 else:
                     self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
                     cl.sendData(moveMessage)
+                    self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
         elif keys[pygame.K_LEFT] == True:
-            legalMove = self.checkIfLegal("x", 2)
+            legalMove = self.checkIfLegal("x", 2, cl)
             if legalMove:
                 self.rect.x -= 2
                 if self.rect.x < 0:
                     self.rect.x = 0
                 else:
                     self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x}}
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
                     cl.sendData(moveMessage)
+                    self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
-        if collided:
-            score = False
-            if platform.rect.bottom == self.rect.top:
-                self.rect.y = self.lastNonColPos[1]
-            if platform.rect.right == self.rect.left:
-                self.rect.x = self.lastNonColPos[0]
-            if platform.rect.left == self.rect.right:
-                self.rect.x = self.lastNonColPos[0]
-            if not score:
-                self.lastNonColPos = [self.rect.x, self.rect.y]
-        else:
-            self.lastNonColPos = [self.rect.x,self.rect.y]
 
 
     def gravity(self, cl, platform, collided):
         if not collided:
-            if self.lastMoveMade != ["y",2]:
-                self.rect.y += 1
-                if self.rect.y > 800 - self.height:
-                    self.rect.y = 800 - self.height
-                else:
-                    #self.lastMoveMade = ["y", 1]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
-                    cl.sendData(moveMessage)
-        if collided:
-            if platform.rect.top == self.rect.bottom:
-                self.rect.y -= 1
+            self.rect.y += 1
+            if self.rect.y > 800 - self.height:
+                self.rect.y = 800 - self.height
+            else:
+                #self.lastMoveMade = ["y", 1]
+                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
+                cl.sendData(moveMessage)
+        # if collided:
+        #     if platform.rect.top == self.rect.bottom:
+        #         self.rect.y -= 1
 
 
+def sendPlatformInfo(platforms):
+    data = []
+    for platform in platforms.sprites():
+        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
+        data.append(dictionary)
+    return data
 
 if __name__ == '__main__':
     pygame.display.init()
@@ -270,6 +265,11 @@ if __name__ == '__main__':
     time.sleep(3)
 
     clientPlayer = players.sprites()[0]
+
+    if clientPlayer.characterNo - 1 == 0:
+        platformInfo = sendPlatformInfo(platforms)
+        platformInfoDict = {"type":"platformInfo","data":platformInfo}
+        c.sendData(platformInfoDict)
     #print("Player added!")
 
 
