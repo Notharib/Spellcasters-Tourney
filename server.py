@@ -1,12 +1,13 @@
 import socket, json, threading, random, time
 
 class Client:
-    def __init__(self, position,colour,cl,clientNo, address):
+    def __init__(self, position,colour,cl,clientNo, address, size=[40,40]):
         self.addr = address
         self.client = cl
         self.position = position
         self.colour = colour
         self.clientNo = clientNo
+        self.size = size
 
 class Platform:
     def __init__(self, position, platformId, colour=(0,255,0),platformSize=[20,500]):
@@ -136,15 +137,13 @@ class Server:
 
                         if closestPlat is not None:
                             if messageData["direction"] == "y":
-                                if clientMove.position[1] - messageData["amount"] == closestPlat.top or clientMove.position[1] - messageData["amount"] <= closestPlat.bottom:
+                                if clientMove.position[1] - messageData["amount"] <= closestPlat.position[1]+closestPlat.platformSize[0]:
                                     clientMove.client.send(json.dumps({"type":"MOVENOTLEGAL"}).encode())
-                                    print("illegal move")
                                 else:
                                     clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
                             else:
-                                if clientMove.position[0] - messageData["amount"] == closestPlat.left or clientMove.position[0] - messageData["amount"] <= closestPlat.right:
+                                if clientMove.position[0] - messageData["amount"] + clientMove.size[0] == closestPlat.position[0] or clientMove.position[0] - messageData["amount"] <= closestPlat.position[0]+closestPlat.platformSize[1]:
                                     clientMove.client.send(json.dumps({"type":"MOVENOTLEGAL"}).encode())
-                                    print("illegal move")
                                 else:
                                     clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
                     for client in self.__clientList:

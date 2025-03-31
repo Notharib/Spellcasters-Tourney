@@ -114,16 +114,27 @@ class Character(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
         self.characterNo = playerNo
-        self.lastPos = []
-        self.lastLegalPos = []
+        self.lastPos = [self.X,self.Y]
+        self.lastLegalPos = self.lastPos
 
     def legalMove(self):
         self.lastLegalPos = self.lastPos
 
+    def onPlat(self):
+        for platform in platforms.sprites():
+            if platform.rect.top == self.rect.bottom or platform.rect.top == self.rect.bottom + 1 or platform.rect.top == self.rect.bottom - 1:
+                print("on platform")
+                return True
+        return False
+
     def illegalMove(self):
-        self.lastPos = self.lastLegalPos
-        self.rect.x = self.lastPos[0]
-        self.rect.y = self.lastPos[1]
+        global collided
+        if (not self.onPlat()) and collided:
+            self.lastPos = self.lastLegalPos
+            self.rect.x = self.lastPos[0]
+            self.rect.y = self.lastPos[1]
+        else:
+            self.legalMove()
 
     def checkClosestPlat(self):
         closestPlat = None
@@ -232,6 +243,7 @@ class Character(pygame.sprite.Sprite):
                 #self.lastMoveMade = ["y", 1]
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
                 cl.sendData(moveMessage)
+                self.lastPos = [self.rect.x, self.rect.y]
         # if collided:
         #     if platform.rect.top == self.rect.bottom:
         #         self.rect.y -= 1
