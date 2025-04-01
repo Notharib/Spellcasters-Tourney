@@ -108,7 +108,8 @@ class Server:
                             # print("player position changed")
                     if message["type"] == "disconn":
                         self.tellClientsOfDisconn(message["data"]["clientNo"]-1)
-                        self.__clientList[message["data"]["clientNo"]-1] = None
+                        self.__clientList[message["data"]["clientNo"]-1].client.close()
+                        self.__clientList.pop(message["data"]["clientNo"] - 1)
                         print("player disconnected")
 
                     if message["type"] == "platformInfo":

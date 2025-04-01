@@ -1,5 +1,4 @@
-import socket, json, threading, pygame, sys
-import time
+import socket, json, threading, pygame, time
 
 
 class Client:
@@ -314,3 +313,4 @@ if __name__ == '__main__':
         clock.tick(60)
         # print("event loop ran")
         pygame.display.update()
+    exit()
