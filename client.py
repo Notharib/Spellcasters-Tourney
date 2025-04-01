@@ -303,7 +303,8 @@ if __name__ == '__main__':
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
-                collided = True
+                if player == clientPlayer:
+                    collided = True
 
 
         clientPlayer.gravity(c, plat, collided)

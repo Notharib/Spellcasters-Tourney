@@ -81,7 +81,7 @@ class Server:
 
     def tellClientsOfDisconn(self,clientToDisconn):
         for client in self.__clientList:
-            if client != self.__clientList[clientToDisconn]:
+            if client != self.__clientList[clientToDisconn] and client is not None:
                 messageDict = {"type":"disconn","data":{"clientNo":clientToDisconn}}
                 client.client.send(json.dumps(messageDict).encode())
 
