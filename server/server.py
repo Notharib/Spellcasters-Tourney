@@ -24,7 +24,7 @@ class Platform:
 class Server:
     def __init__(self):
         self.__HOST = '127.0.0.1'
-        self.__PORT = 50001
+        self.__PORT = 50000
         self.__clientList = []
         self.__spawnPoints = [[250,250], [350,350],[450,450]]
         self.__platforms = [Platform([300,200],0),Platform([200,300],1)]
