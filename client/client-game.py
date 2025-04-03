@@ -1,84 +1,50 @@
-import socket, json, threading, pygame, time
-
-
-class Client:
-    def __init__(self):
-        self.__HOST = '127.0.0.1'
-        self.__PORT = 50001
-        self.clientNo = None
-        self.__socket = None
-        self.__noOfPlatforms = 0
-
-    def connect(self):
-        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__socket.connect((self.__HOST, self.__PORT))
-        threading.Thread(target=self.listen).start()
-
-    def sendData(self,message):
-        strMessage = json.dumps(message)
-        self.__socket.send(strMessage.encode())
-
-    def listen(self):
-        while True:
-            data = self.__socket.recv(1024)
-            if not data:
-                break
-            else:
-                try:
-                    msg = dict(json.loads(data.decode()))
-
-                    if msg["type"] == "clientNo":
-                        print("client player created")
-                        self.clientNo = msg["data"]["clientNo"]
-                        addCharacter(msg["data"])
-                    if msg["type"] == "playerJoin":
-                        print("external player added")
-                        addCharacter(msg["data"])
-                    if msg["type"] == "movement":
-                        if len(players.sprites()) == 2:
-                            movedPlayer = players.sprites()[1]
-                        else:
-                            iteration = 0
-                            for player in players.sprites():
-                                if iteration == 0:
-                                    pass
-                                else:
-                                    if player.characterNo == msg["data"]["playerNo"]:
-                                        print("found moved player")
-                                        movedPlayer = player
-                                        break
-                        if msg["data"]["direction"] == "y":
-                            movedPlayer.rect.y = msg["data"]["movedTo"]
-                        elif msg["data"]["direction"] == "x":
-                            movedPlayer.rect.x = msg["data"]["movedTo"]
-
-                    if msg["type"] == "createPlat":
-                        print("Created platform")
-                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
-                        self.__noOfPlatforms += 1
-                    if msg["type"] == "disconn":
-                        players.remove(players.sprites()[msg["data"]["clientNo"]])
-                        print("Player Disconnected")
-
-                    if msg["type"] == "MOVELEGAL":
-                        #global clientPlayer
-                        clientPlayer.legalMove()
-                    if msg["type"] == "MOVENOTLEGAL":
-                        #global clientPlayer
-                        clientPlayer.illegalMove()
-
-                except json.JSONDecodeError as err:
-                    print(data.decode())
-                    print("JSON Syntax Error:", err)
-
-    def tellServerDisconn(self):
-        msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
-        self.sendData(msgDict)
-
+import pygame, time, threading
+from client import Client
 
 def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
     print("Player created!")
+
+def clientData(collecting, t, passedData):
+    while collecting:
+        if t is not None:
+            if t == "addCharacter":
+                addCharacter(passedData)
+                return False
+            if t == "movement":
+                if len(players.sprites()) == 2:
+                    movedPlayer = players.sprites()[1]
+                else:
+                    iteration = 0
+                    for player in players.sprites():
+                        if iteration == 0:
+                            pass
+                        else:
+                            if player.characterNo == passedData["playerNo"]:
+                                print("found moved player")
+                                movedPlayer = player
+                                break
+                if passedData["direction"] == "y":
+                    movedPlayer.rect.y = passedData["movedTo"]
+                elif passedData["direction"] == "x":
+                    movedPlayer.rect.x = passedData["movedTo"]
+                return False
+            if t == "createPlat":
+                platforms.add(Platform([passedData["positionX"], passedData["positionY"]],[passedData["sizeHeight"], passedData["sizeWidth"]], passedData["noOfPlats"]))
+                return False
+            if t == "disconn":
+                players.remove(players.spites()[passedData["clientNo"]])
+                return False
+            if t == "bullCreate":
+                bullets.add(Bullet(passedData["spawnPoint"],passedData["direction"]))
+                return False
+            if t == "legalMove":
+                clientPlayer.legalMove()
+                return False
+            if t == "illegalMove":
+                clientPlayer.illegalMove()
+
+
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size, platformNo):
@@ -96,6 +62,27 @@ class Platform(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
 
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self,spawnPoint, direction, size=[10,10],damage = 2):
+        super().__init__()
+        self.height = size[0]
+        self.width = size[1]
+        self.X = spawnPoint[0]
+        self.Y = spawnPoint[1]
+        self.direction = direction
+        self.colour = (255,0,0)
+        self.image = pygame.Surface([self.width,self.height])
+        self.image.fill(self.colour)
+        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
+        self.rect = self.image.get_rect()
+        self.rect.x = self.X
+        self.rect.y = self.Y
+        self.damage = damage
+
+    def update(self,client):
+        self.rect.x -= self.direction[0]
+        self.rect.y -= self.direction[1]
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
@@ -115,6 +102,23 @@ class Character(pygame.sprite.Sprite):
         self.characterNo = playerNo
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
+
+    def youDied(self):
+        if self.health == 0:
+            running = True
+            text = "\tYou Died!\nPress ENTER to respawn!"
+            f = pygame.font.SysFont("Comic Sans MS",24)
+            output = f.render(text,True,(0,0,0))
+            while running:
+                screen.fill((255,255,255))
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                    if event.type == pygame.KEYDOWN:
+                        keys = pygame.key.get_pressed()
+                        if keys[pygame.K_RETURN]:
+                            self.health = 10
+                            running = False
 
     def legalMove(self):
         self.lastLegalPos = self.lastPos
@@ -232,6 +236,13 @@ class Character(pygame.sprite.Sprite):
                     self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
 
+    def fire(self, client):
+        mouseKeys = pygame.mouse.get_pressed(3)
+        if mouseKeys[1]:
+            mousePos = pygame.mouse.get_pos()
+            direction = [mousePos[0]-self.rect.x, mousePos[1]-self.rect.y]
+            bullets.add(Bullet([self.rect.x+self.width,self.rect.y],direction))
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y]}})
 
     def gravity(self, cl, platform, collided):
         if not collided:
@@ -257,6 +268,7 @@ def sendPlatformInfo(platforms):
 
 if __name__ == '__main__':
     pygame.display.init()
+    pygame.font.init()
     WINDOW_SIZE = (800, 800)
 
     RED = (250, 9, 1)
@@ -267,11 +279,17 @@ if __name__ == '__main__':
 
     screen = pygame.display.set_mode(WINDOW_SIZE)
     clock = pygame.time.Clock()
+
     players = pygame.sprite.Group()
     platforms = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
 
     c = Client()
     c.connect()
+    collecting, t, passedData = False, 1, 9
+    collecting, t, passedData = threading.Thread(target=c.listen).start()
+    collecting = threading.Thread(target=clientData, args=(collecting,t, passedData))
+
 
     time.sleep(3)
 
@@ -298,6 +316,7 @@ if __name__ == '__main__':
                 exit()
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
+                mouseKey = pygame.mouse.get_pressed(3)
 
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
@@ -305,12 +324,18 @@ if __name__ == '__main__':
                 if player == clientPlayer:
                     collided = True
 
+        pHit = pygame.sprite.groupcollide(bullets, players, True, False)
+        for b, p_list in pHit.items():
+            for pl in p_list:
+                player.health -= b.damage
+                player.youDied()
 
+        bullets.update(c)
         clientPlayer.gravity(c, plat, collided)
         clientPlayer.move(c, plat, collided)
+        clientPlayer.fire(c)
         platforms.draw(screen)
         players.draw(screen)
         clock.tick(60)
-        # print("event loop ran")
         pygame.display.update()
     exit()
