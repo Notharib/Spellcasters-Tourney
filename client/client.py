@@ -137,12 +137,13 @@ class Platform(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self,spawnPoint, direction, size=[10,10],damage = 2):
+    def __init__(self,spawnPoint, direction, mousePos, size=[10,10],damage = 2):
         super().__init__()
         self.height = size[0]
         self.width = size[1]
         self.X = spawnPoint[0]
         self.Y = spawnPoint[1]
+        self.mousePos = mousePos
         self.direction = direction
         self.colour = (0,0,0)
         self.image = pygame.Surface([self.width,self.height])
@@ -154,26 +155,31 @@ class Bullet(pygame.sprite.Sprite):
         self.damage = damage
 
     def update(self,client):
-        if self.direction[0] > self.rect.x:
-            if self.direction[0] % 2 == 0:
-                self.rect.x += 2
-            else:
-                self.rect.x += 1
-        else:
-            if self.direction[0] % 2 == 0:
-                self.rect.x -= 2
-            else:
-                self.rect.x -= 1
-        if self.direction[1] > self.rect.y:
-            if self.direction[1] % 2 == 0:
-                self.rect.y += 2
-            else:
-                self.rect.y += 1
-        else:
-            if self.direction[1] % 2 == 0:
-                self.rect.y -= 2
-            else:
-                self.rect.y -= 1
+        self.rect.x += self.direction[0]
+        self.rect.y += self.direction[1]
+
+
+
+        # if self.direction[0] > self.rect.x:
+        #     if self.direction[0] % 2 == 0:
+        #         self.rect.x += 2
+        #     else:
+        #         self.rect.x += 1
+        # else:
+        #     if self.direction[0] % 2 == 0:
+        #         self.rect.x -= 2
+        #     else:
+        #         self.rect.x -= 1
+        # if self.direction[1] > self.rect.y:
+        #     if self.direction[1] % 2 == 0:
+        #         self.rect.y += 2
+        #     else:
+        #         self.rect.y += 1
+        # else:
+        #     if self.direction[1] % 2 == 0:
+        #         self.rect.y -= 2
+        #     else:
+        #         self.rect.y -= 1
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
@@ -332,17 +338,21 @@ class Character(pygame.sprite.Sprite):
     def fire(self, client):
         mouseKeys = pygame.mouse.get_pressed(3)
         if mouseKeys[0]:
-            direction = pygame.mouse.get_pos()
-            bullets.add(Bullet([self.rect.x,self.rect.y],direction))
-            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y]}})
+            direction = self.getDirection()
+            bullets.add(Bullet([self.rect.x,self.rect.y],direction,pygame.mouse.get_pos()))
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "mousePos":pygame.mouse.get_pos()}})
 
     def getDirection(self):
         mousePos = pygame.mouse.get_pos()
-        direction = []
-        lineSO = mousePos[0] - self.rect.x
-        lineMO = mousePos[1] - self.rect.y
-        lineSM = math.sqrt(lineSO**2+lineMO**2)
-        return direction
+        playerPos = [self.rect.x, self.rect.y]
+        differenceVector = [mousePos[0]-playerPos[0],mousePos[1]-playerPos[1]]
+        divider = differenceVector[0]
+        if divider != 0:
+            differenceVector[0] /= divider
+            differenceVector[1] /= divider
+        else:
+            differenceVector[1] /= differenceVector[1]
+        return differenceVector
 
 
     def gravity(self, cl, platform, collided):
