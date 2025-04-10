@@ -1,4 +1,5 @@
 import pygame, time, threading, socket, json, math
+from menuScreens import gameStart, characterBuilder
 
 class Client:
     def __init__(self):
@@ -78,6 +79,9 @@ def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
     print("Player created!")
 
+def createBullet(data):
+    bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
+
 def clientData(collecting, t, passedData):
     while collecting:
         if t is not None:
@@ -137,14 +141,14 @@ class Platform(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self,spawnPoint, direction, mousePos, size=[10,10],damage = 2):
+    def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
         super().__init__()
         self.height = size[0]
         self.width = size[1]
         self.X = spawnPoint[0]
         self.Y = spawnPoint[1]
-        self.mousePos = mousePos
         self.direction = direction
+        self.playerOrigin = player
         self.colour = (0,0,0)
         self.image = pygame.Surface([self.width,self.height])
         self.image.fill(self.colour)
@@ -154,32 +158,14 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = self.Y
         self.damage = damage
 
-    def update(self,client):
-        self.rect.x += self.direction[0]
-        self.rect.y += self.direction[1]
+    def update(self):
+        if self.direction[0] is not None:
+            self.rect.x -= self.direction[0]
+        if self.direction[1] is not None:
+            self.rect.y -= self.direction[1]
 
-
-
-        # if self.direction[0] > self.rect.x:
-        #     if self.direction[0] % 2 == 0:
-        #         self.rect.x += 2
-        #     else:
-        #         self.rect.x += 1
-        # else:
-        #     if self.direction[0] % 2 == 0:
-        #         self.rect.x -= 2
-        #     else:
-        #         self.rect.x -= 1
-        # if self.direction[1] > self.rect.y:
-        #     if self.direction[1] % 2 == 0:
-        #         self.rect.y += 2
-        #     else:
-        #         self.rect.y += 1
-        # else:
-        #     if self.direction[1] % 2 == 0:
-        #         self.rect.y -= 2
-        #     else:
-        #         self.rect.y -= 1
+        if self.rect.y > 800 or self.rect.y < 0 or self.rect.x > 800 or self.rect.x < 0:
+            bullets.remove(self)
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
@@ -203,7 +189,8 @@ class Character(pygame.sprite.Sprite):
     def youDied(self):
         if self.HP == 0:
             running = True
-            text = "\tYou Died!\nPress ENTER to respawn!"
+            text = """You Died! 
+                Press ENTER to respawn!"""
             f = pygame.font.SysFont("Comic Sans MS",24)
             output = f.render(text,True,(0,0,0))
             while running:
@@ -339,20 +326,20 @@ class Character(pygame.sprite.Sprite):
         mouseKeys = pygame.mouse.get_pressed(3)
         if mouseKeys[0]:
             direction = self.getDirection()
-            bullets.add(Bullet([self.rect.x,self.rect.y],direction,pygame.mouse.get_pos()))
-            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "mousePos":pygame.mouse.get_pos()}})
+            bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self}})
 
     def getDirection(self):
         mousePos = pygame.mouse.get_pos()
-        playerPos = [self.rect.x, self.rect.y]
-        differenceVector = [mousePos[0]-playerPos[0],mousePos[1]-playerPos[1]]
-        divider = differenceVector[0]
-        if divider != 0:
-            differenceVector[0] /= divider
-            differenceVector[1] /= divider
-        else:
-            differenceVector[1] /= differenceVector[1]
-        return differenceVector
+        MPVector = [self.rect.x - mousePos[0], self.rect.y - mousePos[1]]
+        print(MPVector)
+        hyppotenuse = math.sqrt((MPVector[0]**2)+(MPVector[1]**2))
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+
+        print(MPVector)
+        return MPVector
 
 
     def gravity(self, cl, platform, collided):
@@ -377,6 +364,7 @@ def sendPlatformInfo(platforms):
 if __name__ == '__main__':
     pygame.display.init()
     pygame.font.init()
+    pygame.freetype.init()
     WINDOW_SIZE = (800, 800)
 
     RED = (250, 9, 1)
@@ -391,6 +379,9 @@ if __name__ == '__main__':
     players = pygame.sprite.Group()
     platforms = pygame.sprite.Group()
     bullets = pygame.sprite.Group()
+
+    char = characterBuilder(screen)
+    begin = gameStart(screen)
 
     c = Client()
     c.connect()
@@ -432,12 +423,12 @@ if __name__ == '__main__':
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
             for pl in p_list:
-                if pl != clientPlayer:
+                if pl != b.playerOrigin:
                     pl.HP -= b.damage
                     pl.youDied()
                     bullets.remove(b)
 
-        bullets.update(c)
+        bullets.update()
         clientPlayer.gravity(c, plat, collided)
         clientPlayer.move(c, plat, collided)
         clientPlayer.fire(c)
