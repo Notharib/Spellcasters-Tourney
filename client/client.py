@@ -122,7 +122,6 @@ def clientData(collecting, t, passedData):
                 clientPlayer.illegalMove()
 
 
-
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size, platformNo):
         super().__init__()
@@ -383,58 +382,60 @@ if __name__ == '__main__':
     char = characterBuilder(screen)
     begin = gameStart(screen)
 
-    c = Client()
-    c.connect()
+    if begin:
+        c = Client()
+        c.connect()
 
-    time.sleep(3)
+        time.sleep(3)
 
-    clientPlayer = players.sprites()[0]
+        clientPlayer = players.sprites()[0]
 
-    if clientPlayer.characterNo - 1 == 0:
-        platformInfo = sendPlatformInfo(platforms)
-        platformInfoDict = {"type":"platformInfo","data":platformInfo}
-        c.sendData(platformInfoDict)
-    #print("Player added!")
+        if clientPlayer.characterNo - 1 == 0:
+            platformInfo = sendPlatformInfo(platforms)
+            platformInfoDict = {"type":"platformInfo","data":platformInfo}
+            c.sendData(platformInfoDict)
+        #print("Player added!")
 
 
-    running = True
+        running = True
 
-    while running:
+        while running:
 
-        collided = False
-        plat = None
+            collided = False
+            plat = None
 
-        screen.fill(WHITE)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                c.tellServerDisconn()
-                exit()
-            if event.type == pygame.KEYDOWN:
-                keys = pygame.key.get_pressed()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouseKey = pygame.mouse.get_pressed(3)
+            screen.fill(WHITE)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    c.tellServerDisconn()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    keys = pygame.key.get_pressed()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouseKey = pygame.mouse.get_pressed(3)
 
-        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-        for platform, player_list in collisions.items():
-            for player in player_list:
-                if player == clientPlayer:
-                    collided = True
+            collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+            for platform, player_list in collisions.items():
+                for player in player_list:
+                    if player == clientPlayer:
+                        collided = True
 
-        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for b, p_list in pHit.items():
-            for pl in p_list:
-                if pl != b.playerOrigin:
-                    pl.HP -= b.damage
-                    pl.youDied()
-                    bullets.remove(b)
+            pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+            for b, p_list in pHit.items():
+                for pl in p_list:
+                    if pl != b.playerOrigin:
+                        pl.HP -= b.damage
+                        pl.youDied()
+                        bullets.remove(b)
 
-        bullets.update()
-        clientPlayer.gravity(c, plat, collided)
-        clientPlayer.move(c, plat, collided)
-        clientPlayer.fire(c)
-        platforms.draw(screen)
-        bullets.draw(screen)
-        players.draw(screen)
-        clock.tick(60)
-        pygame.display.update()
+            bullets.update()
+            clientPlayer.gravity(c, plat, collided)
+            clientPlayer.move(c, plat, collided)
+            clientPlayer.fire(c)
+            platforms.draw(screen)
+            bullets.draw(screen)
+            players.draw(screen)
+            clock.tick(60)
+            pygame.display.update()
+        exit()
     exit()
