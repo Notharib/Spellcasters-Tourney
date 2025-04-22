@@ -1,5 +1,6 @@
-import pygame, time, threading, socket, json, math
+import pygame, time, threading, socket, json
 from menuScreens import gameStart, characterBuilder
+from gameLogic import getDirection, youDied, onPlat, Bullet, Platform
 
 class Client:
     def __init__(self):
@@ -121,51 +122,6 @@ def clientData(collecting, t, passedData):
             if t == "illegalMove":
                 clientPlayer.illegalMove()
 
-
-class Platform(pygame.sprite.Sprite):
-    def __init__(self,position, size, platformNo):
-        super().__init__()
-        self.height = size[0]
-        self.width = size[1]
-        self.X = position[0]
-        self.Y = position[1]
-        self.colour = (0,255,0)
-        self.platformNo = platformNo
-        self.image = pygame.Surface([self.width,self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-
-
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
-        super().__init__()
-        self.height = size[0]
-        self.width = size[1]
-        self.X = spawnPoint[0]
-        self.Y = spawnPoint[1]
-        self.direction = direction
-        self.playerOrigin = player
-        self.colour = (0,0,0)
-        self.image = pygame.Surface([self.width,self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.damage = damage
-
-    def update(self):
-        if self.direction[0] is not None:
-            self.rect.x -= self.direction[0]
-        if self.direction[1] is not None:
-            self.rect.y -= self.direction[1]
-
-        if self.rect.y > 800 or self.rect.y < 0 or self.rect.x > 800 or self.rect.x < 0:
-            bullets.remove(self)
-
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
         super().__init__()
@@ -185,39 +141,13 @@ class Character(pygame.sprite.Sprite):
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
 
-    def youDied(self):
-        if self.HP == 0:
-            running = True
-            text = """You Died! 
-                Press ENTER to respawn!"""
-            f = pygame.font.SysFont("Comic Sans MS",24)
-            output = f.render(text,True,(0,0,0))
-            while running:
-                screen.fill((255,255,255))
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
-                    if event.type == pygame.KEYDOWN:
-                        keys = pygame.key.get_pressed()
-                        if keys[pygame.K_RETURN]:
-                            self.health = 10
-                            running = False
-                screen.blit(output,(200,400))
-                pygame.display.update()
-
     def legalMove(self):
         self.lastLegalPos = self.lastPos
 
-    def onPlat(self):
-        for platform in platforms.sprites():
-            if platform.rect.top == self.rect.bottom or platform.rect.top == self.rect.bottom + 1 or platform.rect.top == self.rect.bottom - 1:
-                print("on platform")
-                return True
-        return False
 
     def illegalMove(self):
         global collided
-        if (not self.onPlat()) and collided:
+        if (not onPlat(self,platforms)) and collided:
             self.lastPos = self.lastLegalPos
             self.rect.x = self.lastPos[0]
             self.rect.y = self.lastPos[1]
@@ -324,21 +254,9 @@ class Character(pygame.sprite.Sprite):
     def fire(self, client):
         mouseKeys = pygame.mouse.get_pressed(3)
         if mouseKeys[0]:
-            direction = self.getDirection()
+            direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
             client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self}})
-
-    def getDirection(self):
-        mousePos = pygame.mouse.get_pos()
-        MPVector = [self.rect.x - mousePos[0], self.rect.y - mousePos[1]]
-        print(MPVector)
-        hyppotenuse = math.sqrt((MPVector[0]**2)+(MPVector[1]**2))
-        divider = hyppotenuse // 10
-        for i in range(2):
-            MPVector[i] //= divider
-
-        print(MPVector)
-        return MPVector
 
 
     def gravity(self, cl, platform, collided):
@@ -425,7 +343,7 @@ if __name__ == '__main__':
                 for pl in p_list:
                     if pl != b.playerOrigin:
                         pl.HP -= b.damage
-                        pl.youDied()
+                        pl = youDied(pl, screen)
                         bullets.remove(b)
 
             bullets.update()

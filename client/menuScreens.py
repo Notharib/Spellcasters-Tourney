@@ -1,4 +1,5 @@
-import pygame, pygame.freetype, socket
+import pygame, pygame.freetype
+from PrivateServer import Server
 
 class TextBox(pygame.sprite.Sprite):
     def __init__(self, position, typing=False):
@@ -65,9 +66,9 @@ def gameStart(screen):
                          g = privateGame(screen)
                          return g
 
-            f.render_to(screen,(100,400),textOne, (0,0,0))
-            f.render_to(screen, (100, 500), textTwo, (0, 0, 0))
-            f.render_to(screen, (100, 550), textThree, (0, 0, 0))
+            f.render_to(screen,(50,300),textOne, (0,0,0))
+            f.render_to(screen, (100, 400), textTwo, (0, 0, 0))
+            f.render_to(screen, (100, 450), textThree, (0, 0, 0))
             pygame.display.update()
         return True
 
@@ -107,11 +108,11 @@ def privateGame(screen):
                     for tBox in t_List:
                         tBox.update()
 
-        f.render_to(screen,(100,400),textOne, (0,0,0))
-        f.render_to(screen, (150,400), noOfPlayers, (0, 0, 0))
-        f.render_to(screen, (100, 500), textTwo, (0, 0, 0))
-        f.render_to(screen, (100, 550), gameLength, (0, 0, 0))
-        f.render_to(screen, (100, 650), textThree, (0, 0, 0))
+        f.render_to(screen,(25,100),textOne, (0,0,0))
+        f.render_to(screen, (150,150), noOfPlayers, (0, 0, 0))
+        f.render_to(screen, (25, 250), textTwo, (0, 0, 0))
+        f.render_to(screen, (100, 300), gameLength, (0, 0, 0))
+        f.render_to(screen, (100, 550), textThree, (0, 0, 0))
 
         pointer.update()
         pygame.display.update()
