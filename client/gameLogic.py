@@ -1,14 +1,24 @@
 import pygame, math
 
+# Element Classes
+
 class Fire:
     def __init__(self):
         self.__opposite = "Water"
         self.__type = "Fire"
 
+    def __repr__(self):
+        return self.__type
+
 class Water:
     def __init__(self):
         self.__opposite = "Fire"
         self.__type = "Water"
+
+    def __repr__(self):
+        return self.__type
+
+# Non-player objects to be used within the game
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size, platformNo):
@@ -49,6 +59,71 @@ class Bullet(pygame.sprite.Sprite):
             self.rect.x -= self.direction[0]
         if self.direction[1] is not None:
             self.rect.y -= self.direction[1]
+
+# Objects mainly only used within menus
+
+class TextBox(pygame.sprite.Sprite):
+    def __init__(self, position, text, allow="allInput",  typing=False):
+        super().__init__()
+        self.X = position[0]
+        self.Y = position[1]
+        self.height = 30
+        self.width = 50
+        self.colour = (200,200,200)
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(self.colour)
+        pygame.draw.rect(self.image, self.colour, (self.X, self.Y, self.width, self.height))
+        self.rect = self.image.get_rect()
+        self.rect.x = self.X
+        self.rect.y = self.Y
+        self.typing = typing
+        self.text = text
+        self.allow = allow
+
+    def checkIfExample(self):
+        if self.text == "EXAMPLE":
+            return True
+        else:
+            return False
+
+    def update(self, keys):
+        if self.typing:
+            if self.allow == "allInput" or self.allow == "numberInput":
+                if keys[pygame.K_BACKSPACE]:
+                    if self.checkIfExample():
+                        self.text = ""
+                    else:
+                        pass
+                elif keys[pygame.K_1]:
+                    if not self.checkIfExample():
+                        self.text += "1"
+                    else:
+                        self.text = "1"
+
+
+
+# Used so that the user can select which text box they are actually typing into
+class Pointer(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.X = pygame.mouse.get_pos()[0]
+        self.Y = pygame.mouse.get_pos()[1]
+        self.height = 1
+        self.width = 1
+        self.colour =  (255,255,255)
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(self.colour)
+        pygame.draw.rect(self.image, self.colour, (self.X, self.Y, self.width, self.height))
+        self.rect = self.image.get_rect()
+        self.rect.x = self.X
+        self.rect.y = self.Y
+
+    def update(self):
+        mousePos = pygame.mouse.get_pos()
+        self.rect.x = mousePos[0]
+        self.rect.y = mousePos[1]
+
+# General functions
 
 def getDirection(player):
     mousePos = pygame.mouse.get_pos()

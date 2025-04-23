@@ -1,45 +1,6 @@
 import pygame, pygame.freetype
 from PrivateServer import Server
-
-class TextBox(pygame.sprite.Sprite):
-    def __init__(self, position, typing=False):
-        super().__init__()
-        self.X = position[0]
-        self.Y = position[1]
-        self.height = 30
-        self.width = 50
-        self.colour = (200,200,200)
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image, self.colour, (self.X, self.Y, self.width, self.height))
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.typing = typing
-
-    def update(self):
-        if self.typing:
-            pass
-
-class Pointer(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.X = pygame.mouse.get_pos()[0]
-        self.Y = pygame.mouse.get_pos()[1]
-        self.height = 1
-        self.width = 1
-        self.colour =  (255,255,255)
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image, self.colour, (self.X, self.Y, self.width, self.height))
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-
-    def update(self):
-        mousePos = pygame.mouse.get_pos()
-        self.rect.x = mousePos[0]
-        self.rect.y = mousePos[1]
+from gameLogic import TextBox, Pointer
 
 def gameStart(screen):
     running = True
@@ -89,6 +50,9 @@ def privateGame(screen):
 
     pointer.add(Pointer())
 
+    textBoxes.add(TextBox(position=(150,150), text=noOfPlayers))
+    textBoxes.add(TextBox(position=(100, 300), text=gameLength))
+
     running = True
     while running:
         screen.fill((255, 255, 255))
@@ -106,7 +70,7 @@ def privateGame(screen):
                 collided = pygame.sprite.groupcollide(pointer,textBoxes,False,False)
                 for p, t_List in collided.items():
                     for tBox in t_List:
-                        tBox.update()
+                        tBox.update(keys)
 
         f.render_to(screen,(25,100),textOne, (0,0,0))
         f.render_to(screen, (150,150), noOfPlayers, (0, 0, 0))

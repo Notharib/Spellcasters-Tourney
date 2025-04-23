@@ -2,6 +2,7 @@ import pygame, time, threading, socket, json
 from menuScreens import gameStart, characterBuilder
 from gameLogic import getDirection, youDied, onPlat, Bullet, Platform
 
+# Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
 class Client:
     def __init__(self):
         self.__HOST = '127.0.0.1'
@@ -15,10 +16,12 @@ class Client:
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
 
+    # Sends whatever data is passed into the function to the server it is connected to
     def sendData(self,message):
         strMessage = json.dumps(message)
         self.__socket.send(strMessage.encode())
 
+    # Listens for JSON formatted data from the server
     def listen(self):
         while True:
             data = self.__socket.recv(1024)
@@ -76,13 +79,16 @@ class Client:
         msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
         self.sendData(msgDict)
 
+# Adds a Player object to the players sprite group (potential to modularise?)
 def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
     print("Player created!")
 
+# Adds a Bullet object to the bullets/projectiles sprite group
 def createBullet(data):
     bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
 
+#
 def clientData(collecting, t, passedData):
     while collecting:
         if t is not None:
@@ -298,6 +304,8 @@ if __name__ == '__main__':
     bullets = pygame.sprite.Group()
 
     char = characterBuilder(screen)
+
+    # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
     begin = gameStart(screen)
 
     if begin:
@@ -317,6 +325,7 @@ if __name__ == '__main__':
 
         running = True
 
+        # Run loop
         while running:
 
             collided = False
