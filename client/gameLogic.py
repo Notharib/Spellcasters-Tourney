@@ -18,6 +18,16 @@ class Water:
     def __repr__(self):
         return self.__type
 
+# Spellcaster Classes
+
+class Wizard:
+    def __init__(self):
+        self.__type = "Wizard"
+
+class Druid:
+    def __init__(self):
+        self.__type = "Druid"
+
 # Non-player objects to be used within the game
 
 class Platform(pygame.sprite.Sprite):

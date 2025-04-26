@@ -4,8 +4,8 @@ from gameLogic import getDirection, youDied, onPlat, Bullet, Platform
 
 # Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
 class Client:
-    def __init__(self):
-        self.__HOST = '127.0.0.1'
+    def __init__(self,IPToConnectTo):
+        self.__HOST = IPToConnectTo
         self.__PORT = 50000
         self.clientNo = None
         self.__socket = None
@@ -23,6 +23,7 @@ class Client:
 
     # Listens for JSON formatted data from the server
     def listen(self):
+        global clientPlayer
         while True:
             data = self.__socket.recv(1024)
             if not data:
@@ -65,10 +66,8 @@ class Client:
                         print("Player Disconnected")
 
                     if msg["type"] == "MOVELEGAL":
-                        #global clientPlayer
                         clientPlayer.legalMove()
                     if msg["type"] == "MOVENOTLEGAL":
-                        #global clientPlayer
                         clientPlayer.illegalMove()
 
                 except json.JSONDecodeError as err:
@@ -284,6 +283,65 @@ def sendPlatformInfo(platforms):
         data.append(dictionary)
     return data
 
+def publicGame(screen, clock, players, platforms, bullets, char):
+    c = Client("127.0.0.1")
+    c.connect()
+
+    time.sleep(3)
+
+    clientPlayer = players.sprites()[0]
+
+    if clientPlayer.characterNo - 1 == 0:
+        platformInfo = sendPlatformInfo(platforms)
+        platformInfoDict = {"type": "platformInfo", "data": platformInfo}
+        c.sendData(platformInfoDict)
+    # print("Player added!")
+
+    running = True
+
+    # Run loop
+    while running:
+
+        collided = False
+        plat = None
+
+        screen.fill(WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                c.tellServerDisconn()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouseKey = pygame.mouse.get_pressed(3)
+
+        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+        for platform, player_list in collisions.items():
+            for player in player_list:
+                if player == clientPlayer:
+                    collided = True
+
+        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+        for b, p_list in pHit.items():
+            for pl in p_list:
+                if pl != b.playerOrigin:
+                    pl.HP -= b.damage
+                    pl = youDied(pl, screen)
+                    bullets.remove(b)
+
+        bullets.update()
+        clientPlayer.gravity(c, plat, collided)
+        clientPlayer.move(c, plat, collided)
+        clientPlayer.fire(c)
+        platforms.draw(screen)
+        bullets.draw(screen)
+        players.draw(screen)
+        clock.tick(60)
+        pygame.display.update()
+    exit()
+
+
+
 if __name__ == '__main__':
     pygame.display.init()
     pygame.font.init()
@@ -306,63 +364,13 @@ if __name__ == '__main__':
     char = characterBuilder(screen)
 
     # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
-    begin = gameStart(screen)
+    beginInfo = gameStart(screen)
 
-    if begin:
-        c = Client()
-        c.connect()
+    if beginInfo["type"] == "publicGame":
+        publicGame(screen, clock, players, platforms, bullets, char)
 
-        time.sleep(3)
+    if beginInfo["type"] == "privateGameCreate":
+        pass
 
-        clientPlayer = players.sprites()[0]
-
-        if clientPlayer.characterNo - 1 == 0:
-            platformInfo = sendPlatformInfo(platforms)
-            platformInfoDict = {"type":"platformInfo","data":platformInfo}
-            c.sendData(platformInfoDict)
-        #print("Player added!")
-
-
-        running = True
-
-        # Run loop
-        while running:
-
-            collided = False
-            plat = None
-
-            screen.fill(WHITE)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    c.tellServerDisconn()
-                    exit()
-                if event.type == pygame.KEYDOWN:
-                    keys = pygame.key.get_pressed()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    mouseKey = pygame.mouse.get_pressed(3)
-
-            collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-            for platform, player_list in collisions.items():
-                for player in player_list:
-                    if player == clientPlayer:
-                        collided = True
-
-            pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-            for b, p_list in pHit.items():
-                for pl in p_list:
-                    if pl != b.playerOrigin:
-                        pl.HP -= b.damage
-                        pl = youDied(pl, screen)
-                        bullets.remove(b)
-
-            bullets.update()
-            clientPlayer.gravity(c, plat, collided)
-            clientPlayer.move(c, plat, collided)
-            clientPlayer.fire(c)
-            platforms.draw(screen)
-            bullets.draw(screen)
-            players.draw(screen)
-            clock.tick(60)
-            pygame.display.update()
-        exit()
-    exit()
+    if beginInfo["type"] == "privateGameJoin":
+        pass

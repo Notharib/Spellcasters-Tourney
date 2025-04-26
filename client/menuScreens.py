@@ -1,12 +1,11 @@
-import pygame, pygame.freetype
-from PrivateServer import Server
+import pygame, pygame.freetype, requests, socket
 from gameLogic import TextBox, Pointer
 
 def gameStart(screen):
     running = True
     textOne = "Welcome to Wizards Tourney. These are your options for playing:"
     textTwo = "1) Press P to join the public server"
-    textThree = "2) Press A to create a private server"
+    textThree = "2) Press A to join or create a private server"
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
@@ -34,6 +33,33 @@ def gameStart(screen):
         return True
 
 def privateGame(screen):
+    textOne = "Do you wish to join or create a private server?"
+    textTwo = "Press J to join one"
+    textThree = "Press C to create one"
+
+    f = pygame.freetype.SysFont("Comic Sans MS", 24)
+    f.origin = True
+
+    running = True
+    while running:
+        screen.fill((255, 255, 255))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                return False
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_c]:
+                    createInfo = privateCreate(screen)
+                    if createInfo is not None:
+                        return createInfo
+                if keys[pygame.K_j]:
+                    pass
+
+
+
+
+def privateCreate(screen):
     noOfPlayers = "EXAMPLE"
     textOne = "Enter number of players you wish to be able to join the private server: "
 
@@ -62,14 +88,25 @@ def privateGame(screen):
 
         for event in pygame.event.get():
             if event == pygame.QUIT:
-                return False
+                return None
 
             if event == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
 
+                if keys[pygame.K_RETURN]:
+                    return {
+                        "type": "privateCreate",
+                        "data": {
+                            "lengthOfGame": gameLength,
+                            "noOfPlayers": noOfPlayers,
+                            "joinKey": requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())})
+                        }
+                    }
+
                 collided = pygame.sprite.groupcollide(pointer,textBoxes,False,False)
                 for p, t_List in collided.items():
                     for tBox in t_List:
+                        tBox.typing = True
                         tBox.update(keys)
 
         f.render_to(screen,(25,100),textOne, (0,0,0))

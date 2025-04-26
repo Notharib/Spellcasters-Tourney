@@ -35,12 +35,13 @@ class Client:
 # Server class; modified from the public version to make it more suited to how a private game would function (e.g. max amount of clients, length of game)
 class Server:
     def __init__(self, maxClients, lengthOfGame, platformPositions):
-        self.__HOST = '127.0.0.1'
+        self.__HOST = "127.0.0.1" #socket.gethostbyname(socket.gethostname())
         self.__PORT = 50000
         self.__clientList = []
         self.__maxClients = maxClients
         self.__lengthOfGame = lengthOfGame
         self.__platformPositions = platformPositions
+        self.password = None
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
