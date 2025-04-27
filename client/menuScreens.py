@@ -1,5 +1,5 @@
 import pygame, pygame.freetype, requests, socket
-from gameLogic import TextBox, Pointer
+from gameLogic import TextBox, Pointer, Fire, Water, Wizard, Druid
 
 def gameStart(screen):
     running = True
@@ -22,6 +22,7 @@ def gameStart(screen):
                     keys = pygame.key.get_pressed()
                     if keys[pygame.K_p]:
                         running = False
+                        return {"type":"publicGame"}
                     elif keys[pygame.K_a]:
                          g = privateGame(screen)
                          return g
@@ -54,7 +55,14 @@ def privateGame(screen):
                     if createInfo is not None:
                         return createInfo
                 if keys[pygame.K_j]:
-                    pass
+                    joinInfo = enterPrivGameInfo(screen)
+                    if joinInfo is not None:
+                        return joinInfo
+
+        f.render_to(screen, (50, 300), textOne, (0, 0, 0))
+        f.render_to(screen, (100, 400), textTwo, (0, 0, 0))
+        f.render_to(screen, (100, 450), textThree, (0, 0, 0))
+        pygame.display.update()
 
 
 
@@ -83,31 +91,33 @@ def privateCreate(screen):
     while running:
         screen.fill((255, 255, 255))
 
-        for textBox in textBoxes:
-            textBox.typing = False
+        noOfPlayers = textBoxes.sprites()[0].text
+        gameLength = textBoxes.sprites()[1].text
+
+        keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
             if event == pygame.QUIT:
                 return None
 
             if event == pygame.KEYDOWN:
-                keys = pygame.key.get_pressed()
-
                 if keys[pygame.K_RETURN]:
                     return {
                         "type": "privateCreate",
                         "data": {
                             "lengthOfGame": gameLength,
                             "noOfPlayers": noOfPlayers,
-                            "joinKey": requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())})
+                            "joinKey": requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())})["hashedItem"]
                         }
                     }
 
-                collided = pygame.sprite.groupcollide(pointer,textBoxes,False,False)
-                for p, t_List in collided.items():
-                    for tBox in t_List:
-                        tBox.typing = True
-                        tBox.update(keys)
+        collided = pygame.sprite.groupcollide(pointer, textBoxes, False, False)
+        for p, t_List in collided.items():
+            for tBox in t_List:
+                tBox.typing = True
+                tBox.update(keys)
+                for textBox in textBoxes.sprites():
+                    textBox.typing = False
 
         f.render_to(screen,(25,100),textOne, (0,0,0))
         f.render_to(screen, (150,150), noOfPlayers, (0, 0, 0))
@@ -116,6 +126,68 @@ def privateCreate(screen):
         f.render_to(screen, (100, 550), textThree, (0, 0, 0))
 
         pointer.update()
+        pointer.draw(screen)
+        textBoxes.draw(screen)
+        pygame.display.update()
+
+def enterPrivGameInfo(screen):
+    textOne = "Press ENTER to join the server!"
+    textTwo = "Server Key: "
+    textThree = ""
+    serverKey = ""
+
+    f = pygame.freetype.SysFont("Comic Sans MS", 24)
+    f.origin = True
+
+    pointer = pygame.sprite.Group()
+    textBoxes = pygame.sprite.Group()
+
+    pointer.add(Pointer())
+
+    textBoxes.add(TextBox(position=(150, 150), text=serverKey))
+
+    running = True
+    while running:
+        screen.fill((255, 255, 255))
+
+        serverKey = textBoxes.sprites()[0].text
+
+        keys = pygame.key.get_pressed()
+
+        for event in pygame.event.get():
+            if event == pygame.QUIT:
+                return None
+            if event == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+
+                if keys[pygame.K_RETURN]:
+                    try:
+                        return {
+                            "type": "privateJoin",
+                            "data": {
+                                "IPAddress": requests.post("http://127.0.0.1:5000/pHtIv", json= {"hashedKey": serverKey})["IPAddress"],
+                                "joinKey": serverKey
+                            }
+                        }
+                    except Exception as e:
+                        textThree = f"Error: {e}"
+
+        collided = pygame.sprite.groupcollide(pointer, textBoxes, False, False)
+        for p, t_List in collided.items():
+            for tBox in t_List:
+                tBox.typing = True
+                tBox.update(keys)
+                for textBox in textBoxes.sprites():
+                    textBox.typing = False
+
+        f.render_to(screen, (25, 100), textTwo, (0, 0, 0))
+        f.render_to(screen, (150, 150),serverKey , (0, 0, 0))
+        f.render_to(screen, (25, 250), textOne, (0, 0, 0))
+        f.render_to(screen, (100, 550), textThree, (0, 0, 0))
+
+        pointer.update()
+        pointer.draw(screen)
+        textBoxes.draw(screen)
         pygame.display.update()
 
 

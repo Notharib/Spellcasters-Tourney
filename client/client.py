@@ -1,6 +1,7 @@
-import pygame, time, threading, socket, json
+import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder
 from gameLogic import getDirection, youDied, onPlat, Bullet, Platform
+from PrivateServer import Server
 
 # Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
 class Client:
@@ -10,6 +11,9 @@ class Client:
         self.clientNo = None
         self.__socket = None
         self.__noOfPlatforms = 0
+        self.__waiting = None
+        self.__playing = None
+        self.__endGameData = None
 
     def connect(self):
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,6 +69,16 @@ class Client:
                         players.remove(players.sprites()[msg["data"]["clientNo"]])
                         print("Player Disconnected")
 
+                    if msg["type"] == "beginGame":
+                        self.__waiting = False
+                        addCharacter(Character(msg["data"]["playerSpawnPoint"],msg["data"]["playerColour"],msg["data"]["playerNo"]))
+                        for player in list(msg["data"]["otherPlayersInfo"].keys()):
+                            playerData = msg["data"]["otherPlayersInfo"][player]
+                            addCharacter(Character(playerData["spawnPoint"], playerData["colour"],player))
+                    if msg["type"] == "endGame":
+                        self.__playing = False
+                        self.__endGameData = msg["data"]
+
                     if msg["type"] == "MOVELEGAL":
                         clientPlayer.legalMove()
                     if msg["type"] == "MOVENOTLEGAL":
@@ -77,6 +91,27 @@ class Client:
     def tellServerDisconn(self):
         msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
         self.sendData(msgDict)
+
+    def enableWaiting(self):
+        self.__waiting = True
+
+    def waitingOver(self):
+        self.__waiting = False
+
+    def checkWaiting(self):
+        return self.__waiting
+
+    def enablePlaying(self):
+        self.__playing = True
+
+    def playingOver(self):
+        self.__playing = False
+
+    def checkPlaying(self):
+        return self.__playing
+
+    def getEndGameData(self):
+        return self.__endGameData
 
 # Adds a Player object to the players sprite group (potential to modularise?)
 def addCharacter(data):
@@ -340,6 +375,141 @@ def publicGame(screen, clock, players, platforms, bullets, char):
         pygame.display.update()
     exit()
 
+def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
+    server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
+
+    c = Client(socket.gethostbyname(socket.gethostname()))
+    c.connect()
+
+    textOne = "Waiting for players to join!"
+    textTwo = f"Join Code: {creationData['joinKey']}"
+
+    f = pygame.freetype.SysFont("Comic Sans MS", 24)
+    f.origin = True
+
+    c.enableWaiting()
+    while c.checkWaiting():
+        screen.fill(WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                c.waitingOver()
+                exit()
+
+        f.render_to(screen,(300,300), textOne, (0,0,0))
+        f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
+
+    clientPlayer = players.sprites()[0]
+
+    running = True
+
+    # Run loop
+    while running:
+
+        collided = False
+        plat = None
+
+        screen.fill(WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                c.tellServerDisconn()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouseKey = pygame.mouse.get_pressed(3)
+
+        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+        for platform, player_list in collisions.items():
+            for player in player_list:
+                if player == clientPlayer:
+                    collided = True
+
+        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+        for b, p_list in pHit.items():
+            for pl in p_list:
+                if pl != b.playerOrigin:
+                    pl.HP -= b.damage
+                    pl = youDied(pl, screen)
+                    bullets.remove(b)
+
+        bullets.update()
+        clientPlayer.gravity(c, plat, collided)
+        clientPlayer.move(c, plat, collided)
+        clientPlayer.fire(c)
+        platforms.draw(screen)
+        bullets.draw(screen)
+        players.draw(screen)
+        clock.tick(60)
+        pygame.display.update()
+    exit()
+
+
+def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
+
+    c = Client(creationData["data"]["IPAddress"])
+    c.connect()
+
+    textOne = "Waiting for players to join!"
+    textTwo = f"Join Code: {creationData['joinKey']}"
+
+    f = pygame.freetype.SysFont("Comic Sans MS", 24)
+    f.origin = True
+
+    c.enableWaiting()
+    while c.checkWaiting():
+        screen.fill(WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                c.waitingOver()
+                exit()
+
+        f.render_to(screen, (300, 300), textOne, (0, 0, 0))
+        f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
+
+    clientPlayer = players.sprites()[0]
+
+    running = True
+
+    # Run loop
+    while running:
+
+        collided = False
+        plat = None
+
+        screen.fill(WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                c.tellServerDisconn()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                keys = pygame.key.get_pressed()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouseKey = pygame.mouse.get_pressed(3)
+
+        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+        for platform, player_list in collisions.items():
+            for player in player_list:
+                if player == clientPlayer:
+                    collided = True
+
+        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+        for b, p_list in pHit.items():
+            for pl in p_list:
+                if pl != b.playerOrigin:
+                    pl.HP -= b.damage
+                    pl = youDied(pl, screen)
+                    bullets.remove(b)
+
+        bullets.update()
+        clientPlayer.gravity(c, plat, collided)
+        clientPlayer.move(c, plat, collided)
+        clientPlayer.fire(c)
+        platforms.draw(screen)
+        bullets.draw(screen)
+        players.draw(screen)
+        clock.tick(60)
+        pygame.display.update()
+    exit()
 
 
 if __name__ == '__main__':
@@ -370,7 +540,7 @@ if __name__ == '__main__':
         publicGame(screen, clock, players, platforms, bullets, char)
 
     if beginInfo["type"] == "privateGameCreate":
-        pass
+        privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"])
 
     if beginInfo["type"] == "privateGameJoin":
-        pass
+        privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"])
