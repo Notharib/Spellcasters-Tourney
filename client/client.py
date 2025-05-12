@@ -14,6 +14,7 @@ class Client:
         self.__waiting = None
         self.__playing = None
         self.__endGameData = None
+        self.__clientPlayer = None
 
     def connect(self):
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,9 +81,9 @@ class Client:
                         self.__endGameData = msg["data"]
 
                     if msg["type"] == "MOVELEGAL":
-                        clientPlayer.legalMove()
+                        self.__clientPlayer.legalMove()
                     if msg["type"] == "MOVENOTLEGAL":
-                        clientPlayer.illegalMove()
+                        self.__clientPlayer.illegalMove()
 
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -92,8 +93,13 @@ class Client:
         msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
         self.sendData(msgDict)
 
+    #Getters and Setters
+
     def enableWaiting(self):
         self.__waiting = True
+
+    def setClientPlayer(self, clPl):
+        self.__clientPlayer = clPl
 
     def waitingOver(self):
         self.__waiting = False
@@ -180,14 +186,13 @@ class Character(pygame.sprite.Sprite):
         self.characterNo = playerNo
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
+        self.collided = False
 
     def legalMove(self):
         self.lastLegalPos = self.lastPos
 
-
     def illegalMove(self):
-        global collided
-        if (not onPlat(self,platforms)) and collided:
+        if (not onPlat(self,platforms)) and self.collided:
             self.lastPos = self.lastLegalPos
             self.rect.x = self.lastPos[0]
             self.rect.y = self.lastPos[1]
@@ -213,7 +218,7 @@ class Character(pygame.sprite.Sprite):
         time.sleep(0.01)
         return True
 
-    def move(self, cl, platform, collided):
+    def move(self, cl, platform):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("y",4, cl)
@@ -228,10 +233,10 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 0
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":collided}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
                         cl.sendData(moveMessage)
                         time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
                         cl.sendData(moveMessage)
                         self.lastPos = [self.rect.x, self.rect.y]
         elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
@@ -247,10 +252,10 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 800 - self.rect.x
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":collided}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
                         cl.sendData(moveMessage)
                         time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
+                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
                         cl.sendData(moveMessage)
                         self.lastPos = [self.rect.x, self.rect.y]
 
@@ -262,7 +267,7 @@ class Character(pygame.sprite.Sprite):
                     self.rect.y = 0
                 else:
                     self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y, "collided":collided}}
+                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y, "collided":self.collided}}
                     cl.sendData(moveMessage)
                     self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
@@ -274,7 +279,7 @@ class Character(pygame.sprite.Sprite):
                     self.rect.x = 800 - self.rect.x
                 else:
                     self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
                     cl.sendData(moveMessage)
                     self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
@@ -286,7 +291,7 @@ class Character(pygame.sprite.Sprite):
                     self.rect.x = 0
                 else:
                     self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":collided}}
+                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
                     cl.sendData(moveMessage)
                     self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
@@ -296,11 +301,11 @@ class Character(pygame.sprite.Sprite):
         if mouseKeys[0]:
             direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
-            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self}})
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.characterNo}})
 
 
-    def gravity(self, cl, platform, collided):
-        if not collided:
+    def gravity(self, cl, platform):
+        if not self.collided:
             self.rect.y += 1
             if self.rect.y > 800 - self.height:
                 self.rect.y = 800 - self.height
@@ -324,7 +329,10 @@ def publicGame(screen, clock, players, platforms, bullets, char):
 
     time.sleep(3)
 
+    #print(players.sprites())
+
     clientPlayer = players.sprites()[0]
+    c.setClientPlayer(clientPlayer)
 
     if clientPlayer.characterNo - 1 == 0:
         platformInfo = sendPlatformInfo(platforms)
@@ -337,7 +345,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     # Run loop
     while running:
 
-        collided = False
+        clientPlayer.collided = False
         plat = None
 
         screen.fill(WHITE)
@@ -354,7 +362,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
-                    collided = True
+                    clientPlayer.collided = True
 
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
@@ -365,8 +373,8 @@ def publicGame(screen, clock, players, platforms, bullets, char):
                     bullets.remove(b)
 
         bullets.update()
-        clientPlayer.gravity(c, plat, collided)
-        clientPlayer.move(c, plat, collided)
+        clientPlayer.gravity(c, plat)
+        clientPlayer.move(c, plat)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
@@ -399,13 +407,14 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
 
     clientPlayer = players.sprites()[0]
+    c.setClientPlayer(clientPlayer)
 
     running = True
 
     # Run loop
     while running:
 
-        collided = False
+        clientPlayer.collided = False
         plat = None
 
         screen.fill(WHITE)
@@ -422,7 +431,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
-                    collided = True
+                    clientPlayer.collided = True
 
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
@@ -433,8 +442,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
                     bullets.remove(b)
 
         bullets.update()
-        clientPlayer.gravity(c, plat, collided)
-        clientPlayer.move(c, plat, collided)
+        clientPlayer.gravity(c, plat)
+        clientPlayer.move(c, plat)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
@@ -467,13 +476,14 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
 
     clientPlayer = players.sprites()[0]
+    c.setClientPlayer(clientPlayer)
 
     running = True
 
     # Run loop
     while running:
 
-        collided = False
+        clientPlayer.collided = False
         plat = None
 
         screen.fill(WHITE)
@@ -490,7 +500,7 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
-                    collided = True
+                    clientPlayer.collided = True
 
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
@@ -501,8 +511,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
                     bullets.remove(b)
 
         bullets.update()
-        clientPlayer.gravity(c, plat, collided)
-        clientPlayer.move(c, plat, collided)
+        clientPlayer.gravity(c, plat)
+        clientPlayer.move(c, plat)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
