@@ -74,18 +74,20 @@ def privateCreate(screen):
     gameLength = "EXAMPLE"
     textTwo = "Enter the amount of time you wish to have the game go on for: "
 
-    textThree = "Press ENTER when you wish to wait for players to start joining"
+    textThree = "Press L when you wish to wait for players to start joining"
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
+
+    pygame.key.set_repeat(2000)
 
     pointer = pygame.sprite.Group()
     textBoxes = pygame.sprite.Group()
 
     pointer.add(Pointer())
 
-    textBoxes.add(TextBox(position=(150,150), text=noOfPlayers))
-    textBoxes.add(TextBox(position=(100, 300), text=gameLength))
+    textBoxes.add(TextBox(position=(150,150), text=noOfPlayers, allow="numberInput"))
+    textBoxes.add(TextBox(position=(100, 300), text=gameLength, allow="numberInput"))
 
     running = True
     while running:
@@ -97,17 +99,22 @@ def privateCreate(screen):
         keys = pygame.key.get_pressed()
 
         for event in pygame.event.get():
-            if event == pygame.QUIT:
+            if event.type == pygame.QUIT:
                 return None
+            if event.type == pygame.KEYDOWN:
+                print("EVENT KEY PRESSED!!!!")
+                keys = pygame.key.get_pressed()
 
-            if event == pygame.KEYDOWN:
-                if keys[pygame.K_RETURN]:
+                if keys[pygame.K_l]:
+                    print("Private Game Made!")
+                    pygame.key.set_repeat(0)
+                    joinKey = requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())}).json()["hashedItem"]
                     return {
                         "type": "privateCreate",
                         "data": {
                             "lengthOfGame": gameLength,
                             "noOfPlayers": noOfPlayers,
-                            "joinKey": requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())})["hashedItem"]
+                            "joinKey": joinKey
                         }
                     }
 

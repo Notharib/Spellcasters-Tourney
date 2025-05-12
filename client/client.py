@@ -541,6 +541,8 @@ if __name__ == '__main__':
     platforms = pygame.sprite.Group()
     bullets = pygame.sprite.Group()
 
+    #print(pygame.key.get_repeat())
+
     char = characterBuilder(screen)
 
     # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
@@ -549,8 +551,8 @@ if __name__ == '__main__':
     if beginInfo["type"] == "publicGame":
         publicGame(screen, clock, players, platforms, bullets, char)
 
-    if beginInfo["type"] == "privateGameCreate":
+    if beginInfo["type"] == "privateCreate":
         privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"])
 
-    if beginInfo["type"] == "privateGameJoin":
+    if beginInfo["type"] == "privateJoin":
         privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"])
