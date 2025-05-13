@@ -385,6 +385,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
 
 def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
+    server.start()
 
     c = Client(socket.gethostbyname(socket.gethostname()))
     c.connect()
@@ -405,6 +406,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
         f.render_to(screen,(300,300), textOne, (0,0,0))
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
+        pygame.display.update()
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
@@ -474,6 +476,7 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
         f.render_to(screen, (300, 300), textOne, (0, 0, 0))
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
+        pygame.display.update()
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
@@ -540,8 +543,6 @@ if __name__ == '__main__':
     players = pygame.sprite.Group()
     platforms = pygame.sprite.Group()
     bullets = pygame.sprite.Group()
-
-    #print(pygame.key.get_repeat())
 
     char = characterBuilder(screen)
 

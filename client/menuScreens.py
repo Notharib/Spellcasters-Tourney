@@ -79,8 +79,6 @@ def privateCreate(screen):
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
 
-    pygame.key.set_repeat(2000)
-
     pointer = pygame.sprite.Group()
     textBoxes = pygame.sprite.Group()
 
@@ -92,11 +90,13 @@ def privateCreate(screen):
     running = True
     while running:
         screen.fill((255, 255, 255))
+        pygame.key.set_repeat(200)
 
         noOfPlayers = textBoxes.sprites()[0].text
         gameLength = textBoxes.sprites()[1].text
 
         keys = pygame.key.get_pressed()
+        type = None
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -104,7 +104,7 @@ def privateCreate(screen):
             if event.type == pygame.KEYDOWN:
                 print("EVENT KEY PRESSED!!!!")
                 keys = pygame.key.get_pressed()
-
+                type = pygame.key.get_pressed()
                 if keys[pygame.K_l]:
                     print("Private Game Made!")
                     pygame.key.set_repeat(0)
@@ -117,14 +117,17 @@ def privateCreate(screen):
                             "joinKey": joinKey
                         }
                     }
+            # if event.type == pygame.KEYUP:
+            #     type = pygame.key.get_pressed()
 
-        collided = pygame.sprite.groupcollide(pointer, textBoxes, False, False)
-        for p, t_List in collided.items():
-            for tBox in t_List:
-                tBox.typing = True
-                tBox.update(keys)
-                for textBox in textBoxes.sprites():
-                    textBox.typing = False
+        if type is not None:
+            collided = pygame.sprite.groupcollide(pointer, textBoxes, False, False)
+            for p, t_List in collided.items():
+                for tBox in t_List:
+                    tBox.typing = True
+                    tBox.update(type)
+                    for textBox in textBoxes.sprites():
+                        textBox.typing = False
 
         f.render_to(screen,(25,100),textOne, (0,0,0))
         f.render_to(screen, (150,150), noOfPlayers, (0, 0, 0))

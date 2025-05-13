@@ -40,10 +40,10 @@ class Client:
 class Server:
     def __init__(self, maxClients, lengthOfGame, platformPositions):
         self.__HOST = socket.gethostbyname(socket.gethostname())
-        self.__PORT = 50000
+        self.__PORT = 50001
         self.__clientList = []
-        self.__maxClients = maxClients
-        self.__lengthOfGame = lengthOfGame
+        self.__maxClients = int(maxClients)
+        self.__lengthOfGame = int(lengthOfGame)
         self.__platformPositions = platformPositions
         self.password = None
 
