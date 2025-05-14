@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify
-from appFuncs import IPToHash
+from appFuncs import IPToHash, fullServer
 
 app = Flask(__name__)
 
 activeServers = {}
+serverFull = False
 
 @app.route('/pItHv',methods=["POST"])
 def pItHv():
@@ -36,6 +37,36 @@ def pHtIv():
         IPAddressDict = {"IPAddress":IPAddress}
         return jsonify(IPAddressDict), 200
 
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
+@app.route('/serverFull', methods=["POST"])
+def serverFull():
+    global serverFull
+    data = request.get_json()
+    fullValue = data.get("fullValue")
+
+    if not fullValue:
+        return jsonify({"error:fullValue required"}), 400
+    else:
+        fullValue = int(fullValue)
+
+    try:
+        serverFull = fullServer(fullValue)
+        confirmMesage = {"msg":"Value Changed Successfully!"}
+        return jsonify(confirmMesage), 200
+
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+@app.route('/serverFullCheck', methods=["GET"])
+def serverFullCheck():
+    global serverFull
+
+    try:
+        if serverFull:
+            return jsonify({"msg":"Server Full","quickMsg":1}), 200
+        else:
+            return jsonify({"msg":"Server Not Full","quickMsg":0}), 200
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 

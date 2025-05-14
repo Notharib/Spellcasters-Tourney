@@ -15,3 +15,11 @@ def IPToHash(IP):
         hashedItem += ch
 
     return {"hashedItem":hashedItem}
+
+def fullServer(fullValue):
+    if fullValue == 1:
+        return True
+    elif fullValue == 0:
+        return False
+    else:
+        raise ValueError("fullValue should either be 1 or 0")

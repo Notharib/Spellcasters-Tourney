@@ -6,6 +6,7 @@ def gameStart(screen):
     textOne = "Welcome to Wizards Tourney. These are your options for playing:"
     textTwo = "1) Press P to join the public server"
     textThree = "2) Press A to join or create a private server"
+    textFour = ""
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
@@ -21,8 +22,12 @@ def gameStart(screen):
                 if event.type == pygame.KEYDOWN:
                     keys = pygame.key.get_pressed()
                     if keys[pygame.K_p]:
-                        running = False
-                        return {"type":"publicGame"}
+                        serverFull = requests.get(url="http://127.0.0.1:5000/serverFullCheck").json()
+                        if int(serverFull["quickMsg"]) == 1:
+                            textFour = "The Public Server is full right now! Please try joining later"
+                        else:
+                            running = False
+                            return {"type":"publicGame"}
                     elif keys[pygame.K_a]:
                          g = privateGame(screen)
                          return g
@@ -30,6 +35,7 @@ def gameStart(screen):
             f.render_to(screen,(50,300),textOne, (0,0,0))
             f.render_to(screen, (100, 400), textTwo, (0, 0, 0))
             f.render_to(screen, (100, 450), textThree, (0, 0, 0))
+            f.render_to(screen, (100, 550), textFour, (0, 0, 0))
             pygame.display.update()
         return True
 

@@ -1,4 +1,4 @@
-import socket, json, threading, random, time
+import socket, json, threading, random, time, requests
 
 class Client:
     def __init__(self, position,colour,cl,clientNo, address, size=[40,40]):
@@ -49,6 +49,8 @@ class Server:
                 if len(self.__clientList) != 0:
                     self.createAlreadyJoinedPlayers(conn)
 
+                self.checkIfFull()
+
                 self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
                 time.sleep(0.1)
                 self.notifyClientsOfConn(conn,colour,position)
@@ -60,6 +62,10 @@ class Server:
             if client.client != connection:
                 message = json.dumps({"type":"playerJoin","data":{"clientNo":len(self.__clientList)+1, "colourTuple": colour, "positionList":position}})
                 client.client.send(message.encode())
+
+    def checkIfFull(self):
+        if len(self.__clientList) == 10:
+            msg = requests.post(url="http://127.0.0.1:5000/serverFull", json={"fullValue":"1"})
 
     def createAlreadyJoinedPlayers(self,connection):
         for client in self.__clientList:
@@ -80,6 +86,7 @@ class Server:
             time.sleep(0.2)
 
     def tellClientsOfDisconn(self,clientToDisconn):
+        msg = requests.post(url="http://127.0.0.1:5000/serverFull", json={"fullValue":"0"})
         for client in self.__clientList:
             if client != self.__clientList[clientToDisconn] and client is not None:
                 messageDict = {"type":"disconn","data":{"clientNo":clientToDisconn}}
