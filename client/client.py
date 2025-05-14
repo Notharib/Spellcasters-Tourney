@@ -5,9 +5,9 @@ from PrivateServer import Server
 
 # Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
 class Client:
-    def __init__(self,IPToConnectTo):
+    def __init__(self,IPToConnectTo, socket=50000):
         self.__HOST = IPToConnectTo
-        self.__PORT = 50000
+        self.__PORT = socket
         self.clientNo = None
         self.__socket = None
         self.__noOfPlatforms = 0
@@ -385,13 +385,13 @@ def publicGame(screen, clock, players, platforms, bullets, char):
 
 def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
-    server.start()
-
-    c = Client(socket.gethostbyname(socket.gethostname()))
-    c.connect()
+    threading.Thread(target=server.start).start()
 
     textOne = "Waiting for players to join!"
     textTwo = f"Join Code: {creationData['joinKey']}"
+
+    c = Client(socket.gethostbyname(socket.gethostname()),socket=50001)
+    c.connect()
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
@@ -406,7 +406,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
         f.render_to(screen,(300,300), textOne, (0,0,0))
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
-        pygame.display.update()
+        pygame.display.flip()
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
@@ -457,7 +457,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
-    c = Client(creationData["data"]["IPAddress"])
+    c = Client(creationData["data"]["IPAddress"], socket=50001)
     c.connect()
 
     textOne = "Waiting for players to join!"

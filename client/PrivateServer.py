@@ -53,6 +53,10 @@ class Server:
             s.listen(1)
             print("Server Setup and listening on port", self.__PORT)
 
+            self.__spawnPoints = []
+            for i in range(len(self.__platformPositions)):
+                self.__spawnPoints.append((self.__platformPositions[i][0], self.__platformPositions[i][1]+20))
+
             # Should only accept new connections while the length of the client lists is less than the max number of connections
             while len(self.__clientList) < self.__maxClients:
                 conn, addr = s.accept()

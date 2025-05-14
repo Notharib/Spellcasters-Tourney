@@ -58,6 +58,7 @@ def serverFull():
 
     except Exception as e:
         return jsonify({"error":str(e)}), 500
+
 @app.route('/serverFullCheck', methods=["GET"])
 def serverFullCheck():
     global serverFull
