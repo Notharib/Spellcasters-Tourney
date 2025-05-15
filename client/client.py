@@ -72,10 +72,11 @@ class Client:
 
                     if msg["type"] == "beginGame":
                         self.__waiting = False
-                        addCharacter(Character(msg["data"]["playerSpawnPoint"],msg["data"]["playerColour"],msg["data"]["playerNo"]))
+                        addCharacter(msg["data"])
                         for player in list(msg["data"]["otherPlayersInfo"].keys()):
                             playerData = msg["data"]["otherPlayersInfo"][player]
-                            addCharacter(Character(playerData["spawnPoint"], playerData["colour"],player))
+                            playerData["playerNo"] = player
+                            addCharacter(playerData)
                     if msg["type"] == "endGame":
                         self.__playing = False
                         self.__endGameData = msg["data"]
@@ -457,8 +458,10 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
-    c = Client(creationData["data"]["IPAddress"], socket=50001)
+    c = Client(creationData["IPAddress"], socket=50001)
     c.connect()
+
+    print("Joined up to the private server!")
 
     textOne = "Waiting for players to join!"
     textTwo = f"Join Code: {creationData['joinKey']}"

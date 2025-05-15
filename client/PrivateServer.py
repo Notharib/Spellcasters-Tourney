@@ -10,6 +10,10 @@ class Client:
         self.__spellCaster = None
         self.__playerNo = playerNo
         self.__colour = (randint(0, 255), randint(0, 255), randint(0, 255))
+        self.position = list(spawnPoint)
+
+    def sendData(self, msgToSend):
+        self.__client.send(msgToSend)
 
     # Getters and setters
     def setElement(self, element):
@@ -52,6 +56,7 @@ class Server:
             s.bind((self.__HOST, self.__PORT))
             s.listen(1)
             print("Server Setup and listening on port", self.__PORT)
+            print(self.__maxClients)
 
             self.__spawnPoints = []
             for i in range(len(self.__platformPositions)):
@@ -70,16 +75,18 @@ class Server:
                 print(clientNoMessage)
                 conn.send(clientNoMessage.encode())
                 time.sleep(0.1)
-                self.__clientList.append(conn)
+                self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1))
+                print(len(self.__clientList))
                 # Separate function used so that it will still continue running after the while loop in this function stops running
                 self.startListening(conn)
+                # Once the required number of clients has joined, send the start information to all the clients in '__clientList'
+                if len(self.__clientList) >= self.__maxClients:
+                    print("Beginning Game!")
+                    self.beginGame()
+                    break
 
-            # Once the required number of clients has joined, send the start information to all the clients in '__clientList'
-            if len(self.__clientList) >= self.__maxClients:
-                self.beginGame()
-
+    # Starts a Thread to continue listening from the client until the server closes
     def startListening(self, conn):
-        while True:
             threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
     # Sends each client connection the required information for the clientside game to be able to generate properly
@@ -89,9 +96,9 @@ class Server:
             "type": "beginGame",
             "data": {
                 "platformsPos": self.__platformPositions,
-                "playerSpawnPoint": None,
-                "playerNo": None,
-                "playerColour": None,
+                "positionList": None,
+                "clientNo": None,
+                "colourTuple": None,
                 "otherPlayersInfo": {}
             }
         }
@@ -99,27 +106,29 @@ class Server:
         # Sends each of the clients the information that they will need to create the stage and all of the opponents
         for client in self.__clientList:
 
-            messageDict["data"]["playerSpawnPoint"] = client.getSpawnPoint()
-            messageDict["data"]["playerNo"] = client.getPlayerNo()
-            messageDict["data"]["playerColour"] = client.getPlayerColour()
+            messageDict["data"]["positionList"] = client.getSpawnPoint()
+            messageDict["data"]["clientNo"] = client.getPlayerNo()
+            messageDict["data"]["colourTuple"] = client.getPlayerColour()
 
             for connection in self.__clientList:
                 if connection != client:
                     messageDict["data"]["otherPlayersInfo"][connection.getPlayerNo()] = {
                         "type": connection.getCaster(),
                         "element": connection.getElement(),
-                        "spawnPoint": connection.getSpawnPoint(),
-                        "colour": connection.getPlayerColour()
+                        "positionList": connection.getSpawnPoint(),
+                        "colourTuple": connection.getPlayerColour(),
+                        "clientNo": connection.getPlayerNo()
                     }
 
-            client.send(json.dumps(messageDict).encode())
+
+            client.sendData(json.dumps(messageDict).encode())
             messageDict = {
                 "type": "beginGame",
                 "data": {
                     "platformsPos": self.__platformPositions,
-                    "playerSpawnPoint": None,
-                    "playerNo": None,
-                    "playerColour": None,
+                    "positionList": None,
+                    "clientNo": None,
+                    "colourTuple": None,
                     "otherPlayersInfo": {}
                 }
             }
@@ -136,8 +145,8 @@ class Server:
                     if message["type"] == "movement":
 
                         for client in self.__clientList:
-                            if client.client == conn:
-                                clPos = client.clientNo - 1
+                            if client.getClient() == conn:
+                                clPos = client.getPlayerNo() - 1
 
                         if message["data"]["direction"] == "y":
                             self.__clientList[clPos].position[1] = message["data"]["movedTo"]
@@ -183,20 +192,20 @@ class Server:
                             if messageData["direction"] == "y":
                                 if clientMove.position[1] - messageData["amount"] <= closestPlat.position[1] + \
                                         closestPlat.platformSize[0]:
-                                    clientMove.client.send(json.dumps({"type": "MOVENOTLEGAL"}).encode())
+                                    clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                                 else:
-                                    clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
+                                    clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
                             else:
                                 if clientMove.position[0] - messageData["amount"] + clientMove.size[0] == \
                                         closestPlat.position[0] or clientMove.position[0] - messageData["amount"] <= \
                                         closestPlat.position[0] + closestPlat.platformSize[1]:
-                                    clientMove.client.send(json.dumps({"type": "MOVENOTLEGAL"}).encode())
+                                    clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                                 else:
-                                    clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
+                                    clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
                     for client in self.__clientList:
-                        if client is not None and client.client != conn and (
+                        if client is not None and client.getClient() != conn and (
                                 message["type"] != "platformInfo" or message["type"] != "legalCheck"):
-                            client.client.send(data)
+                            client.sendData(data)
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)

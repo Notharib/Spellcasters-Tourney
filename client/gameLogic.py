@@ -128,12 +128,7 @@ class TextBox(pygame.sprite.Sprite):
             }
 
             if self.allow == "allInput" or self.allow == "numberInput":
-                if keys[pygame.K_BACKSPACE]:
-                    if self.checkIfExample():
-                        self.text = ""
-                    else:
-                        pass
-                elif keys[pygame.K_1]:
+                if keys[pygame.K_1]:
                     if not self.checkIfExample():
                         self.text += "1"
                     else:
@@ -183,14 +178,15 @@ class TextBox(pygame.sprite.Sprite):
                         self.text += "0"
                     else:
                         self.text = "0"
-            if self.allow == "allInput" or self.allow == "textInput":
-                if keys[pygame.K_BACKSPACE]:
+                elif keys[pygame.K_BACKSPACE]:
                     if self.checkIfExample():
                         self.text = ""
                     else:
-                        pass
+                        self.text = self.text[:-1]
+            if self.allow == "allInput" or self.allow == "textInput":
+                mods = pygame.key.get_mods()
                 for letter in list(alphabetToPygame.keys()):
-                    if keys[alphabetToPygame[letter]] and keys[pygame.KMOD_SHIFT]:
+                    if keys[alphabetToPygame[letter]] and mods != 0:
                         if not self.checkIfExample():
                             self.text += letter.upper()
                         else:
@@ -200,6 +196,11 @@ class TextBox(pygame.sprite.Sprite):
                             self.text += letter
                         else:
                             self.text = letter
+                if keys[pygame.K_BACKSPACE]:
+                    if self.checkIfExample():
+                        self.text = ""
+                    else:
+                        self.text = self.text[:-1]
 
 
 
@@ -209,8 +210,8 @@ class Pointer(pygame.sprite.Sprite):
         super().__init__()
         self.X = pygame.mouse.get_pos()[0]
         self.Y = pygame.mouse.get_pos()[1]
-        self.height = 20
-        self.width = 20
+        self.height = 1
+        self.width = 1
         self.colour =  (255,255,255)
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(self.colour)
