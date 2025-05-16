@@ -267,5 +267,18 @@ def onPlat(player, platforms):
             return True
     return False
 
+def sendPlatformInfo(platforms):
+    data = []
+    for platform in platforms.sprites():
+        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
+        data.append(dictionary)
+    return data
+
+def platformInfo(platforms, client, clientPlayer):
+    if clientPlayer.characterNo - 1 == 0:
+        platformInfo = sendPlatformInfo(platforms)
+        platformInfoDict = {"type": "platformInfo", "data": platformInfo}
+        client.sendData(platformInfoDict)
+
 if __name__ == "__main__":
     pass

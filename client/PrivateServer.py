@@ -173,7 +173,7 @@ class Server:
                         messageData = message["data"]
                         clientMove = self.__clientList[messageData["clientNo"] - 1]
                         closestPlat = None
-                        for platform in self.__platforms:
+                        for platform in self.__platformPositions:
                             if closestPlat is None:
                                 closestPlat = platform
                             else:

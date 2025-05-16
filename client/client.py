@@ -1,6 +1,6 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder
-from gameLogic import getDirection, youDied, onPlat, Bullet, Platform
+from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo
 from PrivateServer import Server
 
 # Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
@@ -49,14 +49,12 @@ class Client:
                             movedPlayer = players.sprites()[1]
                         else:
                             iteration = 0
+                            print(players.sprites())
                             for player in players.sprites():
-                                if iteration == 0:
-                                    pass
-                                else:
-                                    if player.characterNo == msg["data"]["playerNo"]:
-                                        print("found moved player")
-                                        movedPlayer = player
-                                        break
+                                if player.characterNo == msg["data"]["playerNo"]:
+                                    print("found moved player")
+                                    movedPlayer = player
+                                    break
                         if msg["data"]["direction"] == "y":
                             movedPlayer.rect.y = msg["data"]["movedTo"]
                         elif msg["data"]["direction"] == "x":
@@ -128,46 +126,6 @@ def addCharacter(data):
 # Adds a Bullet object to the bullets/projectiles sprite group
 def createBullet(data):
     bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
-
-#
-def clientData(collecting, t, passedData):
-    while collecting:
-        if t is not None:
-            if t == "addCharacter":
-                addCharacter(passedData)
-                return False
-            if t == "movement":
-                if len(players.sprites()) == 2:
-                    movedPlayer = players.sprites()[1]
-                else:
-                    iteration = 0
-                    for player in players.sprites():
-                        if iteration == 0:
-                            pass
-                        else:
-                            if player.characterNo == passedData["playerNo"]:
-                                print("found moved player")
-                                movedPlayer = player
-                                break
-                if passedData["direction"] == "y":
-                    movedPlayer.rect.y = passedData["movedTo"]
-                elif passedData["direction"] == "x":
-                    movedPlayer.rect.x = passedData["movedTo"]
-                return False
-            if t == "createPlat":
-                platforms.add(Platform([passedData["positionX"], passedData["positionY"]],[passedData["sizeHeight"], passedData["sizeWidth"]], passedData["noOfPlats"]))
-                return False
-            if t == "disconn":
-                players.remove(players.spites()[passedData["clientNo"]])
-                return False
-            if t == "bullCreate":
-                bullets.add(Bullet(passedData["spawnPoint"],passedData["direction"]))
-                return False
-            if t == "legalMove":
-                clientPlayer.legalMove()
-                return False
-            if t == "illegalMove":
-                clientPlayer.illegalMove()
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
@@ -317,12 +275,6 @@ class Character(pygame.sprite.Sprite):
                 self.lastPos = [self.rect.x, self.rect.y]
 
 
-def sendPlatformInfo(platforms):
-    data = []
-    for platform in platforms.sprites():
-        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
-        data.append(dictionary)
-    return data
 
 def publicGame(screen, clock, players, platforms, bullets, char):
     c = Client("127.0.0.1")
@@ -335,11 +287,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
-    if clientPlayer.characterNo - 1 == 0:
-        platformInfo = sendPlatformInfo(platforms)
-        platformInfoDict = {"type": "platformInfo", "data": platformInfo}
-        c.sendData(platformInfoDict)
-    # print("Player added!")
+    platformInfo(platforms, c, clientPlayer)
 
     running = True
 
@@ -412,6 +360,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
+    platformInfo(platforms, c, clientPlayer)
+
     running = True
 
     # Run loop
@@ -483,6 +433,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
+
+    platformInfo(platforms, c, clientPlayer)
 
     running = True
 
