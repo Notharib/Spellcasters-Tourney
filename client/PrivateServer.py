@@ -1,6 +1,46 @@
 import socket, json, threading, time
 from random import randint, choice
 
+# Platform class for exclusive use in the private server
+class Platform:
+    def __init__(self, position, size=[20,500]):
+        self.__position = position
+        self.__size = size
+        self.__colour = (0,0,255)
+        self.__top = None
+        self.__left = None
+        self.__right = None
+        self.__bottom = None
+
+    # Getters and Setters
+    def getPos(self):
+        return self.__position
+    def getSize(self):
+        return self.__size
+    def getTop(self):
+        return self.__top
+    def getBottom(self):
+        return self.__bottom
+    def getLeft(self):
+        return self.__left
+    def getRight(self):
+        return self.__right
+    def setTop(self, top):
+        self.__top = top
+        return None
+    def setLeft(self, left):
+        self.__left = left
+        return None
+    def setRight(self, right):
+        self.__right = right
+        return None
+    def setBottom(self, bottom):
+        self.__bottom = bottom
+        return None
+
+    def __repr__(self):
+        return self.__position
+
 # Client class, exclusive to server files. Done to try and make managing data surrounding the client connections easier. Purely only used within this file
 class Client:
     def __init__(self, conn, spawnPoint, playerNo):
@@ -49,6 +89,8 @@ class Server:
         self.__maxClients = int(maxClients)
         self.__lengthOfGame = int(lengthOfGame)
         self.__platformPositions = platformPositions
+        self.__platforms = []
+        self.__spawnPoints = []
         self.password = None
 
     def start(self):
@@ -58,9 +100,11 @@ class Server:
             print("Server Setup and listening on port", self.__PORT)
             print(self.__maxClients)
 
-            self.__spawnPoints = []
             for i in range(len(self.__platformPositions)):
                 self.__spawnPoints.append((self.__platformPositions[i][0], self.__platformPositions[i][1]+20))
+
+            for platform in self.__platformPositions:
+                self.__platforms.append(Platform(platform))
 
             # Should only accept new connections while the length of the client lists is less than the max number of connections
             while len(self.__clientList) < self.__maxClients:
@@ -163,42 +207,44 @@ class Server:
                     if message["type"] == "platformInfo":
                         iterator = 0
                         for platform in message["data"]:
-                            self.__platforms[iterator].top = platform["platformTop"]
-                            self.__platforms[iterator].bottom = platform["platformBottom"]
-                            self.__platforms[iterator].left = platform["platformLeft"]
-                            self.__platforms[iterator].right = platform["platformRight"]
+                            self.__platforms[iterator].setTop(platform["platformTop"])
+                            self.__platforms[iterator].setBottom(platform["platformBottom"])
+                            self.__platforms[iterator].setLeft(platform["platformLeft"])
+                            self.__platforms[iterator].setRight(platform["platformRight"])
+                            with self.__platforms[iterator] as p:
+                                print([p.getTop(),p.getBottom(),p.getLeft(),p.getRight()])
                             iterator += 1
 
                     if message["type"] == "legalCheck":
                         messageData = message["data"]
                         clientMove = self.__clientList[messageData["clientNo"] - 1]
                         closestPlat = None
-                        for platform in self.__platformPositions:
+                        for platform in self.__platforms:
                             if closestPlat is None:
                                 closestPlat = platform
                             else:
                                 if messageData["direction"] == "y":
-                                    if (platform.top >= clientMove.position[1] - messageData[
-                                        "amount"] or platform.top <= clientMove.position[1] - messageData[
-                                            "amount"]) and closestPlat.top - platform.top < 0:
+                                    if (platform.getTop() >= clientMove.position[1] - messageData[
+                                        "amount"] or platform.getTop() <= clientMove.position[1] - messageData[
+                                            "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
                                         closestPlat = platform
                                 else:
-                                    if (platform.top >= clientMove.position[0] - messageData[
-                                        "amount"] or platform.top <= clientMove.position[0] - messageData[
-                                            "amount"]) and closestPlat.top - platform.top < 0:
+                                    if (platform.getTop() >= clientMove.position[0] - messageData[
+                                        "amount"] or platform.getTop() <= clientMove.position[0] - messageData[
+                                            "amount"]) and closestPlat.getTop - platform.getTop() < 0:
                                         closestPlat = platform
 
                         if closestPlat is not None:
                             if messageData["direction"] == "y":
                                 if clientMove.position[1] - messageData["amount"] <= closestPlat.position[1] + \
-                                        closestPlat.platformSize[0]:
+                                        closestPlat.getSize()[0]:
                                     clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                                 else:
                                     clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
                             else:
                                 if clientMove.position[0] - messageData["amount"] + clientMove.size[0] == \
-                                        closestPlat.position[0] or clientMove.position[0] - messageData["amount"] <= \
-                                        closestPlat.position[0] + closestPlat.platformSize[1]:
+                                        closestPlat.getPos()[0] or clientMove.position[0] - messageData["amount"] <= \
+                                        closestPlat.getPos()[0] + closestPlat.platformSize[1]:
                                     clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                                 else:
                                     clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())

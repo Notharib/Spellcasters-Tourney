@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
-from appFuncs import IPToHash, fullServer
+from appFuncs import IPToHash, fullServer, createPlayerID
 
 app = Flask(__name__)
 
+# activeServers = {"exampleServerID":{
+#     "IPAddress": "127.0.0.1",
+#     "playerIDs": []
+# }}
 activeServers = {}
 serverFull = False
 
@@ -17,7 +21,9 @@ def pItHv():
 
     try:
         hashedKey = IPToHash(IPAddress)
-        activeServers[hashedKey["hashedItem"]] = IPAddress
+        activeServers[hashedKey["hashedItem"]] = {}
+        activeServers[hashedKey["hashedItem"]]["IPAddress"] = IPAddress
+        activeServers[hashedKey["hashedItem"]]["playerIDs"] = []
         return jsonify(hashedKey), 200
 
     except Exception as e:
@@ -33,7 +39,7 @@ def pHtIv():
         return jsonify({"error":"hashedKey required"}), 400
 
     try:
-        IPAddress = activeServers[hashedKey]
+        IPAddress = activeServers[hashedKey]["IPAddress"]
         IPAddressDict = {"IPAddress":IPAddress}
         return jsonify(IPAddressDict), 200
 
@@ -62,7 +68,6 @@ def serverFull():
 @app.route('/serverFullCheck', methods=["GET"])
 def serverFullCheck():
     global serverFull
-
     try:
         if serverFull:
             return jsonify({"msg":"Server Full","quickMsg":1}), 200
@@ -71,6 +76,24 @@ def serverFullCheck():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
+@app.route('/playerID', methods=["POST"])
+def playerID():
+    global activeServers
+    data = request.get_json()
+    playerInfo = data.get("playerInfo")
+
+    playerIDs = activeServers[playerInfo["serverKey"]]["playerIDs"]
+
+    if not playerInfo:
+        return jsonify({"msg":"playerInfo required"}), 400
+
+    try:
+        uniquePlayerID = createPlayerID(playerInfo, playerIDs)
+        activeServers[playerInfo["serverKey"]]["playerIDs"].append(uniquePlayerID)
+        playerIDMessage = {"msg":"playerID created", "playerID":uniquePlayerID}
+        return jsonify(playerIDMessage), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

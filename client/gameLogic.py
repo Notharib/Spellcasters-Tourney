@@ -279,6 +279,7 @@ def platformInfo(platforms, client, clientPlayer):
         platformInfo = sendPlatformInfo(platforms)
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         client.sendData(platformInfoDict)
+        print("Platform info sent to the server!")
 
 if __name__ == "__main__":
     pass

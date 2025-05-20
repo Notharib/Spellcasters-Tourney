@@ -23,3 +23,7 @@ def fullServer(fullValue):
         return False
     else:
         raise ValueError("fullValue should either be 1 or 0")
+
+def createPlayerID(playerInfo, playerIDs):
+    playerNo = playerInfo["playerNo"]
+    serverOrg = playerInfo[""]

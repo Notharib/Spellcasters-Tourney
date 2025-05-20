@@ -49,10 +49,10 @@ class Client:
                             movedPlayer = players.sprites()[1]
                         else:
                             iteration = 0
-                            print(players.sprites())
+                            # print(players.sprites())
                             for player in players.sprites():
                                 if player.characterNo == msg["data"]["playerNo"]:
-                                    print("found moved player")
+                                    # print("found moved player")
                                     movedPlayer = player
                                     break
                         if msg["data"]["direction"] == "y":
