@@ -176,18 +176,6 @@ class Character(pygame.sprite.Sprite):
         else:
             self.legalMove()
 
-    # def checkClosestPlat(self):
-    #     closestPlat = None
-    #     closestPlatX = 0
-    #     iteration = 0
-    #     for platform in platforms.sprites():
-    #         if iteration == 0:
-    #             closestPlatX = platform.rect.x
-    #             iteration += 1
-    #         else:
-    #             if closestPlatX > self.rect.x:
-    #                 if platform.rect.x < closestPlatX and (platform.rect.x >= closestPlatX or platform.rect.x <= closestPlatX):
-    #                     closestPlatX = platform.rect.x
 
     def checkIfLegal(self,direction,amount, client):
         checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":self.characterNo}}
