@@ -23,6 +23,7 @@ class Client:
 
     # Sends whatever data is passed into the function to the server it is connected to
     def sendData(self,message):
+        # print(message)
         strMessage = json.dumps(message)
         self.__socket.send(strMessage.encode())
 
@@ -70,11 +71,24 @@ class Client:
 
                     if msg["type"] == "beginGame":
                         self.__waiting = False
-                        addCharacter(msg["data"])
+                        print(msg['data'])
+                        # addCharacter(msg["data"])
+                        clPlData = {
+                            "clientNo": msg["data"]["clientNo"],
+                            "positionList": msg['data']['positionList'],
+                            'colourTuple': msg['data']['colourTuple']
+                        }
+                        addCharacter(clPlData)
                         for player in list(msg["data"]["otherPlayersInfo"].keys()):
                             playerData = msg["data"]["otherPlayersInfo"][player]
                             playerData["playerNo"] = player
                             addCharacter(playerData)
+
+                        iterator = 0
+                        for platform in msg['data']['platformsPos']:
+                            createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
+                            iterator += 1
+
                     if msg["type"] == "endGame":
                         self.__playing = False
                         self.__endGameData = msg["data"]
@@ -118,7 +132,7 @@ class Client:
     def getEndGameData(self):
         return self.__endGameData
 
-# Adds a Player object to the players sprite group (potential to modularise?)
+# Adds a Player object to the players sprite group
 def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
     print("Player created!")
@@ -126,6 +140,10 @@ def addCharacter(data):
 # Adds a Bullet object to the bullets/projectiles sprite group
 def createBullet(data):
     bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
+
+# Adds a Platform object to the platforms sprite group
+def createPlatform(data):
+    platforms.add(Platform(data['position'],data['size'],data['platformNo']))
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
@@ -158,21 +176,21 @@ class Character(pygame.sprite.Sprite):
         else:
             self.legalMove()
 
-    def checkClosestPlat(self):
-        closestPlat = None
-        closestPlatX = 0
-        iteration = 0
-        for platform in platforms.sprites():
-            if iteration == 0:
-                closestPlatX = platform.rect.x
-                iteration += 1
-            else:
-                if closestPlatX > self.rect.x:
-                    if platform.rect.x < closestPlatX and (platform.rect.x >= closestPlatX or platform.rect.x <= closestPlatX):
-                        closestPlatX = platform.rect.x
+    # def checkClosestPlat(self):
+    #     closestPlat = None
+    #     closestPlatX = 0
+    #     iteration = 0
+    #     for platform in platforms.sprites():
+    #         if iteration == 0:
+    #             closestPlatX = platform.rect.x
+    #             iteration += 1
+    #         else:
+    #             if closestPlatX > self.rect.x:
+    #                 if platform.rect.x < closestPlatX and (platform.rect.x >= closestPlatX or platform.rect.x <= closestPlatX):
+    #                     closestPlatX = platform.rect.x
 
     def checkIfLegal(self,direction,amount, client):
-        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":client.clientNo}}
+        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":self.characterNo}}
         client.sendData(checkIfLegalDict)
         time.sleep(0.01)
         return True
@@ -282,7 +300,6 @@ def publicGame(screen, clock, players, platforms, bullets, char):
 
     time.sleep(3)
 
-    #print(players.sprites())
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
@@ -362,6 +379,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
     platformInfo(platforms, c, clientPlayer)
 
+    for player in players.sprites():
+        print(player.characterNo)
     running = True
 
     # Run loop

@@ -113,11 +113,11 @@ class Server:
 
                 colour = (randint(0, 255), randint(0, 255), randint(0, 255))
                 position = choice(self.__spawnPoints)
-                clientNoMessage = json.dumps({"type": "clientNo",
-                                              "data": {"clientNo": len(self.__clientList) + 1, "colourTuple": colour,
-                                                       "positionList": position}})
-                print(clientNoMessage)
-                conn.send(clientNoMessage.encode())
+                # clientNoMessage = json.dumps({"type": "clientNo",
+                #                               "data": {"clientNo": len(self.__clientList) + 1, "colourTuple": colour,
+                #                                        "positionList": position}})
+                # print(clientNoMessage)
+                # conn.send(clientNoMessage.encode())
                 time.sleep(0.1)
                 self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1))
                 print(len(self.__clientList))
@@ -135,7 +135,6 @@ class Server:
 
     # Sends each client connection the required information for the clientside game to be able to generate properly
     def beginGame(self):
-
         messageDict = {
             "type": "beginGame",
             "data": {
@@ -164,7 +163,7 @@ class Server:
                         "clientNo": connection.getPlayerNo()
                     }
 
-
+            # print(messageDict)
             client.sendData(json.dumps(messageDict).encode())
             messageDict = {
                 "type": "beginGame",
@@ -205,18 +204,22 @@ class Server:
                         print("player disconnected")
 
                     if message["type"] == "platformInfo":
+                        print("CREATING PLATFORM INFORMATION")
                         iterator = 0
                         for platform in message["data"]:
                             self.__platforms[iterator].setTop(platform["platformTop"])
                             self.__platforms[iterator].setBottom(platform["platformBottom"])
                             self.__platforms[iterator].setLeft(platform["platformLeft"])
                             self.__platforms[iterator].setRight(platform["platformRight"])
-                            with self.__platforms[iterator] as p:
-                                print([p.getTop(),p.getBottom(),p.getLeft(),p.getRight()])
+                            print("PLATFORM INFO RECORDED")
+                            p = self.__platforms[iterator]
+                            print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
                             iterator += 1
 
                     if message["type"] == "legalCheck":
                         messageData = message["data"]
+                        print("LEGALMOVECHECK")
+                        print(messageData)
                         clientMove = self.__clientList[messageData["clientNo"] - 1]
                         closestPlat = None
                         for platform in self.__platforms:
