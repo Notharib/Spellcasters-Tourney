@@ -89,8 +89,6 @@ class Client:
                             createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
                             iterator += 1
 
-                            # Hello there
-
                     if msg["type"] == "endGame":
                         self.__playing = False
                         self.__endGameData = msg["data"]
