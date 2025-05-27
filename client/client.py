@@ -367,6 +367,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
     platformInfo(platforms, c, clientPlayer)
 
+    time.sleep(0.1)
+
     for player in players.sprites():
         print(player.characterNo)
     running = True
@@ -442,6 +444,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
     c.setClientPlayer(clientPlayer)
 
     platformInfo(platforms, c, clientPlayer)
+
+    time.sleep(0.1)
 
     running = True
 
