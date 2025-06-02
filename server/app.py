@@ -5,7 +5,8 @@ app = Flask(__name__)
 
 # activeServers = {"exampleServerID":{
 #     "IPAddress": "127.0.0.1",
-#     "playerIDs": []
+#     "playerIDs": [],
+#     "serverPin: 5-digit PIN number
 # }}
 activeServers = {}
 serverFull = False
@@ -24,6 +25,7 @@ def pItHv():
         activeServers[hashedKey["hashedItem"]] = {}
         activeServers[hashedKey["hashedItem"]]["IPAddress"] = IPAddress
         activeServers[hashedKey["hashedItem"]]["playerIDs"] = []
+        activeServers[hashedKey["hashedItem"]]["serverPin"] = hashedKey["PIN"]
         return jsonify(hashedKey), 200
 
     except Exception as e:
@@ -34,6 +36,7 @@ def pHtIv():
     global activeServers
     data = request.get_json()
     hashedKey = data.get('hashedKey')
+    enteredPin = data.get('pinNo')
 
     if not hashedKey:
         return jsonify({"error":"hashedKey required"}), 400

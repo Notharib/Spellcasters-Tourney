@@ -14,7 +14,14 @@ def IPToHash(IP):
         ch = chr(num)
         hashedItem += ch
 
-    return {"hashedItem":hashedItem}
+    pin = ""
+    for i in range(5):
+        number = str(random.randint(0,9))
+        pin += number
+
+    pin = int(pin)
+
+    return {"hashedItem":hashedItem, "PIN": pin}
 
 def fullServer(fullValue):
     if fullValue == 1:
