@@ -114,13 +114,16 @@ def privateCreate(screen):
                 if keys[pygame.K_l]:
                     # print("Private Game Made!")
                     pygame.key.set_repeat(0)
-                    joinKey = requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())}).json()["hashedItem"]
+                    joinInfo = requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())}).json()["hashedItem"]
+                    joinKey = joinInfo["hashedItem"]
+                    pinNo = joinInfo["PIN"]
                     return {
                         "type": "privateCreate",
                         "data": {
                             "lengthOfGame": gameLength,
                             "noOfPlayers": noOfPlayers,
-                            "joinKey": joinKey
+                            "joinKey": joinKey,
+                            "pinNo": pinNo
                         }
                     }
             # if event.type == pygame.KEYUP:
@@ -150,7 +153,10 @@ def enterPrivGameInfo(screen):
     textOne = "Press ENTER to join the server!"
     textTwo = "Server Key: "
     textThree = ""
+    textFour = "Server Pin:"
+
     serverKey = "EXAMPLE"
+    serverPin = "EXAMPLE"
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
@@ -161,6 +167,7 @@ def enterPrivGameInfo(screen):
     pointer.add(Pointer())
 
     textBoxes.add(TextBox(position=(150, 150), text=serverKey))
+    textBoxes.add(TextBox(position=(150, 300), text=serverPin))
 
     running = True
     while running:
