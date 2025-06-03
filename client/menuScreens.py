@@ -166,8 +166,8 @@ def enterPrivGameInfo(screen):
 
     pointer.add(Pointer())
 
-    textBoxes.add(TextBox(position=(150, 150), text=serverKey))
-    textBoxes.add(TextBox(position=(150, 300), text=serverPin))
+    textBoxes.add(TextBox(position=(150, 200), text=serverKey, allow="textInput"))
+    textBoxes.add(TextBox(position=(150, 300), text=serverPin, allow="numberInput"))
 
     running = True
     while running:
@@ -189,12 +189,13 @@ def enterPrivGameInfo(screen):
                 if keys[pygame.K_RETURN]:
                     try:
                         pygame.key.set_repeat(0)
-                        IPAdress = requests.post("http://127.0.0.1:5000/pHtIv", json= {"hashedKey": serverKey}).json()["IPAddress"]
+                        IPAdress = requests.post("http://127.0.0.1:5000/pHtIv", json= {"hashedKey": serverKey, "pinNo":int(serverPin)}).json()["IPAddress"]
                         return {
                             "type": "privateJoin",
                             "data": {
                                 "IPAddress": IPAdress,
-                                "joinKey": serverKey
+                                "joinKey": serverKey,
+                                "pinNo": serverPin
                             }
                         }
                     except Exception as e:
@@ -209,9 +210,11 @@ def enterPrivGameInfo(screen):
                         textBox.typing = False
 
         f.render_to(screen, (25, 100), textTwo, (0, 0, 0))
-        f.render_to(screen, (150, 150),serverKey , (0, 0, 0))
         f.render_to(screen, (25, 250), textOne, (0, 0, 0))
         f.render_to(screen, (100, 550), textThree, (0, 0, 0))
+
+        f.render_to(screen, (150, 150), serverKey, (0, 0, 0))
+        f.render_to(screen, (150, 350), serverPin, (0, 0, 0))
 
         pointer.update()
         pointer.draw(screen)

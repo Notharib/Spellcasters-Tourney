@@ -43,6 +43,8 @@ def pHtIv():
 
     try:
         IPAddress = activeServers[hashedKey]["IPAddress"]
+        if activeServers[hashedKey]["serverPin"] != enteredPin:
+            return jsonify({"error":"Server Pin is not Correct!"}), 400
         IPAddressDict = {"IPAddress":IPAddress}
         return jsonify(IPAddressDict), 200
 
