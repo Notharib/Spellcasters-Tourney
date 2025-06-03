@@ -1,5 +1,5 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
-from menuScreens import gameStart, characterBuilder
+from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo
 from PrivateServer import Server
 
@@ -279,30 +279,6 @@ class Character(pygame.sprite.Sprite):
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
                 cl.sendData(moveMessage)
                 self.lastPos = [self.rect.x, self.rect.y]
-
-
-# Waiting loop while players are waiting for the private game to begin
-def waiting(c, screen, creationData):
-    textOne = "Waiting for players to join!"
-    textTwo = f"Join Code: {creationData['joinKey']}"
-    textThree = f"Server Pin: {creationData['pinNo']}"
-
-    f = pygame.freetype.SysFont("Comic Sans MS", 24)
-    f.origin = True
-
-    c.enableWaiting()
-    while c.checkWaiting():
-        screen.fill(WHITE)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                c.waitingOver()
-                exit()
-
-        f.render_to(screen, (300, 300), textOne, (0, 0, 0))
-        f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
-        f.render_to(screen, (300, 400), textThree, (0, 0, 0))
-        pygame.display.flip()
-
 
 def publicGame(screen, clock, players, platforms, bullets, char):
     c = Client("127.0.0.1")
