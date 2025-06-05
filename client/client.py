@@ -9,6 +9,13 @@ Purpose: To interact with the server, and to modify the players' information on 
 as new data is sent/recieved from the server
 '''
 class Client:
+    '''
+    Name: __init__
+    Parameters: IPToConnectTo: integer, socket: integer
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the client object
+    '''
     def __init__(self,IPToConnectTo, socket=50000):
         self.__HOST = IPToConnectTo
         self.__PORT = socket
@@ -20,6 +27,13 @@ class Client:
         self.__endGameData = None
         self.__clientPlayer = None
 
+    '''
+    Name: connect
+    Parameters: None
+    Returns: None
+    Purpose: Connects the client object to the server, and then creates a Thread obejct that
+    ensures that the server continuously listens for data from the server
+    '''
     def connect(self):
         print(self.__HOST, self.__PORT)
 
@@ -27,13 +41,24 @@ class Client:
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
 
-    # Sends whatever data is passed into the function to the server it is connected to
+    '''
+    Name: sendData
+    Parameters: message: dictionary
+    Returns: None
+    Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
+    '''
     def sendData(self,message):
         # print(message)
         strMessage = json.dumps(message)
         self.__socket.send(strMessage.encode())
 
-    # Listens for JSON formatted data from the server
+    '''
+    Name: listen
+    Parameters: None
+    Returns: None
+    Purpose: Ran through a Thread object, it listens for data being sent by the server,
+    and then handles what to do with it
+    '''
     def listen(self):
         global clientPlayer
         while True:
@@ -108,15 +133,33 @@ class Client:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
 
+    '''
+    Name: tellServerDisconn
+    Parameters: None
+    Returns: None
+    Purpose: Tells the server that this client wants to disconnect
+    '''
     def tellServerDisconn(self):
         msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
         self.sendData(msgDict)
 
     #Getters and Setters
 
+    '''
+    Name: enableWaiting
+    Parameters: None
+    Returns: None
+    Purpose: Setter for the waiting variable
+    '''
     def enableWaiting(self):
         self.__waiting = True
 
+    '''
+    Name: setClientPlayer
+    Parameters: clPl: object
+    Returns: None
+    Purpose: Setter for the clientPlayer variable
+    '''
     def setClientPlayer(self, clPl):
         self.__clientPlayer = clPl
 

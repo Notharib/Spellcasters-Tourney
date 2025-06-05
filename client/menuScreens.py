@@ -1,7 +1,13 @@
 import pygame, pygame.freetype, requests, socket
 from gameLogic import TextBox, Pointer, Fire, Water, Wizard, Druid
 
-# Waiting loop while players are waiting for the private game to begin
+'''
+Name: waiting
+Parameters: c: object, screen: object, creationData: dictionary
+Returns: None
+Purpose: Run loop for a waiting screen while a player is waiting for other players to 
+join their private server
+'''
 def waiting(c, screen, creationData):
     textOne = "Waiting for players to join!"
     textTwo = f"Join Code: {creationData['joinKey']}"
@@ -23,6 +29,13 @@ def waiting(c, screen, creationData):
         f.render_to(screen, (300, 400), textThree, (0, 0, 0))
         pygame.display.flip()
 
+'''
+Name: gameStart
+Parameters: screen: object
+Returns: dictionary
+Purpose: Pygame run loop that determines what the player wants to do, 
+whether it be play on the public server, or join/create a private server
+'''
 def gameStart(screen):
     running = True
     textOne = "Welcome to Wizards Tourney. These are your options for playing:"
@@ -61,6 +74,13 @@ def gameStart(screen):
             pygame.display.update()
         return True
 
+'''
+Name: privateGame
+Parameters: screen: object
+Returns: dictionary | boolean
+Purpose: Pygame run loop to allow the player to decide whether they wish to join a private
+server or create one
+'''
 def privateGame(screen):
     textOne = "Do you wish to join or create a private server?"
     textTwo = "Press J to join one"
@@ -92,9 +112,13 @@ def privateGame(screen):
         f.render_to(screen, (100, 450), textThree, (0, 0, 0))
         pygame.display.update()
 
-
-
-
+'''
+Name: privateCreate
+Parameters: screen: object
+Returns: dictionary
+Purpose: Constructor to set the initial values
+of the treasure object
+'''
 def privateCreate(screen):
     noOfPlayers = "EXAMPLE"
     textOne = "Enter number of players you wish to be able to join the private server: "
@@ -172,6 +196,12 @@ def privateCreate(screen):
         textBoxes.draw(screen)
         pygame.display.update()
 
+'''
+Name: enterPrivGameInfo
+Parameters: screen: object
+Returns: dictionary
+Purpose: Pygame run loop to allow the player to enter the required information to join a private server
+'''
 def enterPrivGameInfo(screen):
     textOne = "Press ENTER to join the server!"
     textTwo = "Server Key: "
@@ -237,6 +267,7 @@ def enterPrivGameInfo(screen):
         f.render_to(screen, (25, 100), textTwo, (0, 0, 0))
         f.render_to(screen, (25, 250), textOne, (0, 0, 0))
         f.render_to(screen, (100, 550), textThree, (0, 0, 0))
+        f.render_to(screen, (100,300), textFour, (0, 0, 0))
 
         f.render_to(screen, (150, 150), serverKey, (0, 0, 0))
         f.render_to(screen, (150, 350), serverPin, (0, 0, 0))
@@ -246,7 +277,12 @@ def enterPrivGameInfo(screen):
         textBoxes.draw(screen)
         pygame.display.update()
 
-
+'''
+Name: characterBuilder
+Parameters: screen: object
+Returns: character: dictionary
+Purpose: Pygame run loop to allow players to design their character
+'''
 def characterBuilder(screen):
     currSelectedClass = "None Selected"
     currSelectedElement = "None Selected"
