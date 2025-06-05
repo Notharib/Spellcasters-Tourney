@@ -136,7 +136,8 @@ def privateCreate(screen):
                 if keys[pygame.K_l]:
                     # print("Private Game Made!")
                     pygame.key.set_repeat(0)
-                    joinInfo = requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())}).json()["hashedItem"]
+                    joinInfo = requests.post("http://127.0.0.1:5000/pItHv", json={"IPAddress":socket.gethostbyname(socket.gethostname())}).json()
+                    print(joinInfo, type(joinInfo))
                     joinKey = joinInfo["hashedItem"]
                     pinNo = joinInfo["PIN"]
                     return {
@@ -196,6 +197,8 @@ def enterPrivGameInfo(screen):
         screen.fill((255, 255, 255))
 
         serverKey = textBoxes.sprites()[0].text
+        serverPin = textBoxes.sprites()[1].text
+
         pygame.key.set_repeat(200)
 
         keys = pygame.key.get_pressed()
@@ -211,11 +214,11 @@ def enterPrivGameInfo(screen):
                 if keys[pygame.K_RETURN]:
                     try:
                         pygame.key.set_repeat(0)
-                        IPAdress = requests.post("http://127.0.0.1:5000/pHtIv", json= {"hashedKey": serverKey, "pinNo":int(serverPin)}).json()["IPAddress"]
+                        IPAdress = requests.post("http://127.0.0.1:5000/pHtIv", json= {"hashedKey": serverKey, "pinNo":int(serverPin)}).json()
                         return {
                             "type": "privateJoin",
                             "data": {
-                                "IPAddress": IPAdress,
+                                "IPAddress": IPAdress["IPAddress"],
                                 "joinKey": serverKey,
                                 "pinNo": serverPin
                             }

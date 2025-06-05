@@ -42,6 +42,10 @@ def pHtIv():
         return jsonify({"error":"hashedKey required"}), 400
 
     try:
+        if activeServers[hashedKey] is None:
+            return jsonify({"error": "entered server key doesn't exist!"})
+        if activeServers[hashedKey]["IPAddress"] is None:
+            return jsonify({"error": "Please DM notharib and tell him that this happened"})
         IPAddress = activeServers[hashedKey]["IPAddress"]
         if activeServers[hashedKey]["serverPin"] != enteredPin:
             return jsonify({"error":"Server Pin is not Correct!"}), 400
@@ -49,6 +53,7 @@ def pHtIv():
         return jsonify(IPAddressDict), 200
 
     except Exception as e:
+        print(e)
         return jsonify({"error":str(e)}), 500
 
 @app.route('/serverFull', methods=["POST"])

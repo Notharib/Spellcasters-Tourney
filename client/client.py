@@ -17,6 +17,8 @@ class Client:
         self.__clientPlayer = None
 
     def connect(self):
+        print(self.__HOST, self.__PORT)
+
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
@@ -399,6 +401,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
+    print(creationData)
     c = Client(creationData["IPAddress"], socket=50001)
     c.connect()
 
