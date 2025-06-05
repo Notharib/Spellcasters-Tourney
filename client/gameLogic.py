@@ -2,6 +2,10 @@ import pygame, math
 
 # Element Classes
 
+'''
+Name: Fire
+Purpose: To handle properties to do with the fire element
+'''
 class Fire:
     def __init__(self):
         self.__opposite = "Water"
@@ -10,6 +14,10 @@ class Fire:
     def __repr__(self):
         return self.__type
 
+'''
+Name: Water
+Purpose: To handle properties to do with the water element
+'''
 class Water:
     def __init__(self):
         self.__opposite = "Fire"
@@ -20,16 +28,29 @@ class Water:
 
 # Spellcaster Classes
 
+'''
+Name: Wizard
+Purpose: To handle properties of the wizard spellcaster
+'''
 class Wizard:
     def __init__(self):
         self.__type = "Wizard"
 
+'''
+Name: Druid
+Purpose: To handle properties of the druid spellcaster
+'''
 class Druid:
     def __init__(self):
         self.__type = "Druid"
 
 # Non-player objects to be used within the game
 
+'''
+Name: Platform
+Inherits: pygame.sprite.Sprite
+Purpose: To have platforms that players are able to move around on
+'''
 class Platform(pygame.sprite.Sprite):
     def __init__(self,position, size, platformNo):
         super().__init__()
@@ -46,6 +67,11 @@ class Platform(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
 
+'''
+Name: Bullet
+Inherits: pygame.sprite.Sprite
+Purpose: Manages projectiles and projectile behaviour
+'''
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
         super().__init__()
@@ -72,6 +98,12 @@ class Bullet(pygame.sprite.Sprite):
 
 # Objects mainly only used within menus
 
+'''
+Name: TextBox
+Inherits: pygame.sprite.Sprite
+Purpose: To create a textbox that players need to move their pointer over in
+order to be able to type
+'''
 class TextBox(pygame.sprite.Sprite):
     def __init__(self, position, text, allow="allInput",  typing=False):
         super().__init__()
@@ -204,7 +236,11 @@ class TextBox(pygame.sprite.Sprite):
 
 
 
-# Used so that the user can select which text box they are actually typing into
+'''
+Name: Pointer
+Inherits: pygame.sprite.Sprite
+Purpose: To have an object that follows the player's cursor so that it can interact with textboxes
+'''
 class Pointer(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()

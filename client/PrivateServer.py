@@ -1,7 +1,10 @@
 import socket, json, threading, time
 from random import randint, choice
 
-# Platform class for exclusive use in the private server
+'''
+Name: Platform
+Purpose: To have platforms that players are able to move around on
+'''
 class Platform:
     def __init__(self, position, size=[20,500]):
         self.__position = position
@@ -41,7 +44,11 @@ class Platform:
     def __repr__(self):
         return self.__position
 
-# Client class, exclusive to server files. Done to try and make managing data surrounding the client connections easier. Purely only used within this file
+'''
+Name: Client
+Purpose: Client class for the private server, to make managing data about 
+any given player easier
+'''
 class Client:
     def __init__(self, conn, spawnPoint, playerNo, size=[40,40]):
         self.__client = conn
@@ -84,7 +91,11 @@ class Client:
     def getCaster(self):
         return self.__spellCaster
 
-# Server class; modified from the public version to make it more suited to how a private game would function (e.g. max amount of clients, length of game)
+'''
+Name: Server
+Purpose: Server class to handle connections from the different clients. Different to the public server's
+Server class, due to the differences in functionality required from both of them
+'''
 class Server:
     def __init__(self, maxClients, lengthOfGame, platformPositions):
         self.__HOST = socket.gethostbyname(socket.gethostname())

@@ -3,7 +3,11 @@ from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo
 from PrivateServer import Server
 
-# Client class, not possible to modularise in current capacity due to how interlinked it is with the core code
+'''
+Name: Client
+Purpose: To interact with the server, and to modify the players' information on the game
+as new data is sent/recieved from the server
+'''
 class Client:
     def __init__(self,IPToConnectTo, socket=50000):
         self.__HOST = IPToConnectTo
@@ -147,6 +151,10 @@ def createBullet(data):
 def createPlatform(data):
     platforms.add(Platform(data['position'],data['size'],data['platformNo']))
 
+'''
+Name: Character
+Purpose: To manage data surrounding each player's character, and how to handle certain actions
+'''
 class Character(pygame.sprite.Sprite):
     def __init__(self, position, colour, playerNo):
         super().__init__()

@@ -1,5 +1,10 @@
 import socket, json, threading, random, time, requests
 
+'''
+Name: Client
+Purpose: Client class for the private server, to make managing data about 
+any given player easier
+'''
 class Client:
     def __init__(self, position,colour,cl,clientNo, address, size=[40,40]):
         self.addr = address
@@ -9,6 +14,10 @@ class Client:
         self.clientNo = clientNo
         self.size = size
 
+'''
+Name: Platform
+Purpose: To have platforms that players are able to move around on
+'''
 class Platform:
     def __init__(self, position, platformId, colour=(0,255,0),platformSize=[20,500]):
         self.position = position
@@ -20,7 +29,11 @@ class Platform:
         self.left = None
         self.right = None
 
-
+'''
+Name: Server
+Purpose: Server class to handle connections from the different clients. Different to the private server's
+Server class, due to the differences in functionality required from both of them
+'''
 class Server:
     def __init__(self):
         self.__HOST = '127.0.0.1'
