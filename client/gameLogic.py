@@ -7,10 +7,23 @@ Name: Fire
 Purpose: To handle properties to do with the fire element
 '''
 class Fire:
+    '''
+                Name: __init__
+                Parameters: None
+                Returns: None
+                Purpose: Constructor to set the initial values
+                of the Fire object
+                '''
     def __init__(self):
         self.__opposite = "Water"
         self.__type = "Fire"
 
+    '''
+                Name: __repr__
+                Parameters: None
+                Returns: self.__type
+                Purpose: Determines how the object should be represented if nothing is specified
+                '''
     def __repr__(self):
         return self.__type
 
@@ -19,10 +32,23 @@ Name: Water
 Purpose: To handle properties to do with the water element
 '''
 class Water:
+    '''
+                Name: __init__
+                Parameters: None
+                Returns: None
+                Purpose: Constructor to set the initial values
+                of the Water object
+                '''
     def __init__(self):
         self.__opposite = "Fire"
         self.__type = "Water"
 
+    '''
+                    Name: __repr__
+                    Parameters: None
+                    Returns: self.__type
+                    Purpose: Determines how the object should be represented if nothing is specified
+                    '''
     def __repr__(self):
         return self.__type
 
@@ -33,6 +59,13 @@ Name: Wizard
 Purpose: To handle properties of the wizard spellcaster
 '''
 class Wizard:
+    '''
+                    Name: __init__
+                    Parameters: None
+                    Returns: None
+                    Purpose: Constructor to set the initial values
+                    of the Wizard object
+                    '''
     def __init__(self):
         self.__type = "Wizard"
 
@@ -41,6 +74,13 @@ Name: Druid
 Purpose: To handle properties of the druid spellcaster
 '''
 class Druid:
+    '''
+                    Name: __init__
+                    Parameters: None
+                    Returns: None
+                    Purpose: Constructor to set the initial values
+                    of the Druid object
+                    '''
     def __init__(self):
         self.__type = "Druid"
 
@@ -52,6 +92,13 @@ Inherits: pygame.sprite.Sprite
 Purpose: To have platforms that players are able to move around on
 '''
 class Platform(pygame.sprite.Sprite):
+    '''
+                    Name: __init__
+                    Parameters: position:list, size: list, platformNo: integer
+                    Returns: None
+                    Purpose: Constructor to set the initial values
+                    of the Platform object
+                    '''
     def __init__(self,position, size, platformNo):
         super().__init__()
         self.height = size[0]
@@ -73,6 +120,13 @@ Inherits: pygame.sprite.Sprite
 Purpose: Manages projectiles and projectile behaviour
 '''
 class Bullet(pygame.sprite.Sprite):
+    '''
+                    Name: __init__
+                    Parameters: spawnPoint:array, direction: array, player:object, size:list, damage:integer
+                    Returns: None
+                    Purpose: Constructor to set the initial values
+                    of the Bullet object
+                    '''
     def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
         super().__init__()
         self.height = size[0]
@@ -90,6 +144,13 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y = self.Y
         self.damage = damage
 
+    '''
+                    Name: update
+                    Parameters: None
+                    Returns: None
+                    Purpose: Update function that will update the object's rect position, depending on
+                    what the direction is
+                    '''
     def update(self):
         if self.direction[0] is not None:
             self.rect.x -= self.direction[0]
@@ -105,6 +166,13 @@ Purpose: To create a textbox that players need to move their pointer over in
 order to be able to type
 '''
 class TextBox(pygame.sprite.Sprite):
+    '''
+                    Name: __init__
+                    Parameters: position: array, text:string, allow:string, typing:boolean
+                    Returns: None
+                    Purpose: Constructor to set the initial values
+                    of the TextBox object
+                    '''
     def __init__(self, position, text, allow="allInput",  typing=False):
         super().__init__()
         self.X = position[0]
@@ -122,12 +190,25 @@ class TextBox(pygame.sprite.Sprite):
         self.text = text
         self.allow = allow
 
+    '''
+                    Name: checkIfExample
+                    Parameters: None
+                    Returns: boolean
+                    Purpose: Checks whether the value held in self.text is EXAMPLE or if it something else, and
+                    returns the corresponding boolean value
+                    '''
     def checkIfExample(self):
         if self.text == "EXAMPLE":
             return True
         else:
             return False
 
+    '''
+                    Name: update
+                    Parameters: keys:list
+                    Returns: None
+                    Purpose: Updates the value of self.text based upon what key the player is pressing
+                    '''
     def update(self, keys):
         if self.typing:
             alphabetToPygame = {
