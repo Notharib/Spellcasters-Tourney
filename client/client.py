@@ -427,17 +427,29 @@ class Character(pygame.sprite.Sprite):
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
                 cl.sendData(moveMessage)
                 self.lastPos = [self.rect.x, self.rect.y]
-
+    '''
+        Name: publicGame
+        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary
+        Returns: None
+        Purpose: Handles the data for the player to be able to play on the public server
+        '''
 def publicGame(screen, clock, players, platforms, bullets, char):
+
+    # Creates an instance of the client object and connects it to the server
     c = Client("127.0.0.1")
     c.connect()
 
     time.sleep(3)
 
-
+    # After a certain amount of time has passed, the server will have sent all the neccessary information required
+    # for the player to be able to join the server. And the first message that the server will send is the informaiton
+    # that the client will need to create its own player, so this then sets the clientPlayer variable to the first object
+    # in the players sprite group
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
+    # Runs the platformInfo functio, which will send data to the server with information about the platforms if
+    # the player's clientNo is 1
     platformInfo(platforms, c, clientPlayer)
 
     running = True
@@ -458,12 +470,16 @@ def publicGame(screen, clock, players, platforms, bullets, char):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
+        # Sprite group collision check; determines whether a player should be able to continue have gravity
+        # enact on them (if they're on a platform they shouldn't)
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
                     clientPlayer.collided = True
 
+        # Sprite group collision check; determines whether a projectile had hit a player.
+        # If one has, then it will only damage the player if they are not the one who sent it
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
             for pl in p_list:
@@ -483,24 +499,39 @@ def publicGame(screen, clock, players, platforms, bullets, char):
         pygame.display.update()
     exit()
 
+
+'''
+        Name: privateCreate
+        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+        Returns: None
+        Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
+        '''
 def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
+    # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
     threading.Thread(target=server.start).start()
 
+    # Creates an instance of the Client object, and then joins to the private server, based
+    # off the fact the server will be hosted by the same machine you're joining on
     c = Client(socket.gethostbyname(socket.gethostname()),socket=50001)
     c.connect()
 
+    # Begins the waiting loop, which continues to run until the amount of players that the host initially
+    # put in has been reached
     waiting(c, screen, creationData)
 
+    # The first object in the players sprite group will be this clients player, so this just sets it so that is the case
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
+    # Sends the private server the platforms rect information
     platformInfo(platforms, c, clientPlayer)
 
     time.sleep(0.1)
 
-    for player in players.sprites():
-        print(player.characterNo)
+    # for player in players.sprites():
+    #     print(player.characterNo)
+
     running = True
 
     # Run loop
@@ -510,6 +541,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
         plat = None
 
         screen.fill(WHITE)
+
+        #Event loop
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 c.tellServerDisconn()
@@ -519,12 +552,16 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
+        # Sprite group collision handling; handles any collisions between platforms and players, and determines whether they
+        # still need to be impacted by gravity
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
                     clientPlayer.collided = True
 
+        # Sprite group collision handling; handles and collisions between projectiles and players, and determines whether they should be
+        # hit by that projectile
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
             for pl in p_list:
@@ -544,21 +581,27 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
         pygame.display.update()
     exit()
 
-
+'''
+        Name: privateJoin
+        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+        Returns: None
+        Purpose: Handles joining a private server that someone else is hosting
+        '''
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
-    print(creationData)
+    # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
     c = Client(creationData["IPAddress"], socket=50001)
     c.connect()
 
     print("Joined up to the private server!")
 
+    # Wait loop that runs while the server is waiting for all the players to join
     waiting(c, screen, creationData)
 
+    # After the wait loop is over, this players character will be at the front of the players sprite group sprites, so
+    # this just turns that into a unique variable, to make handling it easier
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
-
-    platformInfo(platforms, c, clientPlayer)
 
     time.sleep(0.1)
 
@@ -571,6 +614,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
         plat = None
 
         screen.fill(WHITE)
+
+        # Event loop
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 c.tellServerDisconn()
@@ -580,12 +625,14 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
+        # Sprite group collision handling; handles collisions between platforms and players
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
                     clientPlayer.collided = True
 
+        # Sprite group collision handling; handles collisions between projectiles and players
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
             for pl in p_list:
