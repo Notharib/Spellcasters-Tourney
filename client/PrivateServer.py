@@ -7,12 +7,12 @@ Purpose: To have platforms that players are able to move around on
 '''
 class Platform:
     '''
-        Name: __init__
-        Parameters: position: list, size:list
-        Returns: None
-        Purpose: Constructor to set the initial values
-        of the platform object
-        '''
+    Name: __init__
+    Parameters: position: list, size:list
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the platform object
+    '''
     def __init__(self, position, size=[20,500]):
         self.__position = position
         self.__size = size
@@ -25,105 +25,105 @@ class Platform:
     # Getters and Setters
 
     '''
-        Name: getPos
-        Parameters: None
-        Returns: self.__position:list
-        Purpose: Getter for self.__position
-        '''
+    Name: getPos
+    Parameters: None
+    Returns: self.__position:list
+    Purpose: Getter for self.__position
+    '''
     def getPos(self):
         return self.__position
 
     '''
-            Name: getPos
-            Parameters: None
-            Returns: self.__size:list
-            Purpose: Getter for self.__size
-            '''
+    Name: getPos
+    Parameters: None
+    Returns: self.__size:list
+    Purpose: Getter for self.__size
+    '''
     def getSize(self):
         return self.__size
 
     '''
-            Name: getTop
-            Parameters: None
-            Returns: self.__top
-            Purpose: Getter for self.__top
-            '''
+    Name: getTop
+    Parameters: None
+    Returns: self.__top
+    Purpose: Getter for self.__top
+    '''
     def getTop(self):
         return self.__top
 
     '''
-            Name: getBottom
-            Parameters: None
-            Returns: self.__bottom
-            Purpose: Getter for self.__bottom
-            '''
+    Name: getBottom
+    Parameters: None
+    Returns: self.__bottom
+    Purpose: Getter for self.__bottom
+    '''
     def getBottom(self):
         return self.__bottom
 
     '''
-            Name: getLeft
-            Parameters: None
-            Returns: self.__left
-            Purpose: Getter for self.__left
-            '''
+    Name: getLeft
+    Parameters: None
+    Returns: self.__left
+    Purpose: Getter for self.__left
+    '''
     def getLeft(self):
         return self.__left
 
     '''
-            Name: getRight
-            Parameters: None
-            Returns: self.__right
-            Purpose: Getter for self.__right
-            '''
+    Name: getRight
+    Parameters: None
+    Returns: self.__right
+    Purpose: Getter for self.__right
+    '''
     def getRight(self):
         return self.__right
 
     '''
-            Name: setTop
-            Parameters: top
-            Returns: None
-            Purpose: Setter for self.__top
-            '''
+    Name: setTop
+    Parameters: top
+    Returns: None
+    Purpose: Setter for self.__top
+    '''
     def setTop(self, top):
         self.__top = top
         return None
 
     '''
-                Name: setLeft
-                Parameters: left
-                Returns: None
-                Purpose: Setter for self.__left
-                '''
+    Name: setLeft
+    Parameters: left
+    Returns: None
+    Purpose: Setter for self.__left
+    '''
     def setLeft(self, left):
         self.__left = left
         return None
 
     '''
-                Name: setRight
-                Parameters: right
-                Returns: None
-                Purpose: Setter for self.__right
-                '''
+    Name: setRight
+    Parameters: right
+    Returns: None
+    Purpose: Setter for self.__right
+    '''
     def setRight(self, right):
         self.__right = right
         return None
 
+    ''' 
+    Name: setBottom
+    Parameters: bottom
+    Returns: None
+    Purpose: Setter for self.__bottom
     '''
-                Name: setBottom
-                Parameters: bottom
-                Returns: None
-                Purpose: Setter for self.__bottom
-                '''
     def setBottom(self, bottom):
         self.__bottom = bottom
         return None
 
     '''
-                Name: __repr__
-                Parameters: None
-                Returns: self.__postion
-                Purpose: Defines how this object should be represented if printed directly
-                '''
+    Name: __repr__
+    Parameters: None
+    Returns: self.__postion
+    Purpose: Defines how this object should be represented if printed directly
+    '''
     def __repr__(self):
         return self.__position
 
@@ -134,12 +134,12 @@ any given player easier
 '''
 class Client:
     '''
-            Name: __init__
-            Parameters: conn:object, spawnPoint:tuple, playerNo:integer, size:list
-            Returns: None
-            Purpose: Constructor to set the initial values
-            of the Client object
-            '''
+    Name: __init__
+    Parameters: conn:object, spawnPoint:tuple, playerNo:integer, size:list
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Client object
+    '''
     def __init__(self, conn, spawnPoint, playerNo, size=[40,40]):
         self.__client = conn
         self.__spawnPoint = spawnPoint
@@ -151,94 +151,94 @@ class Client:
         self.__size = size
 
     '''
-                Name: sendData
-                Parameters: msgToSend:dictionary
-                Returns: None
-                Purpose: Sends data through the connection
-                '''
+    Name: sendData
+    Parameters: msgToSend:dictionary
+    Returns: None
+    Purpose: Sends data through the connection
+    '''
     def sendData(self, msgToSend):
         self.__client.send(msgToSend)
 
     # Getters and setters
 
     '''
-                    Name: setElement
-                    Parameters: element: object
-                    Returns: None
-                    Purpose: Setter for self.__element
-                    '''
+    Name: setElement
+    Parameters: element: object
+    Returns: None
+    Purpose: Setter for self.__element
+    '''
     def setElement(self, element):
         self.__element = element
 
     '''
-                    Name: setSpellCaster
-                    Parameters: spellCaster: object
-                    Returns: None
-                    Purpose: Setter for self.__spellCaster
-                    '''
+    Name: setSpellCaster
+    Parameters: spellCaster: object
+    Returns: None
+    Purpose: Setter for self.__spellCaster
+    '''
     def setSpellCaster(self, spellCaster):
         self.__spellCaster = spellCaster
 
     '''
-                    Name: getSpawnPoint
-                    Parameters: None
-                    Returns: self.__spawnPoint:list
-                    Purpose: Getter for self.__spawnPoint
-                    '''
+    Name: getSpawnPoint
+    Parameters: None
+    Returns: self.__spawnPoint:list
+    Purpose: Getter for self.__spawnPoint
+    '''
     def getSpawnPoint(self):
         return self.__spawnPoint
 
     '''
-                        Name: getSize
-                        Parameters: None
-                        Returns: self.__size:list
-                        Purpose: Getter for self.__size 
-                        '''
+    Name: getSize
+    Parameters: None
+    Returns: self.__size:list
+    Purpose: Getter for self.__size 
+    '''
     def getSize(self):
         return self.__size
 
     '''
-                        Name: getClient
-                        Parameters: None
-                        Returns: self.__client:object
-                        Purpose: Getter for self.__client
-                        '''
+    Name: getClient
+    Parameters: None
+    Returns: self.__client:object
+    Purpose: Getter for self.__client
+    '''
     def getClient(self):
         return self.__client
 
     '''
-                        Name: getPlayerNo
-                        Parameters: None
-                        Returns: self.__playerNo:integer
-                        Purpose: Getter for self.__playerNo
-                        '''
+    Name: getPlayerNo
+    Parameters: None
+    Returns: self.__playerNo:integer
+    Purpose: Getter for self.__playerNo
+    '''
     def getPlayerNo(self):
         return self.__playerNo
 
     '''
-                        Name: getElement
-                        Parameters: None
-                        Returns: self.__element
-                        Purpose: Getter for self.__element
-                        '''
+    Name: getElement
+    Parameters: None
+    Returns: self.__element
+    Purpose: Getter for self.__element
+    '''
     def getElement(self):
         return self.__element
 
     '''
-                        Name: getPlayerColour
-                        Parameters: None
-                        Returns: self.__colour:tuple
-                        Purpose: Getter for self.__colour
-                        '''
+    Name: getPlayerColour
+    Parameters: None
+    Returns: self.__colour:tuple
+    Purpose: Getter for self.__colour
+    '''
     def getPlayerColour(self):
         return self.__colour
 
     '''
-                        Name: getCaster
-                        Parameters: None
-                        Returns: self.__spellCaster
-                        Purpose: Getter for self.__spellCaster
-                        '''
+    Name: getCaster
+    Parameters: None
+    Returns: self.__spellCaster
+    Purpose: Getter for self.__spellCaster
+    '''
     def getCaster(self):
         return self.__spellCaster
 
@@ -249,12 +249,12 @@ Server class, due to the differences in functionality required from both of them
 '''
 class Server:
     '''
-                Name: __init__
-                Parameters: maxClients:integer, lengthOfGame:integer, platformPositions:list
-                Returns: None
-                Purpose: Constructor to set the initial values
-                of the Server object
-                '''
+    Name: __init__
+    Parameters: maxClients:integer, lengthOfGame:integer, platformPositions:list
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Server object
+    '''
     def __init__(self, maxClients, lengthOfGame, platformPositions):
         self.__HOST = socket.gethostbyname(socket.gethostname())
         self.__PORT = 50001
@@ -267,12 +267,12 @@ class Server:
         self.password = None
 
     '''
-                Name: start
-                Parameters: None
-                Returns: None
-                Purpose: Starts listening for connections from different clients. Will only accept connections
-                until it reaches the amount of clients connected as pre-determined on the creation of the object
-                '''
+    Name: start
+    Parameters: None
+    Returns: None
+    Purpose: Starts listening for connections from different clients. Will only accept connections
+    until it reaches the amount of clients connected as pre-determined on the creation of the object
+    '''
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.__HOST, self.__PORT))
@@ -310,22 +310,22 @@ class Server:
                     break
 
     '''
-                Name: startListening
-                Parameters: conn:object
-                Returns: None
-                Purpose: Creates a thread that will begin listening for messages from the connection passed into
-                the function
-                '''
+    Name: startListening
+    Parameters: conn:object
+    Returns: None
+    Purpose: Creates a thread that will begin listening for messages from the connection passed into
+    the function
+    '''
     def startListening(self, conn):
             threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
     '''
-                Name: beginGame
-                Parameters: None
-                Returns: None
-                Purpose: Sends each of the clients within the clientList variable the message that the game is beginning,
-                and sends them the necessary information required to begin the game
-                '''
+    Name: beginGame
+    Parameters: None
+    Returns: None
+    Purpose: Sends each of the clients within the clientList variable the message that the game is beginning,
+    and sends them the necessary information required to begin the game
+    '''
     def beginGame(self):
         messageDict = {
             "type": "beginGame",
@@ -369,11 +369,11 @@ class Server:
             }
 
     '''
-                Name: messageHandling
-                Parameters: message:dictionary, conn:object
-                Returns: None
-                Purpose: Handles what to do with the message received from a client
-                '''
+    Name: messageHandling
+    Parameters: message:dictionary, conn:object
+    Returns: None
+    Purpose: Handles what to do with the message received from a client
+    '''
     def __messageHandling(self, message, conn):
         try:
             if message["type"] == "movement":
@@ -445,11 +445,11 @@ class Server:
             print("Error:", e)
 
     '''
-                Name: recv_from_client
-                Parameters: conn:object
-                Returns: None
-                Purpose: Listens for a message from the client, and handles what to do with it
-                '''
+    Name: recv_from_client
+    Parameters: conn:object
+    Returns: None
+    Purpose: Listens for a message from the client, and handles what to do with it
+    '''
     def recv_from_client(self, conn):
         while True:
             data = conn.recv(1024)

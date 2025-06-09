@@ -164,84 +164,84 @@ class Client:
         self.__clientPlayer = clPl
 
     '''
-        Name: waitingOver
-        Parameters: None
-        Returns: None
-        Purpose: Setter for the waiting variable 
-        '''
+    Name: waitingOver
+    Parameters: None
+    Returns: None
+    Purpose: Setter for the waiting variable 
+    '''
     def waitingOver(self):
         self.__waiting = False
 
     '''
-        Name: checkWaiting
-        Parameters: None
-        Returns: self.__waiting
-        Purpose: Getter for the waiting variable
-        '''
+    Name: checkWaiting
+    Parameters: None
+    Returns: self.__waiting
+    Purpose: Getter for the waiting variable
+    '''
     def checkWaiting(self):
         return self.__waiting
 
     '''
-        Name: enablePlaying
-        Parameters: None
-        Returns: None
-        Purpose: Setter for the playing variable
-        '''
+    Name: enablePlaying
+    Parameters: None
+    Returns: None
+    Purpose: Setter for the playing variable
+    '''
     def enablePlaying(self):
         self.__playing = True
 
     '''
-        Name: playingOver
-        Parameters: None
-        Returns: None
-        Purpose: Setter for the playing variable
-        '''
+    Name: playingOver
+    Parameters: None
+    Returns: None
+    Purpose: Setter for the playing variable
+    '''
     def playingOver(self):
         self.__playing = False
 
     '''
-        Name: checkPlaying
-        Parameters: None
-        Returns: self.__playing
-        Purpose: Getter for the playing variable
-        '''
+    Name: checkPlaying
+    Parameters: None
+    Returns: self.__playing
+    Purpose: Getter for the playing variable
+    '''
     def checkPlaying(self):
         return self.__playing
 
     '''
-        Name: getEndGameData
-        Parameters: None
-        Returns: self.__endGameData
-        Purpose: Getter for the endGameData variable
-        '''
+    Name: getEndGameData
+    Parameters: None
+    Returns: self.__endGameData
+    Purpose: Getter for the endGameData variable
+    '''
     def getEndGameData(self):
         return self.__endGameData
 
 '''
-    Name: addCharacter
-    Parameters: data:dictionary
-    Returns: None
-    Purpose: Adds a Character object to the players pygame sprite group
-    '''
+Name: addCharacter
+Parameters: data:dictionary
+Returns: None
+Purpose: Adds a Character object to the players pygame sprite group
+'''
 def addCharacter(data):
     players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
     print("Player created!")
 
 '''
-    Name: createBullet
-    Parameters: data:dictionary
-    Returns: None
-    Purpose: Adds a Bullet object to the bullets pygame sprite group
-    '''
+Name: createBullet
+Parameters: data:dictionary
+Returns: None
+Purpose: Adds a Bullet object to the bullets pygame sprite group
+'''
 def createBullet(data):
     bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
 
 '''
-    Name: createPlatform
-    Parameters: data:dictionary
-    Returns: None
-    Purpose: Adds a Platform object to the platforms pygame sprite group
-    '''
+Name: createPlatform
+Parameters: data:dictionary
+Returns: None
+Purpose: Adds a Platform object to the platforms pygame sprite group
+'''
 def createPlatform(data):
     platforms.add(Platform(data['position'],data['size'],data['platformNo']))
 
@@ -251,12 +251,12 @@ Purpose: To manage data surrounding each player's character, and how to handle c
 '''
 class Character(pygame.sprite.Sprite):
     '''
-        Name: __init__
-        Parameters: position:list, colour:tuple, playerNo:integer
-        Returns: None
-        Purpose: Constructor to set the initial values
-        of the character object
-        '''
+    Name: __init__
+    Parameters: position:list, colour:tuple, playerNo:integer
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the character object
+    '''
     def __init__(self, position, colour, playerNo):
         super().__init__()
         self.height = 40
@@ -277,21 +277,21 @@ class Character(pygame.sprite.Sprite):
         self.collided = False
 
     '''
-        Name: legalMove
-        Parameters: None
-        Returns: None
-        Purpose: Setter for the lastLegalPos variable
-        '''
+    Name: legalMove
+    Parameters: None
+    Returns: None
+    Purpose: Setter for the lastLegalPos variable
+    '''
     def legalMove(self):
         self.lastLegalPos = self.lastPos
 
     '''
-        Name: illegalMove
-        Parameters: None
-        Returns: None
-        Purpose: Reacts to being told by the server that the last legal move was 
-        actually illegal
-        '''
+    Name: illegalMove
+    Parameters: None
+    Returns: None
+    Purpose: Reacts to being told by the server that the last legal move was 
+    actually illegal
+    '''
     def illegalMove(self):
         if (not onPlat(self,platforms)) and self.collided:
             self.lastPos = self.lastLegalPos
@@ -301,11 +301,11 @@ class Character(pygame.sprite.Sprite):
             self.legalMove()
 
     '''
-        Name: checkIfLegal
-        Parameters: direction: string, amount:integer, client:object
-        Returns: boolean
-        Purpose: Sends a request to the server to check if a move was legal
-        '''
+    Name: checkIfLegal
+    Parameters: direction: string, amount:integer, client:object
+    Returns: boolean
+    Purpose: Sends a request to the server to check if a move was legal
+    '''
     def checkIfLegal(self,direction,amount, client):
         checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":self.characterNo}}
         client.sendData(checkIfLegalDict)
@@ -313,12 +313,12 @@ class Character(pygame.sprite.Sprite):
         return True
 
     '''
-        Name: move
-        Parameters: cl:object, platform:object
-        Returns: None
-        Purpose: Changes the position of the sprite position based upon what key is being pressed
-        by a pre-determined amount
-        '''
+    Name: move
+    Parameters: cl:object, platform:object
+    Returns: None
+    Purpose: Changes the position of the sprite position based upon what key is being pressed
+    by a pre-determined amount
+    '''
     def move(self, cl, platform):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
@@ -398,11 +398,11 @@ class Character(pygame.sprite.Sprite):
                     time.sleep(0.01)
 
     '''
-        Name: fire
-        Parameters: client:object
-        Returns: None
-        Purpose: Sends a message to ther server that the player has created a bullet object
-        '''
+    Name: fire
+    Parameters: client:object
+    Returns: None
+    Purpose: Sends a message to ther server that the player has created a bullet object
+    '''
     def fire(self, client):
         mouseKeys = pygame.mouse.get_pressed(3)
         if mouseKeys[0]:
@@ -411,12 +411,12 @@ class Character(pygame.sprite.Sprite):
             client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.characterNo}})
 
     '''
-        Name: gravity
-        Parameters: cl:object, platform:object
-        Returns: None
-        Purpose: Adjusts the position of the character rect if the player 
-        is not on a platform
-        '''
+    Name: gravity
+    Parameters: cl:object, platform:object
+    Returns: None
+    Purpose: Adjusts the position of the character rect if the player 
+    is not on a platform
+    '''
     def gravity(self, cl, platform):
         if not self.collided:
             self.rect.y += 1
@@ -427,12 +427,13 @@ class Character(pygame.sprite.Sprite):
                 moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
                 cl.sendData(moveMessage)
                 self.lastPos = [self.rect.x, self.rect.y]
-    '''
-        Name: publicGame
-        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary
-        Returns: None
-        Purpose: Handles the data for the player to be able to play on the public server
-        '''
+
+'''
+Name: publicGame
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary
+Returns: None
+Purpose: Handles the data for the player to be able to play on the public server
+'''
 def publicGame(screen, clock, players, platforms, bullets, char):
 
     # Creates an instance of the client object and connects it to the server
@@ -499,13 +500,12 @@ def publicGame(screen, clock, players, platforms, bullets, char):
         pygame.display.update()
     exit()
 
-
 '''
-        Name: privateCreate
-        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
-        Returns: None
-        Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
-        '''
+Name: privateCreate
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+Returns: None
+Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
+'''
 def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
     # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
@@ -582,11 +582,11 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     exit()
 
 '''
-        Name: privateJoin
-        Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
-        Returns: None
-        Purpose: Handles joining a private server that someone else is hosting
-        '''
+Name: privateJoin
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+Returns: None
+Purpose: Handles joining a private server that someone else is hosting
+'''
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server

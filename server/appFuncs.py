@@ -1,5 +1,11 @@
 import random
 
+'''
+Name: IPToHash
+Parameters: IP:string
+Returns: dictionary
+Purpose: Converts the IP address passed in, into a hashed key
+'''
 def IPToHash(IP):
     numberList = []
     hashedItem = ""
@@ -23,6 +29,13 @@ def IPToHash(IP):
 
     return {"hashedItem":hashedItem, "PIN": pin}
 
+'''
+    Name: fullServer
+    Parameters: fullValue:integer
+    Returns: boolean
+    Purpose: Determines whether the server is full or not based upon whether the fullValue is 1 or 0, and
+    raises an error if it isn't either of those things 
+    '''
 def fullServer(fullValue):
     if fullValue == 1:
         return True
@@ -31,6 +44,15 @@ def fullServer(fullValue):
     else:
         raise ValueError("fullValue should either be 1 or 0")
 
+'''
+Name: createPlayerID
+Parameters: playerInfo: dictionary, playerIDs:list
+Returns: dictionary
+Purpose: Creates a unique player ID based upon information about the player
+'''
 def createPlayerID(playerInfo, playerIDs):
     playerNo = playerInfo["playerNo"]
     serverOrg = playerInfo[""]
+
+if __name__ == "__main__":
+    pass

@@ -11,6 +11,14 @@ app = Flask(__name__)
 activeServers = {}
 serverFull = False
 
+'''
+Name: pItHv
+Parameters: None
+Returns: None
+Purpose: Recieves JSON data, and returns the IP Address, that should've been
+given through the JSON data, in the form of a hashed key. Also creates a new place in the activeServers
+dictionary with the server information
+'''
 @app.route('/pItHv',methods=["POST"])
 def pItHv():
     global activeServers
@@ -30,6 +38,7 @@ def pItHv():
 
     except Exception as e:
         return jsonify({"error":str(e)}), 500
+
 
 @app.route('/pHtIv',methods=["POST"])
 def pHtIv():

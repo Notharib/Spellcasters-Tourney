@@ -8,22 +8,22 @@ Purpose: To handle properties to do with the fire element
 '''
 class Fire:
     '''
-                Name: __init__
-                Parameters: None
-                Returns: None
-                Purpose: Constructor to set the initial values
-                of the Fire object
-                '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Fire object
+    '''
     def __init__(self):
         self.__opposite = "Water"
         self.__type = "Fire"
 
     '''
-                Name: __repr__
-                Parameters: None
-                Returns: self.__type
-                Purpose: Determines how the object should be represented if nothing is specified
-                '''
+    Name: __repr__
+    Parameters: None
+    Returns: self.__type
+    Purpose: Determines how the object should be represented if nothing is specified
+    '''
     def __repr__(self):
         return self.__type
 
@@ -33,22 +33,22 @@ Purpose: To handle properties to do with the water element
 '''
 class Water:
     '''
-                Name: __init__
-                Parameters: None
-                Returns: None
-                Purpose: Constructor to set the initial values
-                of the Water object
-                '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Water object
+    '''
     def __init__(self):
         self.__opposite = "Fire"
         self.__type = "Water"
 
     '''
-                    Name: __repr__
-                    Parameters: None
-                    Returns: self.__type
-                    Purpose: Determines how the object should be represented if nothing is specified
-                    '''
+    Name: __repr__
+    Parameters: None
+    Returns: self.__type
+    Purpose: Determines how the object should be represented if nothing is specified
+    '''
     def __repr__(self):
         return self.__type
 
@@ -60,12 +60,12 @@ Purpose: To handle properties of the wizard spellcaster
 '''
 class Wizard:
     '''
-                    Name: __init__
-                    Parameters: None
-                    Returns: None
-                    Purpose: Constructor to set the initial values
-                    of the Wizard object
-                    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Wizard object
+    '''
     def __init__(self):
         self.__type = "Wizard"
 
@@ -75,12 +75,12 @@ Purpose: To handle properties of the druid spellcaster
 '''
 class Druid:
     '''
-                    Name: __init__
-                    Parameters: None
-                    Returns: None
-                    Purpose: Constructor to set the initial values
-                    of the Druid object
-                    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Druid object
+    '''
     def __init__(self):
         self.__type = "Druid"
 
@@ -93,12 +93,12 @@ Purpose: To have platforms that players are able to move around on
 '''
 class Platform(pygame.sprite.Sprite):
     '''
-                    Name: __init__
-                    Parameters: position:list, size: list, platformNo: integer
-                    Returns: None
-                    Purpose: Constructor to set the initial values
-                    of the Platform object
-                    '''
+    Name: __init__
+    Parameters: position:list, size: list, platformNo: integer
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Platform object
+    '''
     def __init__(self,position, size, platformNo):
         super().__init__()
         self.height = size[0]
@@ -121,12 +121,12 @@ Purpose: Manages projectiles and projectile behaviour
 '''
 class Bullet(pygame.sprite.Sprite):
     '''
-                    Name: __init__
-                    Parameters: spawnPoint:array, direction: array, player:object, size:list, damage:integer
-                    Returns: None
-                    Purpose: Constructor to set the initial values
-                    of the Bullet object
-                    '''
+    Name: __init__
+    Parameters: spawnPoint:array, direction: array, player:object, size:list, damage:integer
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Bullet object
+    '''
     def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
         super().__init__()
         self.height = size[0]
@@ -145,12 +145,12 @@ class Bullet(pygame.sprite.Sprite):
         self.damage = damage
 
     '''
-                    Name: update
-                    Parameters: None
-                    Returns: None
-                    Purpose: Update function that will update the object's rect position, depending on
-                    what the direction is
-                    '''
+    Name: update
+    Parameters: None
+    Returns: None
+    Purpose: Update function that will update the object's rect position, depending on
+    what the direction is
+    '''
     def update(self):
         if self.direction[0] is not None:
             self.rect.x -= self.direction[0]
@@ -167,12 +167,12 @@ order to be able to type
 '''
 class TextBox(pygame.sprite.Sprite):
     '''
-                    Name: __init__
-                    Parameters: position: array, text:string, allow:string, typing:boolean
-                    Returns: None
-                    Purpose: Constructor to set the initial values
-                    of the TextBox object
-                    '''
+    Name: __init__
+    Parameters: position: array, text:string, allow:string, typing:boolean
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the TextBox object
+    '''
     def __init__(self, position, text, allow="allInput",  typing=False):
         super().__init__()
         self.X = position[0]
@@ -191,12 +191,12 @@ class TextBox(pygame.sprite.Sprite):
         self.allow = allow
 
     '''
-                    Name: checkIfExample
-                    Parameters: None
-                    Returns: boolean
-                    Purpose: Checks whether the value held in self.text is EXAMPLE or if it something else, and
-                    returns the corresponding boolean value
-                    '''
+    Name: checkIfExample
+    Parameters: None
+    Returns: boolean
+    Purpose: Checks whether the value held in self.text is EXAMPLE or if it something else, and
+    returns the corresponding boolean value
+    '''
     def checkIfExample(self):
         if self.text == "EXAMPLE":
             return True
@@ -204,11 +204,11 @@ class TextBox(pygame.sprite.Sprite):
             return False
 
     '''
-                    Name: update
-                    Parameters: keys:list
-                    Returns: None
-                    Purpose: Updates the value of self.text based upon what key the player is pressing
-                    '''
+    Name: update
+    Parameters: keys:list
+    Returns: None
+    Purpose: Updates the value of self.text based upon what key the player is pressing
+    '''
     def update(self, keys):
         if self.typing:
             alphabetToPygame = {
@@ -323,6 +323,13 @@ Inherits: pygame.sprite.Sprite
 Purpose: To have an object that follows the player's cursor so that it can interact with textboxes
 '''
 class Pointer(pygame.sprite.Sprite):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Pointer object
+    '''
     def __init__(self):
         super().__init__()
         self.X = pygame.mouse.get_pos()[0]
@@ -337,6 +344,13 @@ class Pointer(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
 
+    '''
+    Name: update
+    Parameters: None
+    Returns: None
+    Purpose: Updates the rect position of the Pointer object based
+    upon the location of the cursor
+    '''
     def update(self):
         mousePos = pygame.mouse.get_pos()
         self.rect.x = mousePos[0]
@@ -344,6 +358,12 @@ class Pointer(pygame.sprite.Sprite):
 
 # General functions
 
+'''
+Name: getDirection
+Parameters: player:object
+Returns: MPVector:list
+Purpose: Gets the direction vector that the projectile needs to move in
+'''
 def getDirection(player):
     mousePos = pygame.mouse.get_pos()
     MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
@@ -356,6 +376,12 @@ def getDirection(player):
     print(MPVector)
     return MPVector
 
+'''
+Name: youDied
+Parameters: player:object, screen:object
+Returns: player: object
+Purpose: Event loop to handle what happens when a player runs out of health
+'''
 def youDied(player, screen):
     if player.HP == 0:
         running = True
@@ -377,6 +403,13 @@ def youDied(player, screen):
             pygame.display.update()
     return player
 
+'''
+Name: onPlat
+Parameters: player: object, platforms: object
+Returns: boolean
+Purpose: Determines whether a player is on top of a platform, and therefore
+shouldn't be affected by gravity
+'''
 def onPlat(player, platforms):
     for platform in platforms.sprites():
         if platform.rect.top == player.rect.bottom or platform.rect.top == player.rect.bottom + 1 or platform.rect.top == player.rect.bottom - 1:
@@ -384,6 +417,12 @@ def onPlat(player, platforms):
             return True
     return False
 
+'''
+Name: sendPlatformInfo
+Parameters: platforms: pygame Sprite Group
+Returns: data:list
+Purpose: Creates a list of all the information about all the platforms
+'''
 def sendPlatformInfo(platforms):
     data = []
     for platform in platforms.sprites():
@@ -391,6 +430,12 @@ def sendPlatformInfo(platforms):
         data.append(dictionary)
     return data
 
+'''
+Name: platformInfo
+Parameters: platforms: pygame Sprite group, client:object, clientPlayer:object
+Returns: None
+Purpose: Send information about the platforms within the sprite group to the server
+'''
 def platformInfo(platforms, client, clientPlayer):
     if clientPlayer.characterNo - 1 == 0:
         platformInfo = sendPlatformInfo(platforms)
