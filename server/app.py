@@ -14,7 +14,7 @@ serverFull = False
 '''
 Name: pItHv
 Parameters: None
-Returns: None
+Returns: string
 Purpose: Recieves JSON data, and returns the IP Address, that should've been
 given through the JSON data, in the form of a hashed key. Also creates a new place in the activeServers
 dictionary with the server information
@@ -39,7 +39,13 @@ def pItHv():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
-
+'''
+Name: pHtIv
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and returns the associated IP Address for that
+hash key, assuming it was in the initally given JSON data
+'''
 @app.route('/pHtIv',methods=["POST"])
 def pHtIv():
     global activeServers
@@ -65,6 +71,13 @@ def pHtIv():
         print(e)
         return jsonify({"error":str(e)}), 500
 
+'''
+Name: serverFull
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and if in the json data it is given a fullValue, 
+it changes whether the public server is recognised as full or as not full 
+'''
 @app.route('/serverFull', methods=["POST"])
 def serverFull():
     global serverFull
@@ -84,6 +97,13 @@ def serverFull():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
+'''
+Name: serverFullCheck
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and checks what the value of the global variable serverFull is,
+and depending on what that value is, it tells the initial sender whether the public server is full
+'''
 @app.route('/serverFullCheck', methods=["GET"])
 def serverFullCheck():
     global serverFull
@@ -95,6 +115,13 @@ def serverFullCheck():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
+'''
+Name: playerID
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and returns a unique playerID, based upon what server the player is joining,
+their character build, etc, etc.
+'''
 @app.route('/playerID', methods=["POST"])
 def playerID():
     global activeServers
