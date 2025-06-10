@@ -6,8 +6,12 @@ app = Flask(__name__)
 # activeServers = {"exampleServerID":{
 #     "IPAddress": "127.0.0.1",
 #     "playerIDs": [],
-#     "serverPin: 5-digit PIN number
+#     "serverPin: 5-digit PIN number,
+#     "leaderboard": {
+#           playerID: noOfDeaths
+#     }
 # }}
+
 activeServers = {}
 serverFull = False
 
@@ -34,6 +38,7 @@ def pItHv():
         activeServers[hashedKey["hashedItem"]]["IPAddress"] = IPAddress
         activeServers[hashedKey["hashedItem"]]["playerIDs"] = []
         activeServers[hashedKey["hashedItem"]]["serverPin"] = hashedKey["PIN"]
+        activeServers[hashedKey["hashedItem"]]["leaderboard"] = {}
         return jsonify(hashedKey), 200
 
     except Exception as e:
@@ -140,6 +145,53 @@ def playerID():
         return jsonify(playerIDMessage), 200
     except Exception as e:
         return jsonify({"error":str(e)}), 500
+
+'''
+Name: privateLeaderCheck
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and returns the current leaderboard for the associated privateServer
+'''
+@app.route('/privateLeaderCheck', methods=['GET'])
+def privateLeaderCheck():
+    global activeServers
+    data = request.get_json()
+    serverKey = data.get("serverKey")
+
+    if not playerID:
+        return jsonify({"error":"playerID required"}), 400
+
+    try:
+        serverLeaderboard = activeServers[serverKey]["leaderboard"]
+        return jsonify({"leaderboard":serverLeaderboard}), 200
+
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
+'''
+Name: privateLeaderUpd
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and updates the leaderboard for the private server given
+in the json data, by increasing a player's no. of deaths by 1
+'''
+@app.route('/privateLeaderUpd', methods=['POST'])
+def privateLeaderUpd():
+    global activeServers
+    data = request.get_json()
+    serverKey = data.get("serverKey")
+    playerID = data.get("playerID")
+
+    if not serverKey or not playerID:
+        return jsonify({"error":"missing json data"}), 400
+
+    try:
+        activeServers[serverKey]["leaderboard"][playerID] += 1
+        return jsonify({"msg": "score updated"}), 200
+
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
