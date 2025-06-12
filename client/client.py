@@ -1,6 +1,6 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo
+from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo, getLeaderboard
 from PrivateServer import Server
 
 '''
@@ -293,6 +293,23 @@ class Character(pygame.sprite.Sprite):
         self.collided = False
 
     '''
+    Name: leaderboardReq
+    Parameters: serverType:string, client:object, serverKey:None|string
+    Returns: None
+    Purpose: Setter for the lastLegalPos variable
+    '''
+    def leaderboardReq(self,serverType,client,serverKey=None):
+        if serverType is not None:
+            leaderboard = getLeaderboard(serverType, self.characterNo, serverKey, client)
+            if leaderboard is not None:
+                client.setLeaderBoard(leaderboard)
+                return client
+            else:
+                return client
+        else:
+            raise Exception("None Type Error: serverType should be string type value, not NoneType")
+
+    '''
     Name: legalMove
     Parameters: None
     Returns: None
@@ -469,52 +486,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     # the player's clientNo is 1
     platformInfo(platforms, c, clientPlayer)
 
-    running = True
-
-    # Run loop
-    while running:
-
-        clientPlayer.collided = False
-        plat = None
-
-        screen.fill(WHITE)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                c.tellServerDisconn()
-                exit()
-            if event.type == pygame.KEYDOWN:
-                keys = pygame.key.get_pressed()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouseKey = pygame.mouse.get_pressed(3)
-
-        # Sprite group collision check; determines whether a player should be able to continue have gravity
-        # enact on them (if they're on a platform they shouldn't)
-        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-        for platform, player_list in collisions.items():
-            for player in player_list:
-                if player == clientPlayer:
-                    clientPlayer.collided = True
-
-        # Sprite group collision check; determines whether a projectile had hit a player.
-        # If one has, then it will only damage the player if they are not the one who sent it
-        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for b, p_list in pHit.items():
-            for pl in p_list:
-                if pl != b.playerOrigin:
-                    pl.HP -= b.damage
-                    pl = youDied(pl, screen)
-                    bullets.remove(b)
-
-        bullets.update()
-        clientPlayer.gravity(c, plat)
-        clientPlayer.move(c, plat)
-        clientPlayer.fire(c)
-        platforms.draw(screen)
-        bullets.draw(screen)
-        players.draw(screen)
-        clock.tick(60)
-        pygame.display.update()
-    exit()
+    mainRunLoop(screen,clock,platforms,bullets,char,c)
 
 '''
 Name: privateCreate
@@ -548,54 +520,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # for player in players.sprites():
     #     print(player.characterNo)
 
-    running = True
-
-    # Run loop
-    while running:
-
-        clientPlayer.collided = False
-        plat = None
-
-        screen.fill(WHITE)
-
-        #Event loop
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                c.tellServerDisconn()
-                exit()
-            if event.type == pygame.KEYDOWN:
-                keys = pygame.key.get_pressed()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouseKey = pygame.mouse.get_pressed(3)
-
-        # Sprite group collision handling; handles any collisions between platforms and players, and determines whether they
-        # still need to be impacted by gravity
-        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-        for platform, player_list in collisions.items():
-            for player in player_list:
-                if player == clientPlayer:
-                    clientPlayer.collided = True
-
-        # Sprite group collision handling; handles and collisions between projectiles and players, and determines whether they should be
-        # hit by that projectile
-        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for b, p_list in pHit.items():
-            for pl in p_list:
-                if pl != b.playerOrigin:
-                    pl.HP -= b.damage
-                    pl = youDied(pl, screen)
-                    bullets.remove(b)
-
-        bullets.update()
-        clientPlayer.gravity(c, plat)
-        clientPlayer.move(c, plat)
-        clientPlayer.fire(c)
-        platforms.draw(screen)
-        bullets.draw(screen)
-        players.draw(screen)
-        clock.tick(60)
-        pygame.display.update()
-    exit()
+    mainRunLoop(screen,clock,platforms,bullets,char,c)
 
 '''
 Name: privateJoin
@@ -621,6 +546,15 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     time.sleep(0.1)
 
+    mainRunLoop(screen,clock,platforms,bullets,char,c)
+
+'''
+Name: mainRunLoop
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object
+Returns: None
+Purpose: Main run loop for the game
+'''
+def mainRunLoop(screen, clock, platforms, bullets, char, c):
     running = True
 
     # Run loop
@@ -638,6 +572,9 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
                 exit()
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
+                mods = pygame.key.get_mods()
+                if keys[pygame.K_TAB]:
+                    pass
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
@@ -667,7 +604,6 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
         clock.tick(60)
         pygame.display.update()
     exit()
-
 
 if __name__ == '__main__':
     pygame.display.init()

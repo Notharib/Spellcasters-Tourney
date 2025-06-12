@@ -79,18 +79,20 @@ class Bullet(pygame.sprite.Sprite):
 '''
 Name: getLeaderboard
 Parameters: serverType:string, playerNo:integer, serverKey:None, client=None
-Returns: leaderboard:dictionary
+Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
 def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
+    leaderboard = None
     if serverType == "public":
         if client is None:
-            raise Exception("Client object is required for public server leaderboards")
+            raise Exception("None Type Error: client should be Client object type value, not NoneType")
         else:
             client.sendData({"type":"leaderGet"})
+            return leaderboard
     elif serverType == "private":
         if serverKey is None:
-            raise Exception("Server key is required for private server leaderboards")
+            raise Exception("None Type Error: severKey should be string type value, not NoneType")
         else:
             jsonInfo = {
                 "serverKey":serverKey,
