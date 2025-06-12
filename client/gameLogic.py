@@ -3,6 +3,79 @@ import pygame, math, requests
 # Non-player objects to be used within the game
 
 '''
+Name: Leaderboard
+Inherits: pygame.sprite.Sprite
+Purpose: To display what the current leaderboard is
+'''
+class Leaderboard(pygame.sprite.Sprite):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Leaderboard object
+    '''
+    def __init__(self):
+        super().__init__()
+        self.__leaderboard = {}
+        self.__displayText = ""
+        self.X = 200
+        self.Y = 0
+        self.width = 400
+        self.height = 300
+        self.colour = (0,0,255)
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(self.colour)
+        pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])
+        self.rect = self.image.get_rect()
+        self.rect.x = self.X
+        self.rect.y = self.Y
+
+    '''
+    Name: update
+    Parameters: leaderboard:dictionary
+    Returns: None
+    Purpose: Updates the values of different variables within the class as needed
+    '''
+    def update(self, leaderboard):
+        self.__displayText = ""
+        self.__leaderboard = leaderboard
+        leaderList = self.setupLeaderStructure()
+        for i in range(len(leaderList)):
+            if i == 0:
+                self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
+            else:
+                self.__displayText += "\n{position}: {user}, {deathCount}".format(position=i+1, user=leaderList[i][0], deathCount=leaderList[i][1])
+
+    '''
+    Name: getDisplayText
+    Parameters: None
+    Returns: string
+    Purpose: Getter for the displayText variable
+    '''
+    def getDisplayText(self):
+        return self.__displayText
+
+    '''
+    Name: setupLeaderStructure
+    Parameters: None
+    Returns: orderedLeader:list
+    Purpose: Organises the leaderboard so that
+    '''
+    def setupLeaderStructure(self):
+        deathValues = list(self.__leaderboard.values())
+        orderedDeath = merge_sort(deathValues)
+
+        orderedLeader = []
+        for deathValue in orderedDeath:
+            for key in self.__leaderboard.keys():
+                if self.__leaderboard[key] == deathValue:
+                    orderedLeader.append([key, deathValue])
+                    break
+        return orderedLeader
+
+
+'''
 Name: Platform
 Inherits: pygame.sprite.Sprite
 Purpose: To have platforms that players are able to move around on
@@ -75,6 +148,41 @@ class Bullet(pygame.sprite.Sprite):
 
 
 # General functions
+
+'''
+Name: merge_sort
+Parameters: myList:list
+Returns: list
+Purpose: Sorts an unordered list into an ordered one
+'''
+def merge_sort(myList):
+    list_length = len(myList)
+    if list_length == 1:
+        return myList
+    mid_point = list_length // 2
+    left = merge_sort(myList[:mid_point])
+    right = merge_sort(myList[mid_point:])
+    return merge(left, right)
+
+'''
+Name: merge
+Parameters: left:list, right:list
+Returns: output:list
+Purpose: Sorts and merges two separate lists
+'''
+def merge(left, right):
+    output = []
+    i,  j = 0, 0
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            output.append(left[i])
+            i += 1
+        else:
+            output.append(right[j])
+            j += 1
+    output.extend(left[i:])
+    output.extend(right[j:])
+    return output
 
 '''
 Name: getLeaderboard

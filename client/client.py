@@ -1,6 +1,6 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import getDirection, youDied, onPlat, Bullet, Platform, platformInfo, getLeaderboard
+from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard
 from PrivateServer import Server
 
 '''
@@ -486,7 +486,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     # the player's clientNo is 1
     platformInfo(platforms, c, clientPlayer)
 
-    mainRunLoop(screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
 
 '''
 Name: privateCreate
@@ -520,7 +520,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # for player in players.sprites():
     #     print(player.characterNo)
 
-    mainRunLoop(screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
 
 '''
 Name: privateJoin
@@ -546,7 +546,7 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     time.sleep(0.1)
 
-    mainRunLoop(screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
 
 '''
 Name: mainRunLoop
@@ -554,7 +554,11 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Main run loop for the game
 '''
-def mainRunLoop(screen, clock, platforms, bullets, char, c):
+def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
+    leaderboard = pygame.sprite.Group()
+    leaderboard.add(Leaderboard())
+
+
     running = True
 
     # Run loop
@@ -572,7 +576,7 @@ def mainRunLoop(screen, clock, platforms, bullets, char, c):
                 exit()
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
-                mods = pygame.key.get_mods()
+                # mods = pygame.key.get_mods()
                 if keys[pygame.K_TAB]:
                     pass
             if event.type == pygame.MOUSEBUTTONDOWN:
