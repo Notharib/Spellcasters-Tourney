@@ -62,6 +62,7 @@ class Server:
         self.__clientList = []
         self.__spawnPoints = [[250,250], [350,350],[450,450]]
         self.__platforms = [Platform([300,200],0),Platform([200,300],1)]
+        self.__leaderboard = {}
 
     '''
     Name: start
@@ -93,6 +94,7 @@ class Server:
                 self.checkIfFull()
 
                 self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
+                self.__leaderboard[len(self.__clientList)+1] = 0
                 time.sleep(0.1)
                 self.notifyClientsOfConn(conn,colour,position)
                 self.createStage(conn)
@@ -182,12 +184,20 @@ class Server:
             else:
                 try:
                     message = dict(json.loads(data.decode()))
-                    if message["type"] == "movement":
+                    if message["type"] == "leaderUpd":
+                        self.__leaderboard[message["data"]["playerNo"]] += 1
 
+                    if message["type"] == "leaderGet":
+                        leaderMsg = {
+                            "type":"leaderGet",
+                            "data": self.__leaderboard
+                        }
+                        conn.send(json.dumps(leaderMsg).encode())
+
+                    if message["type"] == "movement":
                         for client in self.__clientList:
                             if client.client == conn:
                                 clPos = client.clientNo-1
-
 
                         if message["data"]["direction"] == "y":
                             self.__clientList[clPos].position[1] = message["data"]["movedTo"]
@@ -237,7 +247,9 @@ class Server:
                                 else:
                                     clientMove.client.send(json.dumps({"type": "MOVELEGAL"}).encode())
                     for client in self.__clientList:
-                        if client is not None and client.client != conn and (message["type"] != "platformInfo" or message["type"] != "legalCheck"):
+                        if (client is not None and client.client != conn and
+                                (message["type"] != "platformInfo" or message["type"] != "legalCheck" or message["type"] != "leaderUpd" or
+                                message["type"] != "leaderGet")):
                             client.client.send(data)
                 except json.JSONDecodeError as err:
                     print(data.decode())

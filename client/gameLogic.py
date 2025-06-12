@@ -1,4 +1,4 @@
-import pygame, math, requests, json
+import pygame, math, requests
 
 # Non-player objects to be used within the game
 
@@ -87,7 +87,7 @@ def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
         if client is None:
             raise Exception("Client object is required for public server leaderboards")
         else:
-            pass
+            client.sendData({"type":"leaderGet"})
     elif serverType == "private":
         if serverKey is None:
             raise Exception("Server key is required for private server leaderboards")

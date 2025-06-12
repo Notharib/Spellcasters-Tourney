@@ -6,7 +6,7 @@ from PrivateServer import Server
 '''
 Name: Client
 Purpose: To interact with the server, and to modify the players' information on the game
-as new data is sent/recieved from the server
+as new data is sent/received from the server
 '''
 class Client:
     '''
@@ -26,6 +26,7 @@ class Client:
         self.__playing = None
         self.__endGameData = None
         self.__clientPlayer = None
+        self.__leaderBoard = None
 
     '''
     Name: connect
@@ -69,13 +70,18 @@ class Client:
                 try:
                     msg = dict(json.loads(data.decode()))
 
+                    if msg["type"] == "leaderGet":
+                        self.setLeaderBoard(msg["data"])
+
                     if msg["type"] == "clientNo":
                         print("client player created")
                         self.clientNo = msg["data"]["clientNo"]
                         addCharacter(msg["data"])
+
                     if msg["type"] == "playerJoin":
                         print("external player added")
                         addCharacter(msg["data"])
+
                     if msg["type"] == "movement":
                         if len(players.sprites()) == 2:
                             movedPlayer = players.sprites()[1]
@@ -96,6 +102,7 @@ class Client:
                         print("Created platform")
                         platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
                         self.__noOfPlatforms += 1
+
                     if msg["type"] == "disconn":
                         players.remove(players.sprites()[msg["data"]["clientNo"]])
                         print("Player Disconnected")
@@ -144,6 +151,15 @@ class Client:
         self.sendData(msgDict)
 
     #Getters and Setters
+
+    '''
+    Name: setLeaderBoard
+    Parameters: leaderboard:dictionary
+    Returns: None
+    Purpose: Setter for the leaderboard variable
+    '''
+    def setLeaderBoard(self,leaderboard):
+        self.__leaderBoard = leaderboard
 
     '''
     Name: enableWaiting
