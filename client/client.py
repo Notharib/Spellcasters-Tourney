@@ -1,7 +1,7 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from time import time
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard
+from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard
 from PrivateServer import Server
 
 '''
@@ -569,6 +569,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
 
         clientPlayer.collided = False
         plat = None
+        showLeader = False
 
         screen.fill(WHITE)
 
@@ -581,7 +582,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
                 keys = pygame.key.get_pressed()
                 # mods = pygame.key.get_mods()
                 if keys[pygame.K_TAB]:
-                    pass
+                    leaderboard.update()
+                    showLeader = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
@@ -608,6 +610,9 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
         platforms.draw(screen)
         bullets.draw(screen)
         players.draw(screen)
+        if showLeader:
+            leaderboard.draw(screen)
+
         clock.tick(60)
         pygame.display.update()
     exit()

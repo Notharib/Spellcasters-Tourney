@@ -13,7 +13,7 @@ app = Flask(__name__)
 # }}
 
 activeServers = {}
-serverFull = False
+serverFullValue = False
 
 '''
 Name: pItHv
@@ -111,9 +111,10 @@ and depending on what that value is, it tells the initial sender whether the pub
 '''
 @app.route('/serverFullCheck', methods=["GET"])
 def serverFullCheck():
-    global serverFull
+    global serverFullValue
+    print(serverFullValue)
     try:
-        if serverFull:
+        if serverFullValue:
             return jsonify({"msg":"Server Full","quickMsg":1}), 200
         else:
             return jsonify({"msg":"Server Not Full","quickMsg":0}), 200
