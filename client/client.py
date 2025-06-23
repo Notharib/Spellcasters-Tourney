@@ -1,5 +1,4 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
-from time import time
 from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard
 from PrivateServer import Server
@@ -18,17 +17,17 @@ class Client:
     of the client object
     '''
     def __init__(self,IPToConnectTo, socket=50000):
-        self.__HOST = IPToConnectTo
-        self.__PORT = socket
-        self.clientNo = None
-        self.__socket = None
-        self.__noOfPlatforms = 0
-        self.__waiting = None
-        self.__playing = None
-        self.__endGameData = None
-        self.__clientPlayer = None
-        self.__leaderBoard = None
-        self.__lastMessageSent = time
+        self.__HOST = IPToConnectTo #String
+        self.__PORT = socket #Integer
+        self.clientNo = None #Integer
+        self.__socket = None #Object?
+        self.__noOfPlatforms = 0 #Integer
+        self.__waiting = None #Bool
+        self.__playing = None #Bool
+        self.__endGameData = None #Dict
+        self.__clientPlayer = None #String?
+        self.__leaderBoard = None #Object
+        self.__lastMessageSent = time.time()
 
     '''
     Name: connect
@@ -51,10 +50,10 @@ class Client:
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
     def sendData(self,message):
-        if (time - self.__lastMessageSent) >= 0.1:
+        if (time.time() - self.__lastMessageSent) >= 0.1:
             strMessage = json.dumps(message)
             self.__socket.send(strMessage.encode())
-            self.__lastMessageSent = time
+            self.__lastMessageSent = time.time()
 
     '''
     Name: listen
@@ -563,15 +562,22 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
 
 
     running = True
+    showLeader = False
 
     # Run loop
     while running:
 
         clientPlayer.collided = False
         plat = None
-        showLeader = False
 
         screen.fill(WHITE)
+
+        tab = pygame.key.get_pressed()[pygame.K_TAB]
+        if not tab:
+            showLeader = False
+        else:
+            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+            showLeader = True
 
         # Event loop
         for event in pygame.event.get():
@@ -581,9 +587,6 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
                 # mods = pygame.key.get_mods()
-                if keys[pygame.K_TAB]:
-                    leaderboard.update()
-                    showLeader = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 

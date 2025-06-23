@@ -57,6 +57,15 @@ class Leaderboard(pygame.sprite.Sprite):
         return self.__displayText
 
     '''
+    Name: getLeaderboard 
+    Parameters: None 
+    Returns: dictionary 
+    Purpose: Getter for the leaderboard variable
+    '''    
+    def getLeaderboard(self):
+        return self.__leaderboard
+
+    '''
     Name: setupLeaderStructure
     Parameters: None
     Returns: orderedLeader:list
@@ -64,7 +73,9 @@ class Leaderboard(pygame.sprite.Sprite):
     '''
     def setupLeaderStructure(self):
         deathValues = list(self.__leaderboard.values())
-        orderedDeath = merge_sort(deathValues)
+        # orderedDeath = merge_sort(deathValues)
+        deathValues.sort()
+        orderedDeath = deathValues
 
         orderedLeader = []
         for deathValue in orderedDeath:
@@ -74,6 +85,8 @@ class Leaderboard(pygame.sprite.Sprite):
                     break
         return orderedLeader
 
+    def __repr__(self):
+        return self.__leaderboard
 
 '''
 Name: Platform
