@@ -63,7 +63,7 @@ def pHtIv():
 
     try:
         if activeServers[hashedKey] is None:
-            return jsonify({"error": "entered server key doesn't exist!"})
+            return jsonify({"error": "entered server key doesn't exist!"}), 400
         if activeServers[hashedKey]["IPAddress"] is None:
             return jsonify({"error": "Please DM notharib and tell him that this happened"})
         IPAddress = activeServers[hashedKey]["IPAddress"]
