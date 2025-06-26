@@ -14,6 +14,11 @@ app = Flask(__name__)
 
 activeServers = {}
 serverFullValue = False
+pubLeader = {}
+
+for i in range(1,11):
+    pubLeader[str(i)] = None
+
 
 '''
 Name: pItHv
@@ -193,6 +198,69 @@ def privateLeaderUpd():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
+
+'''
+Name: publicLeaderCheck
+Parameters: None
+Returns: string
+Purpose: Recieves the request, and returns the dictionary information for the
+public server
+'''
+@app.route('/publicLeaderCheck',methods=['GET'])
+def publicLeaderCheck():
+    global pubLeader
+
+    try:
+        return jsonify({"msg":"leaderboard", "data":pubLeader}), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
+'''
+Name: publicServerUpd
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and then updates the amount of deaths stored for that player
+'''
+@app.route('/publicLeaderUpd',methods=['POST'])
+def publicLeaderUpd():
+    global pubLeader
+    data = request.get_json()
+    playerID = data.get("playerID")
+
+    if not playerID:
+        return jsonify({"msg":"Missing PlayerID"}), 400
+
+    try:
+        if pubLeader[playerID] is None:
+            pubLeader[playerID] = 0
+            return jsonify({"msg":"leaderboard updated"}), 200
+        else:
+            pubLeader[playerID] += 1
+            return jsonify({"msg":"leaderboard updated"}), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
+'''
+Name: removePlayer
+Parameters: None
+Returns: string
+Purpose: Recieves JSON data, and if in the json data it is given,
+it converts the position in the leaderboard to None
+'''
+@app.route('/removePlayer', methods=['POST'])
+def removePlayer():
+    global pubLeader
+    data = request.get_json()
+    playerID = data.get("playerID")
+
+    if not playerID:
+        return jsonify({"error":"playerID required"}), 400
+
+    try:
+        pubLeader[playerID] = None
+        return jsonify({"msg":"player removed successfully"}), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

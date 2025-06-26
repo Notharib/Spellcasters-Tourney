@@ -1,4 +1,4 @@
-import pygame, math, requests
+import pygame, math, requests, unittest, random
 
 # Non-player objects to be used within the game
 
@@ -65,6 +65,17 @@ class Leaderboard(pygame.sprite.Sprite):
     def getLeaderboard(self):
         return self.__leaderboard
 
+
+    '''
+    Name: addToLeader
+    Parameters: examplePlayer:list
+    Returns: None
+    Purpose: Function only used for unit testing to add players to
+    the leaderboard
+    '''
+    def addToLeader(self,examplePlayer):
+        self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
+
     '''
     Name: setupLeaderStructure
     Parameters: None
@@ -73,6 +84,7 @@ class Leaderboard(pygame.sprite.Sprite):
     '''
     def setupLeaderStructure(self):
         deathValues = list(self.__leaderboard.values())
+        print(deathValues)
         orderedDeath = merge_sort(deathValues)
        # deathValues.sort()
        # orderedDeath = deathValues
@@ -206,11 +218,13 @@ Purpose: Gets the current updated version of the leaderboard for the player to s
 def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
     leaderboard = None
     if serverType == "public":
-        if client is None:
-            raise Exception("None Type Error: client should be Client object type value, not NoneType")
-        else:
-            client.sendData({"type":"leaderGet"})
-            return leaderboard
+      #  if client is None:
+      #      raise Exception("None Type Error: client should be Client object type value, not NoneType")
+      #  else:
+      #      client.sendData({"type":"leaderGet"})
+      #      return leaderboard
+      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck")
+      return leaderboard
     elif serverType == "private":
         if serverKey is None:
             raise Exception("None Type Error: severKey should be string type value, not NoneType")
@@ -310,5 +324,51 @@ def platformInfo(platforms, client, clientPlayer):
         print(platformInfoDict)
         client.sendData(platformInfoDict)
 
+# Unit Tests
+class LeaderboardTesting(unittest.TestCase):
+    '''
+    Name: setUp
+    Parameters: None
+    Returns: None
+    Purpose: Sets up the unit test
+    '''
+    def setUp(self):
+        self.leaderboard = Leaderboard()
+        
+        for i in range(3):
+            randomPlayer = [random.randint(0,100),random.randint(0,100)]
+            self.leaderboard.addToLeader(randomPlayer)
+
+    '''
+    Name: test_isLeaderboardGetter
+    Parameters: None
+    Returns: None
+    Purpose: Unit test to make sure the leaderboard is returning as a dictionary
+    '''
+    def test_isLeaderboardGetter(self):
+        self.assertEqual(type(self.leaderboard.getLeaderboard()),type({}),"Problem with Leaderboard getter or variable")
+    
+    '''
+    Name: test_isDisplayTextGetter
+    Parameters: None
+    Returns: None
+    Purpose: Unit test to make sure the display text getter is returning a string
+    '''
+    def test_isDisplayTextGetter(self):
+        self.assertEqual(type(self.leaderboard.getDisplayText()),type("Hello World"), "Problem with DisplayText getter or variable")
+    
+    '''
+    Name: test_LeaderStructure
+    Parameters: None
+    Returns: None
+    Purpose: Unit test to make sure the leaderboard is structuring properly
+    '''
+    def test_LeaderStructure(self):
+        orderedDeath = self.leaderboard.setupLeaderStructure()
+        self.assertGreater(len(orderedDeath),0)
+        for item in orderedDeath:
+            self.assertEqual(type(item),type([]))
+
+
 if __name__ == "__main__":
-    pass
+    unittest.main()

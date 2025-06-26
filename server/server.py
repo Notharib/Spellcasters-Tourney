@@ -170,6 +170,15 @@ class Server:
                 client.client.send(json.dumps(messageDict).encode())
 
     '''
+    Name: leaderUpd
+    Parameters: None
+    Returns: None
+    Purpose: Sends a POST request to the API to update the information on the public leaderboard
+    '''
+    def leaderUpd(self, playerID):
+        requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":playerID})
+
+    '''
     Name: recv_from_client
     Parameters: conn:object
     Returns: None
@@ -185,8 +194,8 @@ class Server:
                 try:
                     message = dict(json.loads(data.decode()))
                     if message["type"] == "leaderUpd":
-                        self.__leaderboard[message["data"]["playerNo"]] += 1
-
+                        #self.__leaderboard[message["data"]["playerNo"]] += 1
+                        self.leaderUpd(message["data"]["playerNo"])
                     if message["type"] == "leaderGet":
                         leaderMsg = {
                             "type":"leaderGet",

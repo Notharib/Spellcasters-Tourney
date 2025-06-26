@@ -265,6 +265,7 @@ class Server:
         self.__platforms = []
         self.__spawnPoints = []
         self.password = None
+        self.__beginTime = None
 
     '''
     Name: start
@@ -367,6 +368,24 @@ class Server:
                     "otherPlayersInfo": {}
                 }
             }
+        self.__beginTime = time.time()
+    
+    def timeCheck(self):
+        while (time.time()-self.__beginTime) < self.__lengthOfGame:
+            pass
+        self.__timeUp()
+
+
+    def getTimeRemaining(self):
+        for client in self.__clientList:
+            timeRemaining = {
+                    "type": "timeLeft",
+                    "data": self.__lengthOfGame - (time.time()-self.__beginTime) 
+                    }
+            client.sendData(json.dumps(timeRemaining).encode())
+
+    def __timeUp(self):
+        pass
 
     '''
     Name: messageHandling
@@ -482,3 +501,6 @@ class Server:
                                 client.sendData(data)
                     except Exception as e:
                         print("Error:", e)
+
+if __name__ == "__main__":
+    pass

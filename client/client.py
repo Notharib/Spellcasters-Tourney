@@ -27,7 +27,7 @@ class Client:
         self.__endGameData = None #Dict
         self.__clientPlayer = None #String?
         self.__leaderBoard = None #Object
-        self.__lastMessageSent = time.time()
+        self.__lastMessageSent = time.time() #Float
 
     '''
     Name: connect
@@ -293,6 +293,7 @@ class Character(pygame.sprite.Sprite):
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
         self.collided = False
+        self.lastBulletFired = time.time()
 
     '''
     Name: leaderboardReq
@@ -440,7 +441,7 @@ class Character(pygame.sprite.Sprite):
     '''
     def fire(self, client):
         mouseKeys = pygame.mouse.get_pressed(3)
-        if mouseKeys[0]:
+        if mouseKeys[0] and (time.time().self.lastBulletFired) > 0.1:
             direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
             client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.characterNo}})
@@ -550,6 +551,12 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
 
+def leaderBoardUpd(serverType, client):
+    if serverType == "public":
+        client.sendData({"type:leaderReq"})
+        
+    
+
 '''
 Name: mainRunLoop
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object
@@ -563,6 +570,12 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
 
     running = True
     showLeader = False
+    
+    f = pygame.freetype.SysFont("Comic Sans MS", 24)
+    f.origin = True
+
+    leaderText = ""
+    leaderUpd = time.time()
 
     # Run loop
     while running:
@@ -575,9 +588,11 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
         tab = pygame.key.get_pressed()[pygame.K_TAB]
         if not tab:
             showLeader = False
+            leaderText = ""
         else:
             leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
             showLeader = True
+            leaderText = leaderboard.sprites()[0].getDisplayText()
 
         # Event loop
         for event in pygame.event.get():
@@ -607,6 +622,9 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
                     bullets.remove(b)
 
         bullets.update()
+        if (time.time()-leaderUpd) >= 1:
+            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+            timeUpd = time.time()
         clientPlayer.gravity(c, plat)
         clientPlayer.move(c, plat)
         clientPlayer.fire(c)
@@ -615,6 +633,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
         players.draw(screen)
         if showLeader:
             leaderboard.draw(screen)
+            f.render_to(screen,(200,0), leaderText, (0,0,0))
 
         clock.tick(60)
         pygame.display.update()
