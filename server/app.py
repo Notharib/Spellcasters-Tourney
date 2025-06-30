@@ -198,7 +198,6 @@ def privateLeaderUpd():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
-
 '''
 Name: publicLeaderCheck
 Parameters: None
@@ -226,10 +225,13 @@ def publicLeaderUpd():
     global pubLeader
     data = request.get_json()
     playerID = data.get("playerID")
-
+    
     if not playerID:
         return jsonify({"msg":"Missing PlayerID"}), 400
-
+    
+    playerID = str(playerID)
+    print(pubLeader[playerID])
+    
     try:
         if pubLeader[playerID] is None:
             pubLeader[playerID] = 0
@@ -238,6 +240,7 @@ def publicLeaderUpd():
             pubLeader[playerID] += 1
             return jsonify({"msg":"leaderboard updated"}), 200
     except Exception as e:
+        print("Error",e)
         return jsonify({"error":str(e)}), 500
 
 '''

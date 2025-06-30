@@ -1,6 +1,6 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard
+from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, linearQueue
 from PrivateServer import Server
 
 '''
@@ -28,6 +28,8 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard = None #Object
         self.__lastMessageSent = time.time() #Float
+        self.__messageQueue = linearQueue() #Linear Queue
+
 
     '''
     Name: connect
@@ -38,10 +40,25 @@ class Client:
     '''
     def connect(self):
         print(self.__HOST, self.__PORT)
-
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
+        threading.Thread(target=self.queueEmptying).start()
+
+    '''
+    Name: queueEmptying 
+    Parameters: Self
+    Returns: None
+    Description: Empties the next message in the messageQueue
+    '''
+    def queueEmptying(self):
+        while True:
+            if not self.__messageQueue.isempty():
+                sendValue = self.__messageQueue.dequeue()
+                strSendValue = json.dumps(sendValue)
+                self.socket.send(strSendValue.encode())
+                self.__lastMessageSent = time.time()
+                time.sleep(0.1)
 
     '''
     Name: sendData
@@ -50,10 +67,16 @@ class Client:
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
     def sendData(self,message):
-        if (time.time() - self.__lastMessageSent) >= 0.1:
+        if (time.time() - self.__lastMessageSent) >= 0.1 and self.__messageQueue.isempty():
             strMessage = json.dumps(message)
             self.__socket.send(strMessage.encode())
             self.__lastMessageSent = time.time()
+        elif not self.__messageQueue.isempty():
+            if message != self.__messageQueue.getBack():
+                if not self.__messageQueue.isfull():
+                    self.__messageQueue.enqueue(message)
+                else:
+                    raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
 
     '''
     Name: listen
@@ -306,6 +329,8 @@ class Character(pygame.sprite.Sprite):
             leaderboard = getLeaderboard(serverType, self.characterNo, serverKey, client)
             if leaderboard is not None:
                 client.setLeaderBoard(leaderboard)
+                print(leaderboard)
+                print(type(leaderboard))
                 return client
             else:
                 return client
@@ -441,7 +466,7 @@ class Character(pygame.sprite.Sprite):
     '''
     def fire(self, client):
         mouseKeys = pygame.mouse.get_pressed(3)
-        if mouseKeys[0] and (time.time().self.lastBulletFired) > 0.1:
+        if mouseKeys[0] and (time.time() - self.lastBulletFired) > 0.1:
             direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
             client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.characterNo}})
@@ -466,11 +491,11 @@ class Character(pygame.sprite.Sprite):
 
 '''
 Name: publicGame
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, serverType:string
 Returns: None
 Purpose: Handles the data for the player to be able to play on the public server
 '''
-def publicGame(screen, clock, players, platforms, bullets, char):
+def publicGame(screen, clock, players, platforms, bullets, char,serverType):
 
     # Creates an instance of the client object and connects it to the server
     c = Client("127.0.0.1")
@@ -489,15 +514,15 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     # the player's clientNo is 1
     platformInfo(platforms, c, clientPlayer)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c,serverType)
 
 '''
 Name: privateCreate
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary, serverType:string 
 Returns: None
 Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
 '''
-def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
+def privateCreate(screen, clock, players, platforms, bullets, char, creationData, serverType):
     # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
     threading.Thread(target=server.start).start()
@@ -523,15 +548,15 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # for player in players.sprites():
     #     print(player.characterNo)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
 '''
 Name: privateJoin
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary, serverType:string 
 Returns: None
 Purpose: Handles joining a private server that someone else is hosting
 '''
-def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
+def privateJoin(screen, clock, players, platforms, bullets, char, creationData,serverType):
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
     c = Client(creationData["IPAddress"], socket=50001)
@@ -549,21 +574,19 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     time.sleep(0.1)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c,serverType)
 
 def leaderBoardUpd(serverType, client):
     if serverType == "public":
         client.sendData({"type:leaderReq"})
         
-    
-
 '''
 Name: mainRunLoop
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object
+Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object, serverType:string
 Returns: None
 Purpose: Main run loop for the game
 '''
-def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
+def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, serverType):
     leaderboard = pygame.sprite.Group()
     leaderboard.add(Leaderboard())
 
@@ -590,7 +613,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
             showLeader = False
             leaderText = ""
         else:
-            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+            leaderboard.update(getLeaderboard(serverType))
             showLeader = True
             leaderText = leaderboard.sprites()[0].getDisplayText()
 
@@ -622,8 +645,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
                     bullets.remove(b)
 
         bullets.update()
-        if (time.time()-leaderUpd) >= 1:
-            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+        if (time.time()-leaderUpd) >= 30:
+            leaderboard.update(getLeaderboard(serverType))
             timeUpd = time.time()
         clientPlayer.gravity(c, plat)
         clientPlayer.move(c, plat)
@@ -632,8 +655,9 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
         bullets.draw(screen)
         players.draw(screen)
         if showLeader:
+            #print(leaderText)
             leaderboard.draw(screen)
-            f.render_to(screen,(200,0), leaderText, (0,0,0))
+            f.render_to(screen,(200,25), leaderText, (0,0,0))
 
         clock.tick(60)
         pygame.display.update()
@@ -664,10 +688,10 @@ if __name__ == '__main__':
     beginInfo = gameStart(screen)
 
     if beginInfo["type"] == "publicGame":
-        publicGame(screen, clock, players, platforms, bullets, char)
+        publicGame(screen, clock, players, platforms, bullets, char, "public")
 
     if beginInfo["type"] == "privateCreate":
-        privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"])
+        privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"],"private")
 
     if beginInfo["type"] == "privateJoin":
-        privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"])
+        privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")

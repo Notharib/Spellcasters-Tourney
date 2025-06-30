@@ -2,6 +2,108 @@ import pygame, math, requests, unittest, random
 
 # Non-player objects to be used within the game
 
+class linearQueue:
+    '''
+    Name: __init__
+    Parameters: self
+    Returns: None
+    Description: Initialises the Queue as a list with 10 Null elements and
+    initialises the front and rear to -1
+    '''
+    def __init__(self):
+        self.__data = [None, None, None, None, None, None, None, None, None, None]
+        self.__front = -1
+        self.__rear = -1
+
+    '''
+    Name: enqueue
+    Parameters: self, newdata: String|Integer|Dictionary
+    Returns: None
+    Description: Checks if the Queue is full, if not adds new element
+    to the rear of the Queue and updates the rear pointer
+    '''
+    def enqueue(self, newdata):
+        if self.isempty():
+            self.__rear = (self.__rear + 1) % len(self.__data)
+            self.__data[self.__rear] = newdata
+        if self.__front == -1:
+            self.__front += 1
+
+    '''
+    Name: dequeue
+    Parameters: self
+    Returns: String|Integer|Dictionary
+    Description: Returns the item at
+    the front of the Queue and updates the front pointer
+    ''' 
+    def dequeue(self):
+        val = self.__data[self.__front]
+        if self.__front == self.__rear:
+            self.__front, self.__rear = -1, -1
+        else:
+            self.__front = (self.__front + 1) % len(self.__data)
+        return val
+
+    '''
+    Name: is_empty
+    Parameters: Self
+    Returns: Boolean
+    Description: Returns True if the Queue is empty and False if not
+    '''
+    def isempty(self):
+        if self.__front == -1:
+            return True
+        else:
+            return False
+    
+    '''
+    Name: is_full
+    Parameters: Self
+    Returns: Boolean
+    Description: Returns True if the Queue is full and False if not
+    '''
+    def isfull(self):
+        if self.__rear + 1 == self.__front or self.__front + 1 == self.__rear:
+            return True
+        else:
+            return False
+
+    '''
+    Name: getFront
+    Parameters: Self
+    Returns: String|Integer|Dictionary
+    Description: Returns whatever data is at the front of the queue
+    '''
+    def getFront(self):
+        return self.__data[self.__front]
+
+    '''
+    Name: getBack
+    Parameters: Self
+    Returns: String|Integer|Dictionary
+    Description: Returns whatever data is at the back of the queue
+    '''
+    def getBack(self):
+        return self.__data[self.__rear]
+
+    '''
+    Name: spaces_free
+    Parameters: Self
+    Returns: Integer
+    Description: Returns how many empty spaces remain in the Queue
+    '''
+    def spaces_free(self):
+        if self.isempty():
+            return len(self.__data)#
+        elif self.isfull():
+            return 0
+        elif self.__front > self.__rear:
+            return (self.__rear - self.__front) * -1
+        elif self.__rear > self.__front:
+            return (self.__front - self.__front) * -1
+        else:
+            return len(self.__data) -1
+
 '''
 Name: Leaderboard
 Inherits: pygame.sprite.Sprite
@@ -46,6 +148,7 @@ class Leaderboard(pygame.sprite.Sprite):
                 self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
             else:
                 self.__displayText += "\n{position}: {user}, {deathCount}".format(position=i+1, user=leaderList[i][0], deathCount=leaderList[i][1])
+        print(self.__displayText)
 
     '''
     Name: getDisplayText
@@ -83,8 +186,17 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Organises the leaderboard so that
     '''
     def setupLeaderStructure(self):
+        keysToPop = []
+        for key in list(self.__leaderboard.keys()):
+            if self.__leaderboard[key] is None:
+                keysToPop.append(key)
+        if len(keysToPop) != 0:
+            for key in keysToPop:
+                self.__leaderboard.pop(key)
+
         deathValues = list(self.__leaderboard.values())
-        print(deathValues)
+        # print(deathValues)
+
         orderedDeath = merge_sort(deathValues)
        # deathValues.sort()
        # orderedDeath = deathValues
@@ -211,11 +323,12 @@ def merge(left, right):
 
 '''
 Name: getLeaderboard
-Parameters: serverType:string, playerNo:integer, serverKey:None, client=None
+Parameters: serverType:string, playerNo:integer|None, serverKey:string|None, client=Client|None
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
+def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
+   # print("GET LEADERBOARD BEING CALLED")
     leaderboard = None
     if serverType == "public":
       #  if client is None:
@@ -223,8 +336,9 @@ def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
       #  else:
       #      client.sendData({"type":"leaderGet"})
       #      return leaderboard
-      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck")
-      return leaderboard
+        leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
+    #    print(leaderboard)
+        return leaderboard["data"]
     elif serverType == "private":
         if serverKey is None:
             raise Exception("None Type Error: severKey should be string type value, not NoneType")
@@ -234,7 +348,8 @@ def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
                 "playerNo":playerNo
             }
             leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-            return leaderboard
+    #    print(leaderboard)
+        return leaderboard["data"]
     else:
         raise ValueError("Server type must be either public or private")
 

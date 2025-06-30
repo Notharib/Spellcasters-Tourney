@@ -108,6 +108,7 @@ class Server:
     as well as sending them the character data required for the character to be created
     '''
     def notifyClientsOfConn(self,connection,colour,position):
+        self.leaderUpd(len(self.__clientList))
         for client in self.__clientList:
             if client.client != connection:
                 message = json.dumps({"type":"playerJoin","data":{"clientNo":len(self.__clientList)+1, "colourTuple": colour, "positionList":position}})
