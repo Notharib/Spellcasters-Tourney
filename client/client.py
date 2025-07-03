@@ -19,7 +19,7 @@ class Client:
     def __init__(self,IPToConnectTo, socket=50000):
         self.__HOST = IPToConnectTo #String
         self.__PORT = socket #Integer
-        self.clientNo = None #Integer
+        self.playerID = None #Integer
         self.__socket = None #Object?
         self.__noOfPlatforms = 0 #Integer
         self.__waiting = None #Bool
@@ -56,9 +56,9 @@ class Client:
             if not self.__messageQueue.isempty():
                 sendValue = self.__messageQueue.dequeue()
                 strSendValue = json.dumps(sendValue)
-                self.socket.send(strSendValue.encode())
+                self.__socket.send(strSendValue.encode())
                 self.__lastMessageSent = time.time()
-                time.sleep(0.1)
+                time.sleep(0.01)
 
     '''
     Name: sendData
@@ -67,11 +67,11 @@ class Client:
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
     def sendData(self,message):
-        if (time.time() - self.__lastMessageSent) >= 0.1 and self.__messageQueue.isempty():
+        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.isempty():
             strMessage = json.dumps(message)
             self.__socket.send(strMessage.encode())
             self.__lastMessageSent = time.time()
-        elif not self.__messageQueue.isempty():
+        else:
             if message != self.__messageQueue.getBack():
                 if not self.__messageQueue.isfull():
                     self.__messageQueue.enqueue(message)
@@ -98,9 +98,9 @@ class Client:
                     if msg["type"] == "leaderGet":
                         self.setLeaderBoard(msg["data"])
 
-                    if msg["type"] == "clientNo":
+                    if msg["type"] == "playerID":
                         print("client player created")
-                        self.clientNo = msg["data"]["clientNo"]
+                        self.playerID = msg["data"]["playerID"]
                         addCharacter(msg["data"])
 
                     if msg["type"] == "playerJoin":
@@ -114,14 +114,16 @@ class Client:
                             iteration = 0
                             # print(players.sprites())
                             for player in players.sprites():
-                                if player.characterNo == msg["data"]["playerNo"]:
+                                if player.playerID == msg["data"]["playerID"]:
                                     # print("found moved player")
                                     movedPlayer = player
                                     break
-                        if msg["data"]["direction"] == "y":
-                            movedPlayer.rect.y = msg["data"]["movedTo"]
-                        elif msg["data"]["direction"] == "x":
-                            movedPlayer.rect.x = msg["data"]["movedTo"]
+    #                    if msg["data"]["direction"] == "y":
+    #                        movedPlayer.rect.y = msg["data"]["movedTo"]
+    #                    elif msg["data"]["direction"] == "x":
+    #                        movedPlayer.rect.x = msg["data"]["movedTo"]
+                        movedPlayer.rect.y = msg["data"]["posY"]
+                        movedPlayer.rect.x = msg["data"]["posX"]
 
                     if msg["type"] == "createPlat":
                         print("Created platform")
@@ -129,7 +131,7 @@ class Client:
                         self.__noOfPlatforms += 1
 
                     if msg["type"] == "disconn":
-                        players.remove(players.sprites()[msg["data"]["clientNo"]])
+                        players.remove(players.sprites()[msg["data"]["playerID"]])
                         print("Player Disconnected")
 
                     if msg["type"] == "beginGame":
@@ -137,14 +139,14 @@ class Client:
                         print(msg['data'])
                         # addCharacter(msg["data"])
                         clPlData = {
-                            "clientNo": msg["data"]["clientNo"],
+                            "playerID": msg["data"]["playerID"],
                             "positionList": msg['data']['positionList'],
                             'colourTuple': msg['data']['colourTuple']
                         }
                         addCharacter(clPlData)
                         for player in list(msg["data"]["otherPlayersInfo"].keys()):
                             playerData = msg["data"]["otherPlayersInfo"][player]
-                            playerData["playerNo"] = player
+                            playerData["playerID"] = player
                             addCharacter(playerData)
 
                         iterator = 0
@@ -172,7 +174,7 @@ class Client:
     Purpose: Tells the server that this client wants to disconnect
     '''
     def tellServerDisconn(self):
-        msgDict = {"type":"disconn", "data":{"clientNo":self.clientNo}}
+        msgDict = {"type":"disconn", "data":{"playerID":self.playerID}}
         self.sendData(msgDict)
 
     #Getters and Setters
@@ -265,7 +267,7 @@ Returns: None
 Purpose: Adds a Character object to the players pygame sprite group
 '''
 def addCharacter(data):
-    players.add(Character(data["positionList"],data["colourTuple"],data["clientNo"]))
+    players.add(Character(data["positionList"],data["colourTuple"],data["playerID"]))
     print("Player created!")
 
 '''
@@ -293,12 +295,12 @@ Purpose: To manage data surrounding each player's character, and how to handle c
 class Character(pygame.sprite.Sprite):
     '''
     Name: __init__
-    Parameters: position:list, colour:tuple, playerNo:integer
+    Parameters: position:list, colour:tuple, playerID:integer
     Returns: None
     Purpose: Constructor to set the initial values
     of the character object
     '''
-    def __init__(self, position, colour, playerNo):
+    def __init__(self, position, colour, playerID):
         super().__init__()
         self.height = 40
         self.width = 40
@@ -312,7 +314,7 @@ class Character(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
-        self.characterNo = playerNo
+        self.playerID = playerID
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
         self.collided = False
@@ -326,7 +328,7 @@ class Character(pygame.sprite.Sprite):
     '''
     def leaderboardReq(self,serverType,client,serverKey=None):
         if serverType is not None:
-            leaderboard = getLeaderboard(serverType, self.characterNo, serverKey, client)
+            leaderboard = getLeaderboard(serverType, self.playerID, serverKey, client)
             if leaderboard is not None:
                 client.setLeaderBoard(leaderboard)
                 print(leaderboard)
@@ -368,10 +370,20 @@ class Character(pygame.sprite.Sprite):
     Purpose: Sends a request to the server to check if a move was legal
     '''
     def checkIfLegal(self,direction,amount, client):
-        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "clientNo":self.characterNo}}
+        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "playerID":self.playerID}}
         client.sendData(checkIfLegalDict)
         time.sleep(0.01)
         return True
+
+    '''
+    Name: __moveMessage
+    Parameters: client:Client
+    Returns: None
+    Purpose: Sends a message to the server with the new coordinates
+    '''
+    def __moveMessage(self, client):
+        moveMessage = {"type":"movement", "data":{"playerID":self.playerID, "collided":self.collided, "posX":self.rect.x, "posY":self.rect.y}}
+        client.sendData(moveMessage)
 
     '''
     Name: move
@@ -395,12 +407,7 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 0
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
+                        self.__moveMessage(cl)
         elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
             legalMove = self.checkIfLegal("y", 4, cl)
             if legalMove:
@@ -414,12 +421,7 @@ class Character(pygame.sprite.Sprite):
                         self.rect.x = 800 - self.rect.x
                     else:
                         self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
+                        self.__moveMessage(cl)
 
         elif keys[pygame.K_UP] == True:
             legalMove = self.checkIfLegal("y", 4, cl)
@@ -429,10 +431,7 @@ class Character(pygame.sprite.Sprite):
                     self.rect.y = 0
                 else:
                     self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerNo": self.characterNo, "direction":"y", "movedTo":self.rect.y, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                    self.__moveMessage(cl)
         elif keys[pygame.K_RIGHT] == True:
             legalMove = self.checkIfLegal("x", -2, cl)
             if legalMove:
@@ -441,10 +440,7 @@ class Character(pygame.sprite.Sprite):
                     self.rect.x = 800 - self.rect.x
                 else:
                     self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                    self.__moveMessage(cl)
         elif keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("x", 2, cl)
             if legalMove:
@@ -453,10 +449,8 @@ class Character(pygame.sprite.Sprite):
                     self.rect.x = 0
                 else:
                     self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                    self.__moveMessage(cl)
+
 
     '''
     Name: fire
@@ -469,7 +463,7 @@ class Character(pygame.sprite.Sprite):
         if mouseKeys[0] and (time.time() - self.lastBulletFired) > 0.1:
             direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
-            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.characterNo}})
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.playerID}})
 
     '''
     Name: gravity
@@ -484,9 +478,7 @@ class Character(pygame.sprite.Sprite):
             if self.rect.y > 800 - self.height:
                 self.rect.y = 800 - self.height
             else:
-                #self.lastMoveMade = ["y", 1]
-                moveMessage = {"type": "movement","data": {"playerNo": self.characterNo, "direction": "y", "movedTo": self.rect.y}}
-                cl.sendData(moveMessage)
+                self.__moveMessage(cl)
                 self.lastPos = [self.rect.x, self.rect.y]
 
 '''
@@ -511,7 +503,7 @@ def publicGame(screen, clock, players, platforms, bullets, char,serverType):
     c.setClientPlayer(clientPlayer)
 
     # Runs the platformInfo functio, which will send data to the server with information about the platforms if
-    # the player's clientNo is 1
+    # the player's playerID is 1
     platformInfo(platforms, c, clientPlayer)
 
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c,serverType)
@@ -546,7 +538,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     time.sleep(0.1)
 
     # for player in players.sprites():
-    #     print(player.characterNo)
+    #     print(player.playerID)
 
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
@@ -593,12 +585,13 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
     running = True
     showLeader = False
-    
+    lastLeaderStatus = False
+    lastLeaderUpd = time.time()
+
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
 
     leaderText = ""
-    leaderUpd = time.time()
 
     # Run loop
     while running:
@@ -613,9 +606,14 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             showLeader = False
             leaderText = ""
         else:
-            leaderboard.update(getLeaderboard(serverType))
-            showLeader = True
-            leaderText = leaderboard.sprites()[0].getDisplayText()
+            if not lastLeaderStatus:
+                leaderboard.update(getLeaderboard(serverType))
+                showLeader = True
+                leaderText = leaderboard.sprites()[0].getDisplayText()
+            else:
+                if (time.time()-lastLeaderUpd) >= 15:
+                    leaderboard.update(getLeaderboard(serverType))
+                    leaderText = leaderboard.sprites()[0].getDisplayText()
 
         # Event loop
         for event in pygame.event.get():
@@ -645,20 +643,22 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                     bullets.remove(b)
 
         bullets.update()
-        if (time.time()-leaderUpd) >= 30:
-            leaderboard.update(getLeaderboard(serverType))
-            timeUpd = time.time()
         clientPlayer.gravity(c, plat)
         clientPlayer.move(c, plat)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
         players.draw(screen)
+
         if showLeader:
+            if not lastLeaderStatus:
+                lastLeaderStatus = True
             #print(leaderText)
             leaderboard.draw(screen)
             f.render_to(screen,(200,25), leaderText, (0,0,0))
-
+        if lastLeaderStatus and not showLeader:
+            lastLeaderStatus = False
+        
         clock.tick(60)
         pygame.display.update()
     exit()
@@ -684,7 +684,6 @@ if __name__ == '__main__':
 
     char = characterBuilder(screen)
 
-    # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
     beginInfo = gameStart(screen)
 
     if beginInfo["type"] == "publicGame":

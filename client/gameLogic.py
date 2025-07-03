@@ -327,11 +327,11 @@ def merge(left, right):
 
 '''
 Name: getLeaderboard
-Parameters: serverType:string, playerNo:integer|None, serverKey:string|None, client=Client|None
+Parameters: serverType:string, playerID:integer|None, serverKey:string|None, client=Client|None
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
+def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
    # print("GET LEADERBOARD BEING CALLED")
     leaderboard = None
     if serverType == "public":
@@ -349,7 +349,7 @@ def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
         else:
             jsonInfo = {
                 "serverKey":serverKey,
-                "playerNo":playerNo
+                "playerID":playerID
             }
             leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
     #    print(leaderboard)
@@ -437,7 +437,7 @@ Returns: None
 Purpose: Send information about the platforms within the sprite group to the server
 '''
 def platformInfo(platforms, client, clientPlayer):
-    if clientPlayer.characterNo - 1 == 0:
+    if clientPlayer.playerID - 1 == 0:
         platformInfo = sendPlatformInfo(platforms)
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         print(platformInfoDict)

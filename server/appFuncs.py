@@ -51,7 +51,7 @@ Returns: dictionary
 Purpose: Creates a unique player ID based upon information about the player
 '''
 def createPlayerID(playerInfo, playerIDs):
-    playerNo = playerInfo["playerNo"]
+    playerID = playerInfo["playerID"]
     serverOrg = playerInfo[""]
 
 if __name__ == "__main__":
