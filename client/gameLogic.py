@@ -2,6 +2,63 @@ import pygame, math, requests, unittest, random
 
 # Non-player objects to be used within the game
 
+class queue:
+    def __init__(self):
+        self.__data = [None for i in range(10)]
+        self.__back = -1
+   
+   def getFront(self):
+       return self.__data[0]
+
+   def getBack(self):
+       if not self.is_empty():
+           return self.__data[self.__back]
+       else:
+           raise Exception("Attempted to get back of an empty queue")
+
+    def enqueue(self, data):
+        if not self.is_full():
+            if self.__back == -1:
+                self.__data[0] = data
+                self.__back = 0
+            else:
+                self.__back += 1
+                self.__data[self.__back] = data
+        else:
+            raise Exception("Attempted to enter data into a queue that is full")
+
+    def dequeue(self):
+        if not self.is_empty():
+            org = self.__data[0]
+
+            self.__data.pop(0)
+            self.__data.append(None)
+
+            noneValues = 0
+            for item in self.__data:
+                if item is None:
+                    noneValues += 1
+            if noneValues == 10:
+                self.__back = -1
+
+            return org
+        else:
+            raise Exception("Attempted to dequeue an empty queue")
+
+    def is_full(self):
+        return self.__back == 9
+
+    def is_empty(self):
+        return self.__back == -1
+
+    def spaces_free(self):
+        noneValues = 0
+        for item in self.__data:
+            if item is None:
+                noneValues += 1
+
+        return noneValues
+
 '''
 Name: linearQueue
 Purpose: To handle the functions of a linear queue data type
@@ -18,6 +75,16 @@ class linearQueue:
         self.__data = [None, None, None, None, None, None, None, None, None, None]
         self.__front = -1
         self.__rear = -1
+
+    def dumpData(self):
+        self.__data = [None for i in range(10)]
+        self.__front = -1
+        self.__rear = -1
+
+    def loadData(self):
+        for i in range(10):
+            self.enqueue(random.randint(1,100))
+
 
     '''
     Name: enqueue
@@ -49,7 +116,7 @@ class linearQueue:
         return val
 
     '''
-    Name: is_empty
+    Name: isempty
     Parameters: Self
     Returns: Boolean
     Description: Returns True if the Queue is empty and False if not
@@ -61,7 +128,7 @@ class linearQueue:
             return False
     
     '''
-    Name: is_full
+    Name: isfull
     Parameters: Self
     Returns: Boolean
     Description: Returns True if the Queue is full and False if not
@@ -98,7 +165,7 @@ class linearQueue:
     '''
     def spaces_free(self):
         if self.isempty():
-            return len(self.__data)#
+            return len(self.__data)
         elif self.isfull():
             return 0
         elif self.__front > self.__rear:
