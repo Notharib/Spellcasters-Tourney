@@ -1,22 +1,73 @@
-import pygame, math, requests, unittest, random
+import pygame, math, requests, random
 
 # Non-player objects to be used within the game
 
 class queue:
-    def __init__(self):
+    '''
+    Name: queue
+    Purpose: To handle the functions of a queue data type
+    '''
+    def __init__(self) -> None:
+        '''
+        Name: __init__
+        Parameters: self
+        Returns: None
+        Description: Initialises the Queue as a list with 10 Null elements and
+        initialises the rear to -1
+        '''
+        self.__data: list = [None for i in range(10)]
+        self.__back: int = -1
+
+    def dumpData(self) -> None:
+        '''
+        Name: dumpData
+        Parameters: self
+        Returns: None
+        Description: Used in unit tests to dump any leftover data from a previous test
+        '''
         self.__data = [None for i in range(10)]
         self.__back = -1
-   
-   def getFront(self):
-       return self.__data[0]
 
-   def getBack(self):
-       if not self.is_empty():
-           return self.__data[self.__back]
-       else:
-           raise Exception("Attempted to get back of an empty queue")
+    def loadData(self) -> None:
+        '''
+        Name: loadData
+        Parameters: self
+        Returns: None
+        Description: Used in the unit tests just to generate random data to be used
+        '''
+        self.__data = [random.randint(0,100) for i in range(10)]
+        self.__back = 9
 
-    def enqueue(self, data):
+    def getFront(self):
+        '''
+        Name: getFront
+        Parameters: self
+        Returns: None
+        Description: Returns the front element of the queue
+        '''
+        return self.__data[0]
+
+    def getBack(self):
+        '''
+        Name: getBack
+        Parameters: self
+        Returns: self._data[self.__back]
+        Description: Checks if the Queue is full, if not adds new element
+        to the rear of the Queue and updates the rear pointer
+        '''
+        if not self.is_empty():
+            return self.__data[self.__back]
+        else:
+            raise Exception("Attempted to get back of an empty queue")
+
+    def enqueue(self, data) -> None:
+        '''
+        Name: enqueue
+        Parameters: self, data
+        Returns: None
+        Description: Checks if the Queue is full, if not adds new element
+        to the rear of the Queue and updates the rear pointer
+        '''
         if not self.is_full():
             if self.__back == -1:
                 self.__data[0] = data
@@ -28,6 +79,13 @@ class queue:
             raise Exception("Attempted to enter data into a queue that is full")
 
     def dequeue(self):
+        '''
+        Name: dequeue
+        Parameters: self
+        Returns: String|Integer|Dictionary
+        Description: Returns the item at
+        the front of the Queue and updates the front pointer
+        '''
         if not self.is_empty():
             org = self.__data[0]
 
@@ -45,135 +103,37 @@ class queue:
         else:
             raise Exception("Attempted to dequeue an empty queue")
 
-    def is_full(self):
+    def is_full(self) -> bool:
+        '''
+        Name: isfull
+        Parameters: Self
+        Returns: Boolean
+        Description: Returns True if the Queue is full and False if not
+        '''
         return self.__back == 9
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
+        '''
+        Name: is_empty
+        Parameters: Self
+        Returns: Boolean
+        Description: Returns True if the Queue is empty and False if not
+        '''
         return self.__back == -1
 
-    def spaces_free(self):
-        noneValues = 0
+    def spaces_free(self) -> int:
+        '''
+        Name: spaces_free
+        Parameters: Self
+        Returns: Integer
+        Description: Returns how many empty spaces remain in the Queue
+        '''
+        noneValues: int = 0
         for item in self.__data:
             if item is None:
                 noneValues += 1
 
         return noneValues
-
-'''
-Name: linearQueue
-Purpose: To handle the functions of a linear queue data type
-'''
-class linearQueue:
-    '''
-    Name: __init__
-    Parameters: self
-    Returns: None
-    Description: Initialises the Queue as a list with 10 Null elements and
-    initialises the front and rear to -1
-    '''
-    def __init__(self):
-        self.__data = [None, None, None, None, None, None, None, None, None, None]
-        self.__front = -1
-        self.__rear = -1
-
-    def dumpData(self):
-        self.__data = [None for i in range(10)]
-        self.__front = -1
-        self.__rear = -1
-
-    def loadData(self):
-        for i in range(10):
-            self.enqueue(random.randint(1,100))
-
-
-    '''
-    Name: enqueue
-    Parameters: self, newdata: String|Integer|Dictionary
-    Returns: None
-    Description: Checks if the Queue is full, if not adds new element
-    to the rear of the Queue and updates the rear pointer
-    '''
-    def enqueue(self, newdata):
-        if self.isempty():
-            self.__rear = (self.__rear + 1) % len(self.__data)
-            self.__data[self.__rear] = newdata
-        if self.__front == -1:
-            self.__front += 1
-
-    '''
-    Name: dequeue
-    Parameters: self
-    Returns: String|Integer|Dictionary
-    Description: Returns the item at
-    the front of the Queue and updates the front pointer
-    ''' 
-    def dequeue(self):
-        val = self.__data[self.__front]
-        if self.__front == self.__rear:
-            self.__front, self.__rear = -1, -1
-        else:
-            self.__front = (self.__front + 1) % len(self.__data)
-        return val
-
-    '''
-    Name: isempty
-    Parameters: Self
-    Returns: Boolean
-    Description: Returns True if the Queue is empty and False if not
-    '''
-    def isempty(self):
-        if self.__front == -1:
-            return True
-        else:
-            return False
-    
-    '''
-    Name: isfull
-    Parameters: Self
-    Returns: Boolean
-    Description: Returns True if the Queue is full and False if not
-    '''
-    def isfull(self):
-        if self.__rear + 1 == self.__front or self.__front + 1 == self.__rear:
-            return True
-        else:
-            return False
-
-    '''
-    Name: getFront
-    Parameters: Self
-    Returns: String|Integer|Dictionary
-    Description: Returns whatever data is at the front of the queue
-    '''
-    def getFront(self):
-        return self.__data[self.__front]
-
-    '''
-    Name: getBack
-    Parameters: Self
-    Returns: String|Integer|Dictionary
-    Description: Returns whatever data is at the back of the queue
-    '''
-    def getBack(self):
-        return self.__data[self.__rear]
-
-    '''
-    Name: spaces_free
-    Parameters: Self
-    Returns: Integer
-    Description: Returns how many empty spaces remain in the Queue
-    '''
-    def spaces_free(self):
-        if self.isempty():
-            return len(self.__data)
-        elif self.isfull():
-            return 0
-        elif self.__front > self.__rear:
-            return (self.__rear - self.__front) * -1
-        elif self.__rear > self.__front:
-            return (self.__front - self.__front) * -1
-        else:
-            return len(self.__data) -1
 
 '''
 Name: Leaderboard
@@ -190,19 +150,19 @@ class Leaderboard(pygame.sprite.Sprite):
     '''
     def __init__(self):
         super().__init__()
-        self.__leaderboard = {}
-        self.__displayText = ""
-        self.X = 200
-        self.Y = 0
-        self.width = 400
-        self.height = 300
-        self.colour = (0,0,255)
-        self.image = pygame.Surface([self.width, self.height])
+        self.__leaderboard: dict = {}
+        self.__displayText: str = ""
+        self.X: int = 200
+        self.Y: int = 0
+        self.width: int = 400
+        self.height: int = 300
+        self.colour: tuple = (0,0,255)
+        self.image: pygame.Surface = pygame.Surface([self.width, self.height])
         self.image.fill(self.colour)
         pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])
         self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
+        self.rect.x: int = self.X
+        self.rect.y: int = self.Y
 
     '''
     Name: update
@@ -210,10 +170,10 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates the values of different variables within the class as needed
     '''
-    def update(self, leaderboard):
+    def update(self, leaderboard: dict):
         self.__displayText = ""
         self.__leaderboard = leaderboard
-        leaderList = self.setupLeaderStructure()
+        leaderList: list[list[str]] = self.setupLeaderStructure()
         for i in range(len(leaderList)):
             if i == 0:
                 self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
@@ -227,7 +187,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: string
     Purpose: Getter for the displayText variable
     '''
-    def getDisplayText(self):
+    def getDisplayText(self) -> str:
         return self.__displayText
 
     '''
@@ -236,7 +196,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: dictionary 
     Purpose: Getter for the leaderboard variable
     '''    
-    def getLeaderboard(self):
+    def getLeaderboard(self) -> dict:
         return self.__leaderboard
 
 
@@ -247,7 +207,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Function only used for unit testing to add players to
     the leaderboard
     '''
-    def addToLeader(self,examplePlayer):
+    def addToLeader(self,examplePlayer) -> None:
         self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
 
     '''

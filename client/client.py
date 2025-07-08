@@ -1,6 +1,6 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, linearQueue
+from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, queue
 from PrivateServer import Server
 
 '''
@@ -16,19 +16,19 @@ class Client:
     Purpose: Constructor to set the initial values
     of the client object
     '''
-    def __init__(self,IPToConnectTo, socket=50000):
-        self.__HOST = IPToConnectTo #String
-        self.__PORT = socket #Integer
-        self.playerID = None #Integer
-        self.__socket = None #Object?
-        self.__noOfPlatforms = 0 #Integer
-        self.__waiting = None #Bool
-        self.__playing = None #Bool
-        self.__endGameData = None #Dict
+    def __init__(self,IPToConnectTo:str, port: int=50000) -> None:
+        self.__HOST: str = IPToConnectTo #String
+        self.__PORT: int = port #Integer
+        self.playerID: int|None = None #Integer
+        self.__socket: socket.socket|None = None #Object? I forgot what I do with this icl
+        self.__noOfPlatforms: int = 0 #Integer
+        self.__waiting: bool|None = None #Bool
+        self.__playing: bool|None = None #Bool
+        self.__endGameData: dict|None = None #Dict
         self.__clientPlayer = None #String?
-        self.__leaderBoard = None #Object
-        self.__lastMessageSent = time.time() #Float
-        self.__messageQueue = linearQueue() #Linear Queue
+        self.__leaderBoard: dict|None = None #Dictionary?
+        self.__lastMessageSent: float = time.time() #Float
+        self.__messageQueue: queue = queue() #Queue
 
 
     '''
@@ -38,7 +38,7 @@ class Client:
     Purpose: Connects the client object to the server, and then creates a Thread obejct that
     ensures that the server continuously listens for data from the server
     '''
-    def connect(self):
+    def connect(self) -> None:
         print(self.__HOST, self.__PORT)
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
@@ -51,11 +51,11 @@ class Client:
     Returns: None
     Description: Empties the next message in the messageQueue
     '''
-    def queueEmptying(self):
+    def queueEmptying(self) -> None:
         while True:
             if not self.__messageQueue.isempty():
-                sendValue = self.__messageQueue.dequeue()
-                strSendValue = json.dumps(sendValue)
+                sendValue: dict = self.__messageQueue.dequeue()
+                strSendValue: str = json.dumps(sendValue)
                 self.__socket.send(strSendValue.encode())
                 self.__lastMessageSent = time.time()
                 time.sleep(0.01)
@@ -66,14 +66,14 @@ class Client:
     Returns: None
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
-    def sendData(self,message):
-        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.isempty():
-            strMessage = json.dumps(message)
+    def sendData(self,message: dict) -> None:
+        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.is_empty():
+            strMessage: str = json.dumps(message)
             self.__socket.send(strMessage.encode())
             self.__lastMessageSent = time.time()
         else:
             if message != self.__messageQueue.getBack():
-                if not self.__messageQueue.isfull():
+                if not self.__messageQueue.is_full():
                     self.__messageQueue.enqueue(message)
                 else:
                     raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
@@ -85,7 +85,7 @@ class Client:
     Purpose: Ran through a Thread object, it listens for data being sent by the server,
     and then handles what to do with it
     '''
-    def listen(self):
+    def listen(self) -> None:
         global clientPlayer
         while True:
             data = self.__socket.recv(1024)
@@ -93,7 +93,7 @@ class Client:
                 break
             else:
                 try:
-                    msg = dict(json.loads(data.decode()))
+                    msg: dict = dict(json.loads(data.decode()))
 
                     if msg["type"] == "leaderGet":
                         self.setLeaderBoard(msg["data"])
@@ -109,14 +109,14 @@ class Client:
 
                     if msg["type"] == "movement":
                         if len(players.sprites()) == 2:
-                            movedPlayer = players.sprites()[1]
+                            movedPlayer: Character = players.sprites()[1]
                         else:
-                            iteration = 0
+                            iteration: int = 0
                             # print(players.sprites())
                             for player in players.sprites():
                                 if player.playerID == msg["data"]["playerID"]:
                                     # print("found moved player")
-                                    movedPlayer = player
+                                    movedPlayer: Character = player
                                     break
     #                    if msg["data"]["direction"] == "y":
     #                        movedPlayer.rect.y = msg["data"]["movedTo"]
@@ -138,7 +138,7 @@ class Client:
                         self.__waiting = False
                         print(msg['data'])
                         # addCharacter(msg["data"])
-                        clPlData = {
+                        clPlData: dict = {
                             "playerID": msg["data"]["playerID"],
                             "positionList": msg['data']['positionList'],
                             'colourTuple': msg['data']['colourTuple']
@@ -149,7 +149,7 @@ class Client:
                             playerData["playerID"] = player
                             addCharacter(playerData)
 
-                        iterator = 0
+                        iterator: int = 0
                         for platform in msg['data']['platformsPos']:
                             createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
                             iterator += 1
@@ -173,8 +173,8 @@ class Client:
     Returns: None
     Purpose: Tells the server that this client wants to disconnect
     '''
-    def tellServerDisconn(self):
-        msgDict = {"type":"disconn", "data":{"playerID":self.playerID}}
+    def tellServerDisconn(self) -> None:
+        msgDict: dict = {"type":"disconn", "data":{"playerID":self.playerID}}
         self.sendData(msgDict)
 
     #Getters and Setters
@@ -185,7 +185,7 @@ class Client:
     Returns: None
     Purpose: Setter for the leaderboard variable
     '''
-    def setLeaderBoard(self,leaderboard):
+    def setLeaderBoard(self,leaderboard: dict) -> None:
         self.__leaderBoard = leaderboard
 
     '''
@@ -194,16 +194,16 @@ class Client:
     Returns: None
     Purpose: Setter for the waiting variable
     '''
-    def enableWaiting(self):
+    def enableWaiting(self) -> None:
         self.__waiting = True
 
     '''
     Name: setClientPlayer
-    Parameters: clPl: object
+    Parameters: clPl: Character
     Returns: None
     Purpose: Setter for the clientPlayer variable
     '''
-    def setClientPlayer(self, clPl):
+    def setClientPlayer(self, clPl) -> None:
         self.__clientPlayer = clPl
 
     '''
@@ -212,16 +212,16 @@ class Client:
     Returns: None
     Purpose: Setter for the waiting variable 
     '''
-    def waitingOver(self):
+    def waitingOver(self) -> None:
         self.__waiting = False
 
     '''
     Name: checkWaiting
     Parameters: None
-    Returns: self.__waiting
+    Returns: self.__waiting: None|bool
     Purpose: Getter for the waiting variable
     '''
-    def checkWaiting(self):
+    def checkWaiting(self) -> None|bool:
         return self.__waiting
 
     '''
@@ -230,7 +230,7 @@ class Client:
     Returns: None
     Purpose: Setter for the playing variable
     '''
-    def enablePlaying(self):
+    def enablePlaying(self) -> None:
         self.__playing = True
 
     '''
@@ -239,7 +239,7 @@ class Client:
     Returns: None
     Purpose: Setter for the playing variable
     '''
-    def playingOver(self):
+    def playingOver(self) -> None:
         self.__playing = False
 
     '''
@@ -248,7 +248,7 @@ class Client:
     Returns: self.__playing
     Purpose: Getter for the playing variable
     '''
-    def checkPlaying(self):
+    def checkPlaying(self) -> bool:
         return self.__playing
 
     '''
@@ -257,7 +257,7 @@ class Client:
     Returns: self.__endGameData
     Purpose: Getter for the endGameData variable
     '''
-    def getEndGameData(self):
+    def getEndGameData(self) -> dict:
         return self.__endGameData
 
 '''
@@ -266,7 +266,7 @@ Parameters: data:dictionary
 Returns: None
 Purpose: Adds a Character object to the players pygame sprite group
 '''
-def addCharacter(data):
+def addCharacter(data: dict) -> None:
     players.add(Character(data["positionList"],data["colourTuple"],data["playerID"]))
     print("Player created!")
 
@@ -276,7 +276,7 @@ Parameters: data:dictionary
 Returns: None
 Purpose: Adds a Bullet object to the bullets pygame sprite group
 '''
-def createBullet(data):
+def createBullet(data: dict) -> None:
     bullets.add(Bullet(data["spawnPoint"],data["direction"],data["playerOrg"]))
 
 '''
@@ -285,7 +285,7 @@ Parameters: data:dictionary
 Returns: None
 Purpose: Adds a Platform object to the platforms pygame sprite group
 '''
-def createPlatform(data):
+def createPlatform(data: dict) -> None:
     platforms.add(Platform(data['position'],data['size'],data['platformNo']))
 
 '''
@@ -300,25 +300,25 @@ class Character(pygame.sprite.Sprite):
     Purpose: Constructor to set the initial values
     of the character object
     '''
-    def __init__(self, position, colour, playerID):
+    def __init__(self, position:list[int], colour:tuple[int], playerID:int) -> None:
         super().__init__()
-        self.height = 40
-        self.width = 40
-        self.X = position[0]
-        self.Y = position[1]
-        self.HP = 10
-        self.colour = colour
-        self.image = pygame.Surface([self.width, self.height])
+        self.height: int = 40
+        self.width: int = 40
+        self.X: int = position[0]
+        self.Y: int = position[1]
+        self.HP: int = 10
+        self.colour: tuple = colour
+        self.image: pygame.Surface = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
         pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.width, self.height])
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
-        self.playerID = playerID
-        self.lastPos = [self.X,self.Y]
-        self.lastLegalPos = self.lastPos
-        self.collided = False
-        self.lastBulletFired = time.time()
+        self.playerID: int = playerID
+        self.lastPos: list[int] = [self.X,self.Y]
+        self.lastLegalPos: list[int] = self.lastPos
+        self.collided: bool = False
+        self.lastBulletFired: float = time.time()
 
     '''
     Name: leaderboardReq
@@ -326,9 +326,9 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Setter for the lastLegalPos variable
     '''
-    def leaderboardReq(self,serverType,client,serverKey=None):
+    def leaderboardReq(self,serverType: str,client: Client,serverKey: str|None = None) -> Client:
         if serverType is not None:
-            leaderboard = getLeaderboard(serverType, self.playerID, serverKey, client)
+            leaderboard: dict = getLeaderboard(serverType, self.playerID, serverKey, client)
             if leaderboard is not None:
                 client.setLeaderBoard(leaderboard)
                 print(leaderboard)
@@ -345,7 +345,7 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Setter for the lastLegalPos variable
     '''
-    def legalMove(self):
+    def legalMove(self) -> None:
         self.lastLegalPos = self.lastPos
 
     '''
@@ -355,7 +355,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Reacts to being told by the server that the last legal move was 
     actually illegal
     '''
-    def illegalMove(self):
+    def illegalMove(self) -> None:
         if (not onPlat(self,platforms)) and self.collided:
             self.lastPos = self.lastLegalPos
             self.rect.x = self.lastPos[0]
@@ -369,7 +369,7 @@ class Character(pygame.sprite.Sprite):
     Returns: boolean
     Purpose: Sends a request to the server to check if a move was legal
     '''
-    def checkIfLegal(self,direction,amount, client):
+    def checkIfLegal(self,direction: str,amount: int, client: Client) -> bool:
         checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "playerID":self.playerID}}
         client.sendData(checkIfLegalDict)
         time.sleep(0.01)
@@ -381,8 +381,8 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Sends a message to the server with the new coordinates
     '''
-    def __moveMessage(self, client):
-        moveMessage = {"type":"movement", "data":{"playerID":self.playerID, "collided":self.collided, "posX":self.rect.x, "posY":self.rect.y}}
+    def __moveMessage(self, client: Client) -> None:
+        moveMessage: dict = {"type":"movement", "data":{"playerID":self.playerID, "collided":self.collided, "posX":self.rect.x, "posY":self.rect.y}}
         client.sendData(moveMessage)
 
     '''
