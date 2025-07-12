@@ -358,7 +358,7 @@ Parameters: serverType:string, playerID:integer|None, serverKey:string|None, cli
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
+def getLeaderboard(serverType, playerID=None, serverKey=None, client=None) -> dict|None:
    # print("GET LEADERBOARD BEING CALLED")
     leaderboard = None
     if serverType == "public":
@@ -387,21 +387,35 @@ def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
 
 '''
 Name: getDirection
-Parameters: player:object
-Returns: MPVector:list
+Parameters: player:object, mousePos: list[int]|None
+Returns: MPVector:list[int]
 Purpose: Gets the direction vector that the projectile needs to move in
 '''
-def getDirection(player):
-    mousePos = pygame.mouse.get_pos()
+def getDirection(player, mousePos: list[int]|None = None) -> list:
+    if mousePos is None:
+        mousePos = pygame.mouse.get_pos()
     MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
-    print(MPVector)
-    hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
-    divider = hyppotenuse // 10
-    for i in range(2):
-        MPVector[i] //= divider
+    try:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
 
-    print(MPVector)
-    return MPVector
+    except ValueError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2)+1)
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
+    except ZeroDivisionError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = (hyppotenuse // 10) + 2
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
 
 '''
 Name: youDied

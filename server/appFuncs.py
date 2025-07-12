@@ -6,7 +6,7 @@ Parameters: IP:string
 Returns: dictionary
 Purpose: Converts the IP address passed in, into a hashed key
 '''
-def IPToHash(IP):
+def IPToHash(IP: str) -> dict:
     numberList = []
     hashedItem = ""
 
@@ -36,7 +36,7 @@ def IPToHash(IP):
     Purpose: Determines whether the server is full or not based upon whether the fullValue is 1 or 0, and
     raises an error if it isn't either of those things 
     '''
-def fullServer(fullValue):
+def fullServer(fullValue: int) -> bool:
     if fullValue == 1:
         return True
     elif fullValue == 0:
@@ -50,7 +50,7 @@ Parameters: playerInfo: dictionary, playerIDs:list
 Returns: dictionary
 Purpose: Creates a unique player ID based upon information about the player
 '''
-def createPlayerID(playerInfo, playerIDs):
+def createPlayerID(playerInfo:dict, playerIDs:list) -> dict|None:
     playerID = playerInfo["playerID"]
     serverOrg = playerInfo[""]
 

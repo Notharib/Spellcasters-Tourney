@@ -300,7 +300,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Constructor to set the initial values
     of the character object
     '''
-    def __init__(self, position:list[int], colour:tuple[int], playerID:int) -> None:
+    def __init__(self, position:list[int], colour:tuple[int, int, int], playerID:int) -> None:
         super().__init__()
         self.height: int = 40
         self.width: int = 40
@@ -392,7 +392,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Changes the position of the sprite position based upon what key is being pressed
     by a pre-determined amount
     '''
-    def move(self, cl, platform):
+    def move(self, cl:Client) -> None:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("y",4, cl)
@@ -458,7 +458,7 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
     '''
-    def fire(self, client):
+    def fire(self, client: Client) -> None:
         mouseKeys = pygame.mouse.get_pressed(3)
         if mouseKeys[0] and (time.time() - self.lastBulletFired) > 0.1:
             direction = getDirection(self)
@@ -472,7 +472,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Adjusts the position of the character rect if the player 
     is not on a platform
     '''
-    def gravity(self, cl, platform):
+    def gravity(self, cl: Client) -> None:
         if not self.collided:
             self.rect.y += 1
             if self.rect.y > 800 - self.height:
@@ -487,7 +487,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles the data for the player to be able to play on the public server
 '''
-def publicGame(screen, clock, players, platforms, bullets, char,serverType):
+def publicGame(screen, clock: pygame.time.Clock, players: pygame.sprite.Group, platforms: pygame.sprite.Group, bullets: pygame.sprite.Group, char:dict, serverType:str) -> None:
 
     # Creates an instance of the client object and connects it to the server
     c = Client("127.0.0.1")

@@ -1,4 +1,6 @@
-import unittest, random
+import unittest, random, math
+from tokenize import untokenize
+
 import gameLogic, client, menuClasses, PrivateServer
 
 # gameLogic Unit Tests
@@ -142,6 +144,104 @@ class QueueTesting(unittest.TestCase):
         self.queue.loadData()
 
         self.assertEqual(0, self.queue.spaces_free())
+
+
+def getActualMousePos(player:client.Character, mousePos:list[int]) -> list[int]:
+    '''
+    Name: getActualMousePos
+    Parameters: player:client.Character, mousePos:list[int]
+    Returns: MPVector:list[int]
+    Purpose: Function just to check that the vector is functioning as intended
+    '''
+    MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
+    try:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+    except ValueError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
+    except ZeroDivisionError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = (hyppotenuse // 10) + 2
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
+
+class getDirTests(unittest.TestCase):
+    def setUp(self) -> None:
+        '''
+        Name: setUp
+        Parameters: None
+        Returns: None
+        Purpose: Set up the unit test
+        '''
+        self.player = client.Character([200,200], (0,255,100), 2)
+
+    def test_acceptableDirection(self) -> None:
+        '''
+        Name: test_acceptableDirection
+        Parameters: None
+        Returns: None
+        Purpose: Unit test to an acceptable case
+        '''
+        mousePos = [random.randint(1,self.player.X-10) for i in range(2)]
+        MPVector = gameLogic.getDirection(self.player, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+
+    def test_edgeCase(self) -> None:
+        '''
+        Name: test_edgeCase
+        Parameters: None
+        Returns: None
+        Purpose: Unit test to test a potential edge case
+        '''
+        mousePos = [self.player.X -1, self.player.X -1]
+        MPVector = gameLogic.getDirection(self.player, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+
+    def test_Zero(self) -> None:
+        '''
+        Name: test_Zero
+        Parameters: None
+        Returns: None
+        Purpose: Unit test to test that the function is able to handle when there is no difference
+        between the mouse pos and the player position
+        '''
+        mousePos = [self.player.X, self.player.Y]
+        MPVector = gameLogic.getDirection(self.player, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+
+    def test_NegativeX(self) -> None:
+        '''
+        Name: test_NegativeX
+        Parameters: None
+        Returns: None
+        Purpose: Unit test to test what happens when the mousePosX is negative
+        '''
+        mousePos = [-self.player.X, self.player.Y]
+        MPVector = gameLogic.getDirection(self.player, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+
+    def test_NegativeY(self) -> None:
+        '''
+        Name: test_NegativeY
+        Parameters: None
+        Returns: None
+        Purpose: Unit test to test what happens when the mousePosY is negative
+        '''
+        mousePos = [self.player.X, self.player.Y]
+        MPVector = gameLogic.getDirection(self.player, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+
+
 
 # client unit tests
 
