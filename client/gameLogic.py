@@ -15,7 +15,7 @@ class queue:
         Description: Initialises the Queue as a list with 10 Null elements and
         initialises the rear to -1
         '''
-        self.__data: list = [None for i in range(10)]
+        self.__data: list = [None for i in range(20)]
         self.__back: int = -1
 
     def dumpData(self) -> None:
@@ -25,7 +25,7 @@ class queue:
         Returns: None
         Description: Used in unit tests to dump any leftover data from a previous test
         '''
-        self.__data = [None for i in range(10)]
+        self.__data = [None for i in range(20)]
         self.__back = -1
 
     def loadData(self) -> None:
@@ -96,7 +96,7 @@ class queue:
             for item in self.__data:
                 if item is None:
                     noneValues += 1
-            if noneValues == 10:
+            if noneValues == 20:
                 self.__back = -1
 
             return org
@@ -110,7 +110,7 @@ class queue:
         Returns: Boolean
         Description: Returns True if the Queue is full and False if not
         '''
-        return self.__back == 9
+        return self.__back == 19
 
     def is_empty(self) -> bool:
         '''

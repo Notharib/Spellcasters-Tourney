@@ -476,7 +476,7 @@ class Server:
                     if message["type"] == "movement":
                         for client in self.__clientList:
                             if client.getClient() == conn:
-                                clPos = client.playerID - 1
+                                clPos = client.getPlayerID() - 1
 
                         self.__clientList[clPos].position[0], self.__clientList[clPos].position[1] = message["data"][
                             "posX"], message["data"]["posY"]

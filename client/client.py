@@ -2,6 +2,7 @@ import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, queue
 from PrivateServer import Server
+from clientLogger import *
 
 '''
 Name: Client
@@ -53,7 +54,7 @@ class Client:
     '''
     def queueEmptying(self) -> None:
         while True:
-            if not self.__messageQueue.isempty():
+            if not self.__messageQueue.is_empty():
                 sendValue: dict = self.__messageQueue.dequeue()
                 strSendValue: str = json.dumps(sendValue)
                 self.__socket.send(strSendValue.encode())
@@ -72,7 +73,7 @@ class Client:
             self.__socket.send(strMessage.encode())
             self.__lastMessageSent = time.time()
         else:
-            if message != self.__messageQueue.getBack():
+            if self.__messageQueue.is_empty() or message != self.__messageQueue.getBack():
                 if not self.__messageQueue.is_full():
                     self.__messageQueue.enqueue(message)
                 else:
@@ -521,7 +522,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
     # Creates an instance of the Client object, and then joins to the private server, based
     # off the fact the server will be hosted by the same machine you're joining on
-    c = Client(socket.gethostbyname(socket.gethostname()),socket=50001)
+    c = Client(socket.gethostbyname(socket.gethostname()),port=50001)
     c.connect()
 
     # Begins the waiting loop, which continues to run until the amount of players that the host initially
@@ -551,7 +552,7 @@ Purpose: Handles joining a private server that someone else is hosting
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData,serverType):
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
-    c = Client(creationData["IPAddress"], socket=50001)
+    c = Client(creationData["IPAddress"], port=50001)
     c.connect()
 
     print("Joined up to the private server!")
@@ -643,8 +644,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                     bullets.remove(b)
 
         bullets.update()
-        clientPlayer.gravity(c, plat)
-        clientPlayer.move(c, plat)
+        clientPlayer.gravity(c)
+        clientPlayer.move(c)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
@@ -663,34 +664,44 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
         pygame.display.update()
     exit()
 
+def main() -> None:
+    logger = Logger()
+    
+
+    try:
+        pygame.display.init()
+        pygame.font.init()
+        pygame.freetype.init()
+        WINDOW_SIZE = (800, 800)
+
+        RED = (250, 9, 1)
+        GREEN = (2, 249, 0)
+        BLUE = (0, 0, 240)
+        PURPLE = (160, 32, 240)
+        WHITE = (255,255,255)
+
+        screen = pygame.display.set_mode(WINDOW_SIZE)
+        clock = pygame.time.Clock()
+
+        players = pygame.sprite.Group()
+        platforms = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+
+        char = characterBuilder(screen)
+
+        beginInfo = gameStart(screen)
+
+        if beginInfo["type"] == "publicGame":
+            publicGame(screen, clock, players, platforms, bullets, char, "public")
+
+        if beginInfo["type"] == "privateCreate":
+            privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"],"private")
+
+        if beginInfo["type"] == "privateJoin":
+            privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
+    except Exception as e:
+        logger.addToLog(str(e))
+
+
 if __name__ == '__main__':
-    pygame.display.init()
-    pygame.font.init()
-    pygame.freetype.init()
-    WINDOW_SIZE = (800, 800)
-
-    RED = (250, 9, 1)
-    GREEN = (2, 249, 0)
-    BLUE = (0, 0, 240)
-    PURPLE = (160, 32, 240)
-    WHITE = (255,255,255)
-
-    screen = pygame.display.set_mode(WINDOW_SIZE)
-    clock = pygame.time.Clock()
-
-    players = pygame.sprite.Group()
-    platforms = pygame.sprite.Group()
-    bullets = pygame.sprite.Group()
-
-    char = characterBuilder(screen)
-
-    beginInfo = gameStart(screen)
-
-    if beginInfo["type"] == "publicGame":
-        publicGame(screen, clock, players, platforms, bullets, char, "public")
-
-    if beginInfo["type"] == "privateCreate":
-        privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"],"private")
-
-    if beginInfo["type"] == "privateJoin":
-        privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
+    main()
