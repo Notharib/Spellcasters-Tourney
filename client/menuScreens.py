@@ -1,6 +1,10 @@
-import pygame, pygame.freetype, requests, socket
-from menuClasses import TextBox, Pointer
-from characterCreation import Fire, Water, Wizard, Druid
+import socket
+
+import pygame
+import pygame.freetype
+import requests
+from characterCreation import Druid, Fire, Water, Wizard
+from menuClasses import Pointer, TextBox
 
 '''
 Name: waiting

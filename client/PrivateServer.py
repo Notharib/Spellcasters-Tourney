@@ -1,5 +1,8 @@
-import socket, json, threading, time
-from random import randint, choice
+import json
+import socket
+import threading
+import time
+from random import choice, randint
 
 '''
 Name: Platform

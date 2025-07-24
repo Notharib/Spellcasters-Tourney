@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
-from appFuncs import IPToHash, fullServer, createPlayerID
+from appFuncs import IPToHash, createPlayerID, fullServer
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 

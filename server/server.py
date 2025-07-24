@@ -1,4 +1,10 @@
-import socket, json, threading, random, time, requests
+import json
+import random
+import socket
+import threading
+import time
+
+import requests
 
 '''
 Name: Client

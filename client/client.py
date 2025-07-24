@@ -1,8 +1,16 @@
-import pygame,pygame.freetype, time, threading, socket, json, random
-from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, queue
-from PrivateServer import Server
+import json
+import random
+import socket
+import threading
+import time
+
+import pygame
+import pygame.freetype
 from clientLogger import *
+from gameLogic import (Bullet, Leaderboard, Platform, getDirection,
+                       getLeaderboard, onPlat, platformInfo, queue, youDied)
+from menuScreens import characterBuilder, gameStart, waiting
+from PrivateServer import Server
 
 '''
 Name: Client
@@ -658,34 +666,23 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             leaderboard.draw(screen)
             f.render_to(screen,(200,25), leaderText, (0,0,0))
         if lastLeaderStatus and not showLeader:
-            lastLeaderStatus = False
-        
+            lastLeaderStatus = Falsepygame.display.init()
+        pygame.font.init()
+        pygame.freetype.init()
         clock.tick(60)
         pygame.display.update()
     exit()
 
-def main() -> None:
+
+
+def main(players, platforms, bullets) -> None:
     logger = Logger()
-    
 
     try:
-        pygame.display.init()
-        pygame.font.init()
-        pygame.freetype.init()
         WINDOW_SIZE = (800, 800)
-
-        RED = (250, 9, 1)
-        GREEN = (2, 249, 0)
-        BLUE = (0, 0, 240)
-        PURPLE = (160, 32, 240)
-        WHITE = (255,255,255)
 
         screen = pygame.display.set_mode(WINDOW_SIZE)
         clock = pygame.time.Clock()
-
-        players = pygame.sprite.Group()
-        platforms = pygame.sprite.Group()
-        bullets = pygame.sprite.Group()
 
         char = characterBuilder(screen)
 
@@ -704,4 +701,18 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    pygame.display.init()
+    pygame.font.init()
+    pygame.freetype.init()
+
+    WHITE: tuple[int,int,int] = (255,255,255)
+    RED: tuple[int,int,int] = (255,0,0)
+    GREEN: tuple[int,int,int] = (0,255,0)
+    BLUE: tuple[int,int,int] = (0,0,255) 
+    PURPLE: tuple[int,int,int] = (255,0,255)
+
+    players = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
+    platforms = pygame.sprite.Group()
+
+    main(players, bullets, platforms)

@@ -1,7 +1,13 @@
-import unittest, random, math
+import math
+import random
+import unittest
 from tokenize import untokenize
 
-import gameLogic, client, menuClasses, PrivateServer
+import gameLogic
+import menuClasses
+import PrivateServer
+
+import client
 
 # gameLogic Unit Tests
 

@@ -1,4 +1,8 @@
-import pygame, math, requests, random
+import math
+import random
+
+import pygame
+import requests
 
 # Non-player objects to be used within the game
 
