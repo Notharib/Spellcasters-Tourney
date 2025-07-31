@@ -87,7 +87,13 @@ class Client:
                 else:
                     raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
 
-    def __messageHandling(self, message: dict) -> None:
+    '''
+    Name: __messageHandling
+    Parameters: msg:dict
+    Returns: None
+    Purpose: Handles the messages recieved by the server
+    '''
+    def __messageHandling(self, msg: dict) -> None:
         if msg["type"] == "leaderGet":
             self.setLeaderBoard(msg["data"])
 
@@ -143,14 +149,14 @@ class Client:
                 createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
                 iterator += 1
 
-                    if msg["type"] == "endGame":
-                        self.__playing = False
-                        self.__endGameData = msg["data"]
+        if msg["type"] == "endGame":
+            self.__playing = False
+            self.__endGameData = msg["data"]
 
-                    if msg["type"] == "MOVELEGAL":
-                        self.__clientPlayer.legalMove()
-                    if msg["type"] == "MOVENOTLEGAL":
-                        self.__clientPlayer.illegalMove()
+        if msg["type"] == "MOVELEGAL":
+            self.__clientPlayer.legalMove()
+        if msg["type"] == "MOVENOTLEGAL":
+            self.__clientPlayer.illegalMove()
 
 
     '''
@@ -168,8 +174,10 @@ class Client:
                 break
             else:
                 try:
-                    msg: dict = dict(json.loads(data.decode()))
+                    msgList: list[dict] = data_handling(data)
 
+                    for msg in msgList:
+                        self.__messageHandling(msg)
                     
                 except json.JSONDecodeError as err:
                     print(data.decode())

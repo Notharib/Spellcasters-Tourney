@@ -489,12 +489,12 @@ def platformInfo(platforms, client, clientPlayer):
         client.sendData(platformInfoDict)
 
 '''
-Name: __data_handling
+Name: data_handling
 Parameters: data:str
 Returns: list[dict]
 Purpose: Handles what should happen with the data initially, just to help avoid extra data errors
 '''
-def __data_handling(self, data:str) -> list[dict]:
+def data_handling(data:str) -> list[dict]:
     try:
         msgList: list[str] = data.split("}")
 
