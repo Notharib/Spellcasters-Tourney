@@ -488,5 +488,36 @@ def platformInfo(platforms, client, clientPlayer):
         print(platformInfoDict)
         client.sendData(platformInfoDict)
 
+'''
+Name: __data_handling
+Parameters: data:str
+Returns: list[dict]
+Purpose: Handles what should happen with the data initially, just to help avoid extra data errors
+'''
+def __data_handling(self, data:str) -> list[dict]:
+    try:
+        msgList: list[str] = data.split("}")
+
+        returnList: list[dict] = []
+
+        while '' in msgList:
+            msgList.remove('')
+
+        for i in range(len(msgList)):
+            noDicts: int = 0
+            temp: str = msgList[i]
+
+            for letter in temp:
+                if letter == '{':
+                    noDicts += 1
+            temp += '}' * noDicts
+
+            returnList.append(dict(json.loads(temp)))
+
+        return returnList
+
+    except Exception as e:
+        print("Error", e)
+
 if __name__ == "__main__":
     pass

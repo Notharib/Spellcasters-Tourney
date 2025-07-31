@@ -7,7 +7,7 @@ import random
 class Logger:
     def __init__(self) -> None:
         self.__timeOfCreation = time.time()
-        self.__ID = int(round(self.__timeOfCreation // math.pi //1000) + random.randint(1,10000)
+        self.__ID = int(round(self.__timeOfCreation // math.pi //1000) + random.randint(1,10000))
 
         os.makedirs('clLogs/', exist_ok=True)
 

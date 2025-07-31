@@ -8,7 +8,7 @@ import pygame
 import pygame.freetype
 from clientLogger import *
 from gameLogic import (Bullet, Leaderboard, Platform, getDirection,
-                       getLeaderboard, onPlat, platformInfo, queue, youDied)
+                       getLeaderboard, onPlat, platformInfo, queue, youDied, data_handling)
 from menuScreens import characterBuilder, gameStart, waiting
 from PrivateServer import Server
 
@@ -87,6 +87,72 @@ class Client:
                 else:
                     raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
 
+    def __messageHandling(self, message: dict) -> None:
+        if msg["type"] == "leaderGet":
+            self.setLeaderBoard(msg["data"])
+
+        if msg["type"] == "playerID":
+            print("client player created")
+            self.playerID = msg["data"]["playerID"]
+            addCharacter(msg["data"])
+
+        if msg["type"] == "playerJoin":
+            print("external player added")
+            addCharacter(msg["data"])
+
+        if msg["type"] == "movement":
+            if len(players.sprites()) == 2:
+                movedPlayer: Character = players.sprites()[1]
+            else:
+                iteration: int = 0
+                # print(players.sprites())
+                for player in players.sprites():
+                    if player.playerID == msg["data"]["playerID"]:
+                        # print("found moved player")
+                        movedPlayer: Character = player
+                        break
+                movedPlayer.rect.y = msg["data"]["posY"]
+                movedPlayer.rect.x = msg["data"]["posX"]
+
+        if msg["type"] == "createPlat":
+            print("Created platform")
+            platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
+            self.__noOfPlatforms += 1
+
+        if msg["type"] == "disconn":
+            players.remove(players.sprites()[msg["data"]["playerID"]])
+            print("Player Disconnected")
+
+        if msg["type"] == "beginGame":
+            self.__waiting = False
+            print(msg['data'])
+            # addCharacter(msg["data"])
+            clPlData: dict = {
+                "playerID": msg["data"]["playerID"],
+                "positionList": msg['data']['positionList'],
+                'colourTuple': msg['data']['colourTuple']
+                }
+            addCharacter(clPlData)
+            for player in list(msg["data"]["otherPlayersInfo"].keys()):
+                playerData = msg["data"]["otherPlayersInfo"][player]
+                playerData["playerID"] = player
+                addCharacter(playerData)
+
+            iterator: int = 0
+            for platform in msg['data']['platformsPos']:
+                createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
+                iterator += 1
+
+                    if msg["type"] == "endGame":
+                        self.__playing = False
+                        self.__endGameData = msg["data"]
+
+                    if msg["type"] == "MOVELEGAL":
+                        self.__clientPlayer.legalMove()
+                    if msg["type"] == "MOVENOTLEGAL":
+                        self.__clientPlayer.illegalMove()
+
+
     '''
     Name: listen
     Parameters: None
@@ -104,74 +170,7 @@ class Client:
                 try:
                     msg: dict = dict(json.loads(data.decode()))
 
-                    if msg["type"] == "leaderGet":
-                        self.setLeaderBoard(msg["data"])
-
-                    if msg["type"] == "playerID":
-                        print("client player created")
-                        self.playerID = msg["data"]["playerID"]
-                        addCharacter(msg["data"])
-
-                    if msg["type"] == "playerJoin":
-                        print("external player added")
-                        addCharacter(msg["data"])
-
-                    if msg["type"] == "movement":
-                        if len(players.sprites()) == 2:
-                            movedPlayer: Character = players.sprites()[1]
-                        else:
-                            iteration: int = 0
-                            # print(players.sprites())
-                            for player in players.sprites():
-                                if player.playerID == msg["data"]["playerID"]:
-                                    # print("found moved player")
-                                    movedPlayer: Character = player
-                                    break
-    #                    if msg["data"]["direction"] == "y":
-    #                        movedPlayer.rect.y = msg["data"]["movedTo"]
-    #                    elif msg["data"]["direction"] == "x":
-    #                        movedPlayer.rect.x = msg["data"]["movedTo"]
-                        movedPlayer.rect.y = msg["data"]["posY"]
-                        movedPlayer.rect.x = msg["data"]["posX"]
-
-                    if msg["type"] == "createPlat":
-                        print("Created platform")
-                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
-                        self.__noOfPlatforms += 1
-
-                    if msg["type"] == "disconn":
-                        players.remove(players.sprites()[msg["data"]["playerID"]])
-                        print("Player Disconnected")
-
-                    if msg["type"] == "beginGame":
-                        self.__waiting = False
-                        print(msg['data'])
-                        # addCharacter(msg["data"])
-                        clPlData: dict = {
-                            "playerID": msg["data"]["playerID"],
-                            "positionList": msg['data']['positionList'],
-                            'colourTuple': msg['data']['colourTuple']
-                        }
-                        addCharacter(clPlData)
-                        for player in list(msg["data"]["otherPlayersInfo"].keys()):
-                            playerData = msg["data"]["otherPlayersInfo"][player]
-                            playerData["playerID"] = player
-                            addCharacter(playerData)
-
-                        iterator: int = 0
-                        for platform in msg['data']['platformsPos']:
-                            createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
-                            iterator += 1
-
-                    if msg["type"] == "endGame":
-                        self.__playing = False
-                        self.__endGameData = msg["data"]
-
-                    if msg["type"] == "MOVELEGAL":
-                        self.__clientPlayer.legalMove()
-                    if msg["type"] == "MOVENOTLEGAL":
-                        self.__clientPlayer.illegalMove()
-
+                    
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)

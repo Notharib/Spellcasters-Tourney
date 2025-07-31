@@ -4,6 +4,8 @@ import threading
 import time
 from random import choice, randint
 
+from gameLogic import data_handling
+
 '''
 Name: Platform
 Purpose: To have platforms that players are able to move around on
@@ -396,7 +398,7 @@ class Server:
     Returns: None
     Purpose: Handles what to do with the message received from a client
     '''
-    def __messageHandling(self, message, conn):
+    def __messageHandling(self, message:dict, conn):
         try:
             if message["type"] == "movement":
                 for client in self.__clientList:
@@ -475,79 +477,22 @@ class Server:
                 break
             else:
                 try:
-                    message = dict(json.loads(data.decode()))
-                    if message["type"] == "movement":
-                        for client in self.__clientList:
-                            if client.getClient() == conn:
-                                clPos = client.getPlayerID() - 1
+                    msgList: list[dict] = data_handling(data.decode())
+                    for msg in msgList:
+                        self.__messageHandling(message=msg, conn=conn)
 
-                        self.__clientList[clPos].position[0], self.__clientList[clPos].position[1] = message["data"][
-                            "posX"], message["data"]["posY"]
-
-                    if message["type"] == "disconn":
-                        self.tellClientsOfDisconn(message["data"]["playerID"] - 1)
-                        self.__clientList[message["data"]["playerID"] - 1].client.close()
-                        self.__clientList.pop(message["data"]["playerID"] - 1)
-                        print("player disconnected")
-
-                    if message["type"] == "platformInfo":
-                        print("CREATING PLATFORM INFORMATION")
-                        iterator = 0
-                        for platform in message["data"]:
-                            self.__platforms[iterator].setTop(platform["platformTop"])
-                            self.__platforms[iterator].setBottom(platform["platformBottom"])
-                            self.__platforms[iterator].setLeft(platform["platformLeft"])
-                            self.__platforms[iterator].setRight(platform["platformRight"])
-                            print("PLATFORM INFO RECORDED")
-                            p = self.__platforms[iterator]
-                            print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
-                            iterator += 1
-
-                    if message["type"] == "legalCheck":
-                        messageData = message["data"]
-                        print("LEGALMOVECHECK")
-                        print(messageData)
-                        clientMove = self.__clientList[messageData["playerID"] - 1]
-                        closestPlat = None
-                        for platform in self.__platforms:
-                            if closestPlat is None:
-                                closestPlat = platform
-                            else:
-                                if messageData["direction"] == "y":
-                                    if (platform.getTop() >= clientMove.position[1] - messageData[
-                                        "amount"] or platform.getTop() <= clientMove.position[1] - messageData[
-                                            "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                                        closestPlat = platform
-                                else:
-                                    if (platform.getTop() >= clientMove.position[0] - messageData[
-                                        "amount"] or platform.getTop() <= clientMove.position[0] - messageData[
-                                            "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                                        closestPlat = platform
-
-                        if closestPlat is not None:
-                            if messageData["direction"] == "y":
-                                if clientMove.position[1] - messageData["amount"] <= closestPlat.getPos()[1] + \
-                                        closestPlat.getSize()[0]:
-                                    clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
-                                else:
-                                    clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
-                            else:
-                                if clientMove.position[0] - messageData["amount"] + clientMove.getSize()[0] == \
-                                        closestPlat.getPos()[0] or clientMove.position[0] - messageData["amount"] <= \
-                                        closestPlat.getPos()[0] + closestPlat.getSize()[1]:
-                                    clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
-                                else:
-                                    clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
                 except Exception as err:
                     print(data.decode())
                     print("Error:", err)
 
                 finally:
                     try:
-                        for client in self.__clientList:
-                            if client is not None and client.getClient() != conn and (
-                                    message["type"] != "platformInfo" or message["type"] != "legalCheck"):
-                                client.sendData(data)
+                        if msgList is not None:
+                            for message in msgList:
+                                for client in self.__clientList:
+                                    if client is not None and client.getClient() != conn and (
+                                            message["type"] != "platformInfo" or message["type"] != "legalCheck"):
+                                        client.sendData(data)
                     except Exception as e:
                         print("Error:", e)
 
