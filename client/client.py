@@ -3,6 +3,7 @@ import random
 import socket
 import threading
 import time
+import traceback
 
 import pygame
 import pygame.freetype
@@ -174,10 +175,13 @@ class Client:
                 break
             else:
                 try:
-                    msgList: list[dict] = data_handling(data)
+                    msgList: list[dict] = data_handling(data.decode())
 
-                    for msg in msgList:
-                        self.__messageHandling(msg)
+                    if msgList is not None:
+                        for msg in msgList:
+                            self.__messageHandling(msg)
+                    else:
+                        print(msgList)
                     
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -498,6 +502,21 @@ class Character(pygame.sprite.Sprite):
                 self.lastPos = [self.rect.x, self.rect.y]
 
 '''
+Name: sendCasterInfo
+Parameters: client: object, creationData:dict
+Returns: None
+Purpose: Sends information about the type of spellcaster that the player is
+to the private server
+'''
+def sendCasterInfo(client, creationData:dict) -> None:
+    msgDict: dict = {
+                "type": "casterInfo",
+                "data": creationData
+            }
+
+    client.sendData(msgDict)
+
+'''
 Name: publicGame
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, serverType:string
 Returns: None
@@ -530,7 +549,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
 '''
-def privateCreate(screen, clock, players, platforms, bullets, char, creationData, serverType):
+def privateCreate(screen, clock, players, platforms, bullets, char: dict, creationData: dict, serverType: str) -> None:
     # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
     threading.Thread(target=server.start).start()
@@ -539,6 +558,9 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # off the fact the server will be hosted by the same machine you're joining on
     c = Client(socket.gethostbyname(socket.gethostname()),port=50001)
     c.connect()
+
+    #Send the caster's information to be stored on the private server
+    sendCasterInfo(c, char)
 
     # Begins the waiting loop, which continues to run until the amount of players that the host initially
     # put in has been reached
@@ -564,7 +586,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles joining a private server that someone else is hosting
 '''
-def privateJoin(screen, clock, players, platforms, bullets, char, creationData,serverType):
+def privateJoin(screen, clock, players, platforms, bullets, char: dict, creationData: dict,serverType: str) -> None:
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
     c = Client(creationData["IPAddress"], port=50001)
@@ -572,8 +594,14 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData,s
 
     print("Joined up to the private server!")
 
+    #Send the player's caster information to the private server
+    sendCasterInfo(c, char)
+
     # Wait loop that runs while the server is waiting for all the players to join
     waiting(c, screen, creationData)
+
+    # Sends the private server the platforms rect information
+    platformInfo(platforms, c, clientPlayer)
 
     # After the wait loop is over, this players character will be at the front of the players sprite group sprites, so
     # this just turns that into a unique variable, to make handling it easier
@@ -704,6 +732,7 @@ def main(players, platforms, bullets) -> None:
         if beginInfo["type"] == "privateJoin":
             privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
     except Exception as e:
+        #print(traceback.format_exc())
         logger.addToLog(str(e))
 
 

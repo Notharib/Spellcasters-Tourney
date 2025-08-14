@@ -333,7 +333,7 @@ def characterBuilder(screen):
             pygame.display.update()
 
     character = {
-        "spellcastingType": currSelectedClass,
+        "caster": currSelectedClass,
         "element": currSelectedElement,
     }
     return character

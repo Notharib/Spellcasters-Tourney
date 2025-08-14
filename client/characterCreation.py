@@ -12,9 +12,27 @@ class Fire:
     Purpose: Constructor to set the initial values
     of the Fire object
     '''
-    def __init__(self):
-        self.__opposite = "Water"
-        self.__type = "Fire"
+    def __init__(self) -> None:
+        self.__opposite: str = "Water"
+        self.__type: str = "Fire"
+
+    '''
+    Name: getType
+    Parameters: None
+    Returns: __type:str
+    Purpose: Getter for the type variable
+    '''
+    def getType(self) -> str:
+        return self.__type
+
+    '''
+    Name: getOpposite
+    Parameters: None
+    Returns: __opposite:str
+    Purpose: Getter for the opposite variable
+    '''
+    def getOpposite(self) -> str:
+        return self.__opposite
 
     '''
     Name: __repr__

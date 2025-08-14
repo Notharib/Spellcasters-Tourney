@@ -140,20 +140,20 @@ any given player easier
 class Client:
     '''
     Name: __init__
-    Parameters: conn:object, spawnPoint:tuple, playerID:integer, size:list
+    Parameters: conn:object, spawnPoint:tuple[int,int] playerID:integer, size:list
     Returns: None
     Purpose: Constructor to set the initial values
     of the Client object
     '''
-    def __init__(self, conn, spawnPoint, playerID, size=[40,40]):
+    def __init__(self, conn, spawnPoint:list[int], playerID:int, size: list[int] =[40,40]) -> None:
         self.__client = conn
-        self.__spawnPoint = spawnPoint
-        self.__element = None
-        self.__spellCaster = None
-        self.__playerID = playerID
-        self.__colour = (randint(0, 255), randint(0, 255), randint(0, 255))
-        self.position = list(spawnPoint)
-        self.__size = size
+        self.__spawnPoint: tuple[int,int] = spawnPoint
+        self.__element: str|None = None
+        self.__spellCaster: str|None = None
+        self.__playerID: int = playerID
+        self.__colour: tuple[int,int,int] = (randint(0, 255), randint(0, 255), randint(0, 255))
+        self.position: list[int]  = list(spawnPoint)
+        self.__size: list[int] = size
 
     '''
     Name: sendData
@@ -161,27 +161,27 @@ class Client:
     Returns: None
     Purpose: Sends data through the connection
     '''
-    def sendData(self, msgToSend):
+    def sendData(self, msgToSend:dict) -> None:
         self.__client.send(msgToSend)
 
     # Getters and setters
 
     '''
     Name: setElement
-    Parameters: element: object
+    Parameters: element: str
     Returns: None
     Purpose: Setter for self.__element
     '''
-    def setElement(self, element):
+    def setElement(self, element:str) -> None:
         self.__element = element
 
     '''
-    Name: setSpellCaster
-    Parameters: spellCaster: object
+    Name: setCaster
+    Parameters: spellCaster: str
     Returns: None
     Purpose: Setter for self.__spellCaster
     '''
-    def setSpellCaster(self, spellCaster):
+    def setCaster(self, spellCaster:str) -> None:
         self.__spellCaster = spellCaster
 
     '''
@@ -190,7 +190,7 @@ class Client:
     Returns: self.__spawnPoint:list
     Purpose: Getter for self.__spawnPoint
     '''
-    def getSpawnPoint(self):
+    def getSpawnPoint(self) -> list:
         return self.__spawnPoint
 
     '''
@@ -199,7 +199,7 @@ class Client:
     Returns: self.__size:list
     Purpose: Getter for self.__size 
     '''
-    def getSize(self):
+    def getSize(self) -> list:
         return self.__size
 
     '''
@@ -217,16 +217,16 @@ class Client:
     Returns: self.__playerID:integer
     Purpose: Getter for self.__playerID
     '''
-    def getPlayerID(self):
+    def getPlayerID(self) -> int:
         return self.__playerID
 
     '''
     Name: getElement
     Parameters: None
-    Returns: self.__element
+    Returns: self.__element:str
     Purpose: Getter for self.__element
     '''
-    def getElement(self):
+    def getElement(self) -> str:
         return self.__element
 
     '''
@@ -235,16 +235,16 @@ class Client:
     Returns: self.__colour:tuple
     Purpose: Getter for self.__colour
     '''
-    def getPlayerColour(self):
+    def getPlayerColour(self) -> tuple[int,int,int]:
         return self.__colour
 
     '''
     Name: getCaster
     Parameters: None
-    Returns: self.__spellCaster
+    Returns: self.__spellCaster:str
     Purpose: Getter for self.__spellCaster
     '''
-    def getCaster(self):
+    def getCaster(self) -> str:
         return self.__spellCaster
 
 '''
@@ -299,11 +299,7 @@ class Server:
 
                 colour = (randint(0, 255), randint(0, 255), randint(0, 255))
                 position = choice(self.__spawnPoints)
-                # playerIDMessage = json.dumps({"type": "playerID",
-                #                               "data": {"playerID": len(self.__clientList) + 1, "colourTuple": colour,
-                #                                        "positionList": position}})
-                # print(playerIDMessage)
-                # conn.send(playerIDMessage.encode())
+
                 time.sleep(0.1)
                 self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1))
                 print(len(self.__clientList))
@@ -375,12 +371,24 @@ class Server:
             }
         self.__beginTime = time.time()
     
+    '''
+    Name: timeCheck
+    Parameters: None
+    Returns: None
+    Purpose: Runs a continuous loop to check whether the game should have ended or not, and when it should have, end the game
+    '''
     def timeCheck(self):
         while (time.time()-self.__beginTime) < self.__lengthOfGame:
             pass
         self.__timeUp()
 
-
+    '''
+    Name: getTimeRemaining
+    Parameters: None
+    Returns: None
+    Purpose: Notifies each clients of how long there is left
+    within the private game
+    '''
     def getTimeRemaining(self):
         for client in self.__clientList:
             timeRemaining = {
@@ -389,8 +397,26 @@ class Server:
                     }
             client.sendData(json.dumps(timeRemaining).encode())
 
+    '''
+    Name: __timeUp
+    Parameters: None
+    Returns: None
+    Purpose: Sends all the clients the message that the game has ended,
+    as well as information to see who has won
+    '''
     def __timeUp(self):
         pass
+
+    '''
+    Name: __getClientPosition
+    Parameters: conn:object
+    Returns: int
+    Purpose: Gets the position of a certain client object within the clientList variable
+    '''
+    def __getClientPosition(self, conn) -> int:
+        for client  in self.__clientList:
+            if client.getClient() == conn:
+                return client.getPlayerID() - 1
 
     '''
     Name: messageHandling
@@ -398,12 +424,10 @@ class Server:
     Returns: None
     Purpose: Handles what to do with the message received from a client
     '''
-    def __messageHandling(self, message:dict, conn):
+    def __messageHandling(self, message:dict, conn) -> None:
         try:
             if message["type"] == "movement":
-                for client in self.__clientList:
-                    if client.getClient() == conn:
-                        clPos = client.getPlayerID - 1
+                clPos: int = self.__getClientPosition(conn)
 
                 self.__clientList[clPos].position[0], self.__clientList[clPos].position[1] = message["data"]["posX"], message["data"]["posY"]
 
@@ -426,6 +450,14 @@ class Server:
                     print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
                     iterator += 1
 
+            # Since spellcaster information is not automatically filled in, it needs to be set through a seperate message
+            if message["type"] == "casterInfo":
+                data = message["data"]
+                clPos: int = self.__getClientPosition(conn)
+
+                self.__clientList[clPos].setElement(data["element"])
+                self.__clientList[clPos].setCaster(data["caster"])
+
             if message["type"] == "legalCheck":
                 messageData = message["data"]
                 print("LEGALMOVECHECK")
@@ -436,6 +468,7 @@ class Server:
                     if closestPlat is None:
                         closestPlat = platform
                     else:
+                        print("NonePlatCheck:", platform.getTop())
                         if messageData["direction"] == "y":
                             if (platform.getTop() >= clientMove.position[1] - messageData[
                                 "amount"] or platform.getTop() <= clientMove.position[1] - messageData[
@@ -462,7 +495,7 @@ class Server:
                         else:
                             clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
         except Exception as e:
-            print("Error:", e)
+            print("Error1:", e)
 
     '''
     Name: recv_from_client
@@ -477,13 +510,15 @@ class Server:
                 break
             else:
                 try:
-                    msgList: list[dict] = data_handling(data.decode())
-                    for msg in msgList:
-                        self.__messageHandling(message=msg, conn=conn)
+                    if data.decode() is not None:
+                        msgList: list[dict] = data_handling(data.decode())
+                        if msgList is not None:
+                            for msg in msgList:
+                                self.__messageHandling(message=msg, conn=conn)
 
                 except Exception as err:
                     print(data.decode())
-                    print("Error:", err)
+                    print("Error2:", err)
 
                 finally:
                     try:
@@ -494,7 +529,7 @@ class Server:
                                             message["type"] != "platformInfo" or message["type"] != "legalCheck"):
                                         client.sendData(data)
                     except Exception as e:
-                        print("Error:", e)
+                        print("Error3:", e)
 
 if __name__ == "__main__":
     pass

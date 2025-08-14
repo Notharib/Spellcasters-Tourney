@@ -1,5 +1,6 @@
 import math
 import random
+import json
 
 import pygame
 import requests
@@ -496,7 +497,19 @@ Purpose: Handles what should happen with the data initially, just to help avoid 
 '''
 def data_handling(data:str) -> list[dict]:
     try:
-        msgList: list[str] = data.split("}")
+        if "null" not in data:
+            msgList: list[str] = data.split("}")
+        else:
+            temp: str = ""
+
+            msgListwnull: list[str] = data.split("null")
+            while "null" in msgListwnull:
+                msgListwnull.remove("null")
+            for msg in msgListwnull:
+                temp += msg
+           
+            msgList: list[str] = temp.split("}")
+            temp = ""
 
         returnList: list[dict] = []
 
@@ -505,7 +518,7 @@ def data_handling(data:str) -> list[dict]:
 
         for i in range(len(msgList)):
             noDicts: int = 0
-            temp: str = msgList[i]
+            temp = msgList[i]
 
             for letter in temp:
                 if letter == '{':
@@ -517,6 +530,7 @@ def data_handling(data:str) -> list[dict]:
         return returnList
 
     except Exception as e:
+        print(data)
         print("Error", e)
 
 if __name__ == "__main__":
