@@ -231,11 +231,8 @@ class Leaderboard(pygame.sprite.Sprite):
                 self.__leaderboard.pop(key)
 
         deathValues = list(self.__leaderboard.values())
-        # print(deathValues)
 
         orderedDeath = merge_sort(deathValues)
-       # deathValues.sort()
-       # orderedDeath = deathValues
 
         orderedLeader = []
         for deathValue in orderedDeath:
@@ -363,18 +360,11 @@ Parameters: serverType:string, playerID:integer|None, serverKey:string|None, cli
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None) -> dict|None:
-   # print("GET LEADERBOARD BEING CALLED")
+def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
     leaderboard = None
     if serverType == "public":
-      #  if client is None:
-      #      raise Exception("None Type Error: client should be Client object type value, not NoneType")
-      #  else:
-      #      client.sendData({"type":"leaderGet"})
-      #      return leaderboard
-        leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
-    #    print(leaderboard)
-        return leaderboard["data"]
+      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
+      return leaderboard["data"]
     elif serverType == "private":
         if serverKey is None:
             raise Exception("None Type Error: severKey should be string type value, not NoneType")
@@ -384,8 +374,8 @@ def getLeaderboard(serverType, playerID=None, serverKey=None, client=None) -> di
                 "playerID":playerID
             }
             leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-    #    print(leaderboard)
-        return leaderboard["data"]
+
+            return leaderboard["data"]
     else:
         raise ValueError("Server type must be either public or private")
 
@@ -494,23 +484,12 @@ def platformInfo(platforms, client, clientPlayer):
 Name: data_handling
 Parameters: data:str
 Returns: list[dict]
-Purpose: Handles what should happen with the data initially, just to help avoid extra data errors
+Purpose: Handles what should initially happen with data,
+to avoid extra data errors
 '''
-def data_handling(data:str) -> list[dict]:
+def data_handling(data: str) -> list[dict]:
     try:
-        if "null" not in data:
-            msgList: list[str] = data.split("}")
-        else:
-            temp: str = ""
-
-            msgListwnull: list[str] = data.split("null")
-            while "null" in msgListwnull:
-                msgListwnull.remove("null")
-            for msg in msgListwnull:
-                temp += msg
-           
-            msgList: list[str] = temp.split("}")
-            temp = ""
+        msgList: list[str] = data.split("}")
 
         returnList: list[dict] = []
 
@@ -519,7 +498,7 @@ def data_handling(data:str) -> list[dict]:
 
         for i in range(len(msgList)):
             noDicts: int = 0
-            temp = msgList[i]
+            temp: str = msgList[i]
 
             for letter in temp:
                 if letter == '{':
@@ -531,8 +510,23 @@ def data_handling(data:str) -> list[dict]:
         return returnList
 
     except Exception as e:
-        print(data)
-        print("Error", e)
+        print("Data Handling Error:", e)
+
+# Unit Tests
+class LeaderboardTesting(unittest.TestCase):
+    '''
+    Name: setUp
+    Parameters: None
+    Returns: None
+    Purpose: Sets up the unit test
+    '''
+    def setUp(self):
+        self.leaderboard = Leaderboard()
+        
+        for i in range(3):
+            randomPlayer = [random.randint(0,100),random.randint(0,100)]
+            self.leaderboard.addToLeader(randomPlayer)
+
 
 if __name__ == "__main__":
     pass
