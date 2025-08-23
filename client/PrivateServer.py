@@ -370,13 +370,56 @@ class Server:
                 }
             }
         self.__beginTime = time.time()
-    
+        self.checkForPlatInfo()
+
+
+    '''
+    Name: checkForPlatInfo
+    Parameters: None
+    Returns: None
+    Purpose: After 3s of the game beginning, if 
+    the clients still haven't sent over the exact platform
+    information, it will call a function that generates an estimate
+    '''
+    def checkForPlatInfo(self, size: list[int] = [20,500]):
+        time.sleep(3)
+
+        for i in range(len(self.__platforms)):
+            plat = self.platforms[i]
+            platPos: list[int] = plat.getPos()
+            
+            if plat.getTop() is None:
+                self.__platforms[i].setTop(platPos[1])
+            
+            if plat.getBottom() is None:
+                self.__platforms[i].setBottom(platPos[1]+size[0])
+            
+            if plat.getLeft() is None:
+                self.__platforms[i].setLeft(platPos[0])
+            
+            if plat.getRight() is None:
+                self.__platforms[i].setRight(platPos[0]+size[1])
+
+
+    '''
+    Name: timeCheck
+    Parameters: None
+    Returns: None
+    Purpose: Checks if the time has ran out, and if it has
+    runs the timeUp function
+    '''
     def timeCheck(self):
         while (time.time()-self.__beginTime) < self.__lengthOfGame:
             pass
         self.__timeUp()
 
-
+    '''
+    Name: getTimeRemaining
+    Parameters: None
+    Returns: None
+    Purpose: Sends clients a message letting them know how long is left
+    on the timer
+    '''
     def getTimeRemaining(self):
         for client in self.__clientList:
             timeRemaining = {
@@ -384,7 +427,12 @@ class Server:
                     "data": self.__lengthOfGame - (time.time()-self.__beginTime) 
                     }
             client.sendData(json.dumps(timeRemaining).encode())
-
+    '''
+    Name: __timeUp
+    Parameters: None
+    Returns: None
+    Purpose: Handles what to do when the game time has run out
+    '''
     def __timeUp(self):
         pass
 
