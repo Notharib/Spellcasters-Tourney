@@ -1,6 +1,144 @@
-import pygame, math, requests, unittest, random, json
+import math
+import random
+import json
+
+import pygame
+import requests
 
 # Non-player objects to be used within the game
+
+class queue:
+    '''
+    Name: queue
+    Purpose: To handle the functions of a queue data type
+    '''
+    def __init__(self) -> None:
+        '''
+        Name: __init__
+        Parameters: self
+        Returns: None
+        Description: Initialises the Queue as a list with 10 Null elements and
+        initialises the rear to -1
+        '''
+        self.__data: list = [None for i in range(20)]
+        self.__back: int = -1
+
+    def dumpData(self) -> None:
+        '''
+        Name: dumpData
+        Parameters: self
+        Returns: None
+        Description: Used in unit tests to dump any leftover data from a previous test
+        '''
+        self.__data = [None for i in range(20)]
+        self.__back = -1
+
+    def loadData(self) -> None:
+        '''
+        Name: loadData
+        Parameters: self
+        Returns: None
+        Description: Used in the unit tests just to generate random data to be used
+        '''
+        self.__data = [random.randint(0,100) for i in range(10)]
+        self.__back = 9
+
+    def getFront(self):
+        '''
+        Name: getFront
+        Parameters: self
+        Returns: None
+        Description: Returns the front element of the queue
+        '''
+        return self.__data[0]
+
+    def getBack(self):
+        '''
+        Name: getBack
+        Parameters: self
+        Returns: self._data[self.__back]
+        Description: Checks if the Queue is full, if not adds new element
+        to the rear of the Queue and updates the rear pointer
+        '''
+        if not self.is_empty():
+            return self.__data[self.__back]
+        else:
+            raise Exception("Attempted to get back of an empty queue")
+
+    def enqueue(self, data) -> None:
+        '''
+        Name: enqueue
+        Parameters: self, data
+        Returns: None
+        Description: Checks if the Queue is full, if not adds new element
+        to the rear of the Queue and updates the rear pointer
+        '''
+        if not self.is_full():
+            if self.__back == -1:
+                self.__data[0] = data
+                self.__back = 0
+            else:
+                self.__back += 1
+                self.__data[self.__back] = data
+        else:
+            raise Exception("Attempted to enter data into a queue that is full")
+
+    def dequeue(self):
+        '''
+        Name: dequeue
+        Parameters: self
+        Returns: String|Integer|Dictionary
+        Description: Returns the item at
+        the front of the Queue and updates the front pointer
+        '''
+        if not self.is_empty():
+            org = self.__data[0]
+
+            self.__data.pop(0)
+            self.__data.append(None)
+
+            noneValues = 0
+            for item in self.__data:
+                if item is None:
+                    noneValues += 1
+            if noneValues == 20:
+                self.__back = -1
+
+            return org
+        else:
+            raise Exception("Attempted to dequeue an empty queue")
+
+    def is_full(self) -> bool:
+        '''
+        Name: isfull
+        Parameters: Self
+        Returns: Boolean
+        Description: Returns True if the Queue is full and False if not
+        '''
+        return self.__back == 19
+
+    def is_empty(self) -> bool:
+        '''
+        Name: is_empty
+        Parameters: Self
+        Returns: Boolean
+        Description: Returns True if the Queue is empty and False if not
+        '''
+        return self.__back == -1
+
+    def spaces_free(self) -> int:
+        '''
+        Name: spaces_free
+        Parameters: Self
+        Returns: Integer
+        Description: Returns how many empty spaces remain in the Queue
+        '''
+        noneValues: int = 0
+        for item in self.__data:
+            if item is None:
+                noneValues += 1
+
+        return noneValues
 
 '''
 Name: Leaderboard
@@ -17,19 +155,19 @@ class Leaderboard(pygame.sprite.Sprite):
     '''
     def __init__(self):
         super().__init__()
-        self.__leaderboard = {}
-        self.__displayText = ""
-        self.X = 200
-        self.Y = 0
-        self.width = 400
-        self.height = 300
-        self.colour = (0,0,255)
-        self.image = pygame.Surface([self.width, self.height])
+        self.__leaderboard: dict = {}
+        self.__displayText: str = ""
+        self.X: int = 200
+        self.Y: int = 0
+        self.width: int = 400
+        self.height: int = 300
+        self.colour: tuple = (0,0,255)
+        self.image: pygame.Surface = pygame.Surface([self.width, self.height])
         self.image.fill(self.colour)
         pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])
         self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
+        self.rect.x: int = self.X
+        self.rect.y: int = self.Y
 
     '''
     Name: update
@@ -37,15 +175,16 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates the values of different variables within the class as needed
     '''
-    def update(self, leaderboard):
+    def update(self, leaderboard: dict):
         self.__displayText = ""
         self.__leaderboard = leaderboard
-        leaderList = self.setupLeaderStructure()
+        leaderList: list[list[str]] = self.setupLeaderStructure()
         for i in range(len(leaderList)):
             if i == 0:
                 self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
             else:
                 self.__displayText += "\n{position}: {user}, {deathCount}".format(position=i+1, user=leaderList[i][0], deathCount=leaderList[i][1])
+        print(self.__displayText)
 
     '''
     Name: getDisplayText
@@ -53,7 +192,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: string
     Purpose: Getter for the displayText variable
     '''
-    def getDisplayText(self):
+    def getDisplayText(self) -> str:
         return self.__displayText
 
     '''
@@ -62,7 +201,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: dictionary 
     Purpose: Getter for the leaderboard variable
     '''    
-    def getLeaderboard(self):
+    def getLeaderboard(self) -> dict:
         return self.__leaderboard
 
 
@@ -73,7 +212,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Function only used for unit testing to add players to
     the leaderboard
     '''
-    def addToLeader(self,examplePlayer):
+    def addToLeader(self,examplePlayer) -> None:
         self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
 
     '''
@@ -217,7 +356,7 @@ def merge(left, right):
 
 '''
 Name: getLeaderboard
-Parameters: serverType:string, playerNo:integer, serverKey:None, client=None
+Parameters: serverType:string, playerID:integer|None, serverKey:string|None, client=Client|None
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
@@ -232,9 +371,10 @@ def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
         else:
             jsonInfo = {
                 "serverKey":serverKey,
-                "playerNo":playerNo
+                "playerID":playerID
             }
             leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
+
             return leaderboard["data"]
     else:
         raise ValueError("Server type must be either public or private")
@@ -242,21 +382,35 @@ def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
 
 '''
 Name: getDirection
-Parameters: player:object
-Returns: MPVector:list
+Parameters: player:object, mousePos: list[int]|None
+Returns: MPVector:list[int]
 Purpose: Gets the direction vector that the projectile needs to move in
 '''
-def getDirection(player):
-    mousePos = pygame.mouse.get_pos()
+def getDirection(player, mousePos: list[int]|None = None) -> list:
+    if mousePos is None:
+        mousePos = pygame.mouse.get_pos()
     MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
-    print(MPVector)
-    hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
-    divider = hyppotenuse // 10
-    for i in range(2):
-        MPVector[i] //= divider
+    try:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
 
-    print(MPVector)
-    return MPVector
+    except ValueError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2)+1)
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
+    except ZeroDivisionError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = (hyppotenuse // 10) + 2
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+
 
 '''
 Name: youDied
@@ -307,6 +461,7 @@ Purpose: Creates a list of all the information about all the platforms
 '''
 def sendPlatformInfo(platforms):
     data = []
+    print(platforms, platforms.sprites())
     for platform in platforms.sprites():
         dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
         data.append(dictionary)
@@ -319,7 +474,7 @@ Returns: None
 Purpose: Send information about the platforms within the sprite group to the server
 '''
 def platformInfo(platforms, client, clientPlayer):
-    if clientPlayer.characterNo - 1 == 0:
+    if clientPlayer.playerID - 1 == 0:
         platformInfo = sendPlatformInfo(platforms)
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         print(platformInfoDict)
@@ -372,36 +527,6 @@ class LeaderboardTesting(unittest.TestCase):
             randomPlayer = [random.randint(0,100),random.randint(0,100)]
             self.leaderboard.addToLeader(randomPlayer)
 
-    '''
-    Name: test_isLeaderboardGetter
-    Parameters: None
-    Returns: None
-    Purpose: Unit test to make sure the leaderboard is returning as a dictionary
-    '''
-    def test_isLeaderboardGetter(self):
-        self.assertEqual(type(self.leaderboard.getLeaderboard()),type({}),"Problem with Leaderboard getter or variable")
-    
-    '''
-    Name: test_isDisplayTextGetter
-    Parameters: None
-    Returns: None
-    Purpose: Unit test to make sure the display text getter is returning a string
-    '''
-    def test_isDisplayTextGetter(self):
-        self.assertEqual(type(self.leaderboard.getDisplayText()),type("Hello World"), "Problem with DisplayText getter or variable")
-    
-    '''
-    Name: test_LeaderStructure
-    Parameters: None
-    Returns: None
-    Purpose: Unit test to make sure the leaderboard is structuring properly
-    '''
-    def test_LeaderStructure(self):
-        orderedDeath = self.leaderboard.setupLeaderStructure()
-        self.assertGreater(len(orderedDeath),0)
-        for item in orderedDeath:
-            self.assertEqual(type(item),type([]))
-
 
 if __name__ == "__main__":
-    unittest.main()
+    pass

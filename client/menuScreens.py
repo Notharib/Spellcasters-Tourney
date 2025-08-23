@@ -1,6 +1,10 @@
-import pygame, pygame.freetype, requests, socket
-from menuClasses import TextBox, Pointer
-from characterCreation import Fire, Water, Wizard, Druid
+import socket
+
+import pygame
+import pygame.freetype
+import requests
+from characterCreation import Druid, Fire, Water, Wizard
+from menuClasses import Pointer, TextBox
 
 '''
 Name: waiting
@@ -24,6 +28,10 @@ def waiting(c, screen, creationData):
             if event.type == pygame.QUIT:
                 c.waitingOver()
                 exit()
+            if event.type == pygame.KEYDOWN:
+                if pygame.key.get_pressed()[pygame.K_k]:
+                    break
+
 
         f.render_to(screen, (300, 300), textOne, (0, 0, 0))
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
@@ -329,7 +337,7 @@ def characterBuilder(screen):
             pygame.display.update()
 
     character = {
-        "spellcastingType": currSelectedClass,
+        "caster": currSelectedClass,
         "element": currSelectedElement,
     }
     return character
