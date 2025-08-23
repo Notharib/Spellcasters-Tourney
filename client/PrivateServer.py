@@ -5,9 +5,6 @@ import time
 from random import choice, randint
 
 from gameLogic import data_handling
-from PSLogic import (Client, Platform,
-                     generatePlatforms)
-
 
 '''
 Name: Server
