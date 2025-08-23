@@ -1,7 +1,8 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard
+from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
 from PrivateServer import Server
+from clientLogger import Logger
 
 '''
 Name: Client
@@ -70,73 +71,75 @@ class Client:
                 break
             else:
                 try:
-                    msg = dict(json.loads(data.decode()))
+                    messageList: list[dict] = data_handling(data.decode())
+                    
+                    if messageList is not None:
+                        for msg in messageList:
+                            if msg["type"] == "leaderGet":
+                                self.setLeaderBoard(msg["data"])
 
-                    if msg["type"] == "leaderGet":
-                        self.setLeaderBoard(msg["data"])
+                            if msg["type"] == "clientNo":
+                                print("client player created")
+                                self.clientNo = msg["data"]["clientNo"]
+                                addCharacter(msg["data"])
 
-                    if msg["type"] == "clientNo":
-                        print("client player created")
-                        self.clientNo = msg["data"]["clientNo"]
-                        addCharacter(msg["data"])
+                            if msg["type"] == "playerJoin":
+                                print("external player added")
+                                addCharacter(msg["data"])
 
-                    if msg["type"] == "playerJoin":
-                        print("external player added")
-                        addCharacter(msg["data"])
+                            if msg["type"] == "movement":
+                                if len(players.sprites()) == 2:
+                                    movedPlayer = players.sprites()[1]
+                                else:
+                                    iteration = 0
+                                    # print(players.sprites())
+                                    for player in players.sprites():
+                                        if player.characterNo == msg["data"]["playerNo"]:
+                                            # print("found moved player")
+                                            movedPlayer = player
+                                            break
+                                if msg["data"]["direction"] == "y":
+                                    movedPlayer.rect.y = msg["data"]["movedTo"]
+                                elif msg["data"]["direction"] == "x":
+                                    movedPlayer.rect.x = msg["data"]["movedTo"]
 
-                    if msg["type"] == "movement":
-                        if len(players.sprites()) == 2:
-                            movedPlayer = players.sprites()[1]
-                        else:
-                            iteration = 0
-                            # print(players.sprites())
-                            for player in players.sprites():
-                                if player.characterNo == msg["data"]["playerNo"]:
-                                    # print("found moved player")
-                                    movedPlayer = player
-                                    break
-                        if msg["data"]["direction"] == "y":
-                            movedPlayer.rect.y = msg["data"]["movedTo"]
-                        elif msg["data"]["direction"] == "x":
-                            movedPlayer.rect.x = msg["data"]["movedTo"]
+                            if msg["type"] == "createPlat":
+                                print("Created platform")
+                                platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
+                                self.__noOfPlatforms += 1
 
-                    if msg["type"] == "createPlat":
-                        print("Created platform")
-                        platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
-                        self.__noOfPlatforms += 1
+                            if msg["type"] == "disconn":
+                                players.remove(players.sprites()[msg["data"]["clientNo"]])
+                                print("Player Disconnected")
 
-                    if msg["type"] == "disconn":
-                        players.remove(players.sprites()[msg["data"]["clientNo"]])
-                        print("Player Disconnected")
+                            if msg["type"] == "beginGame":
+                                self.__waiting = False
+                                print(msg['data'])
+                                # addCharacter(msg["data"])
+                                clPlData = {
+                                    "clientNo": msg["data"]["clientNo"],
+                                    "positionList": msg['data']['positionList'],
+                                    'colourTuple': msg['data']['colourTuple']
+                                }
+                                addCharacter(clPlData)
+                                for player in list(msg["data"]["otherPlayersInfo"].keys()):
+                                    playerData = msg["data"]["otherPlayersInfo"][player]
+                                    playerData["playerNo"] = player
+                                    addCharacter(playerData)
 
-                    if msg["type"] == "beginGame":
-                        self.__waiting = False
-                        print(msg['data'])
-                        # addCharacter(msg["data"])
-                        clPlData = {
-                            "clientNo": msg["data"]["clientNo"],
-                            "positionList": msg['data']['positionList'],
-                            'colourTuple': msg['data']['colourTuple']
-                        }
-                        addCharacter(clPlData)
-                        for player in list(msg["data"]["otherPlayersInfo"].keys()):
-                            playerData = msg["data"]["otherPlayersInfo"][player]
-                            playerData["playerNo"] = player
-                            addCharacter(playerData)
+                                iterator = 0
+                                for platform in msg['data']['platformsPos']:
+                                    createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
+                                    iterator += 1
 
-                        iterator = 0
-                        for platform in msg['data']['platformsPos']:
-                            createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
-                            iterator += 1
+                            if msg["type"] == "endGame":
+                                self.__playing = False
+                                self.__endGameData = msg["data"]
 
-                    if msg["type"] == "endGame":
-                        self.__playing = False
-                        self.__endGameData = msg["data"]
-
-                    if msg["type"] == "MOVELEGAL":
-                        self.__clientPlayer.legalMove()
-                    if msg["type"] == "MOVENOTLEGAL":
-                        self.__clientPlayer.illegalMove()
+                            if msg["type"] == "MOVELEGAL":
+                                self.__clientPlayer.legalMove()
+                            if msg["type"] == "MOVENOTLEGAL":
+                                self.__clientPlayer.illegalMove()
 
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -470,7 +473,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles the data for the player to be able to play on the public server
 '''
-def publicGame(screen, clock, players, platforms, bullets, char):
+def publicGame(screen, clock, players, platforms, bullets, char, serverType):
 
     # Creates an instance of the client object and connects it to the server
     c = Client("127.0.0.1")
@@ -489,7 +492,7 @@ def publicGame(screen, clock, players, platforms, bullets, char):
     # the player's clientNo is 1
     platformInfo(platforms, c, clientPlayer)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
 '''
 Name: privateCreate
@@ -497,7 +500,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
 '''
-def privateCreate(screen, clock, players, platforms, bullets, char, creationData):
+def privateCreate(screen, clock, players, platforms, bullets, char, creationData, serverType):
     # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
     server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
     threading.Thread(target=server.start).start()
@@ -523,7 +526,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # for player in players.sprites():
     #     print(player.characterNo)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
 '''
 Name: privateJoin
@@ -531,7 +534,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Handles joining a private server that someone else is hosting
 '''
-def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
+def privateJoin(screen, clock, players, platforms, bullets, char, creationData, serverType):
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
     c = Client(creationData["IPAddress"], socket=50001)
@@ -549,7 +552,7 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData):
 
     time.sleep(0.1)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c)
+    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
 def leaderBoardUpd(serverType, client):
     if serverType == "public":
@@ -563,7 +566,7 @@ Parameters: screen:object, clock:object, players:object, bullets: object, char:d
 Returns: None
 Purpose: Main run loop for the game
 '''
-def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
+def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, serverType):
     leaderboard = pygame.sprite.Group()
     leaderboard.add(Leaderboard())
 
@@ -590,7 +593,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
             showLeader = False
             leaderText = ""
         else:
-            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+            leaderboard.update(getLeaderboard(serverType))
             showLeader = True
             leaderText = leaderboard.sprites()[0].getDisplayText()
 
@@ -622,7 +625,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
                     bullets.remove(b)
 
         bullets.update()
-        if (time.time()-leaderUpd) >= 1:
+        if (time.time()-leaderUpd) >= 30:
             leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
             timeUpd = time.time()
         clientPlayer.gravity(c, plat)
@@ -633,41 +636,46 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c):
         players.draw(screen)
         if showLeader:
             leaderboard.draw(screen)
-            f.render_to(screen,(200,0), leaderText, (0,0,0))
+            f.render_to(screen,(200,25), leaderText, (0,0,0))
 
         clock.tick(60)
         pygame.display.update()
     exit()
 
 if __name__ == '__main__':
-    pygame.display.init()
-    pygame.font.init()
-    pygame.freetype.init()
-    WINDOW_SIZE = (800, 800)
+    logger = Logger()
 
-    RED = (250, 9, 1)
-    GREEN = (2, 249, 0)
-    BLUE = (0, 0, 240)
-    PURPLE = (160, 32, 240)
-    WHITE = (255,255,255)
+    try:
+        pygame.display.init()
+        pygame.font.init()
+        pygame.freetype.init()
+        WINDOW_SIZE = (800, 800)
 
-    screen = pygame.display.set_mode(WINDOW_SIZE)
-    clock = pygame.time.Clock()
+        RED = (250, 9, 1)
+        GREEN = (2, 249, 0)
+        BLUE = (0, 0, 240)
+        PURPLE = (160, 32, 240)
+        WHITE = (255,255,255)
 
-    players = pygame.sprite.Group()
-    platforms = pygame.sprite.Group()
-    bullets = pygame.sprite.Group()
+        screen = pygame.display.set_mode(WINDOW_SIZE)
+        clock = pygame.time.Clock()
 
-    char = characterBuilder(screen)
+        players = pygame.sprite.Group()
+        platforms = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
 
-    # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
-    beginInfo = gameStart(screen)
+        char = characterBuilder(screen)
 
-    if beginInfo["type"] == "publicGame":
-        publicGame(screen, clock, players, platforms, bullets, char)
+        # Only runs the code below if the player decides to join the public server (private server functionality needs to be worked on)
+        beginInfo = gameStart(screen)
 
-    if beginInfo["type"] == "privateCreate":
-        privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"])
+        if beginInfo["type"] == "publicGame":
+            publicGame(screen, clock, players, platforms, bullets, char, "public")
 
-    if beginInfo["type"] == "privateJoin":
-        privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"])
+        if beginInfo["type"] == "privateCreate":
+            privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
+
+        if beginInfo["type"] == "privateJoin":
+            privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
+    except Exception as e:
+        logger.addToLog(str(e))

@@ -1,4 +1,4 @@
-import pygame, math, requests, unittest, random
+import pygame, math, requests, unittest, random, json
 
 # Non-player objects to be used within the game
 
@@ -83,11 +83,17 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Organises the leaderboard so that
     '''
     def setupLeaderStructure(self):
+        keysToPop = []
+        for key in list(self.__leaderboard.keys()):
+            if self.__leaderboard[key] is None:
+                keysToPop.append(key)
+        if len(keysToPop) != 0:
+            for key in keysToPop:
+                self.__leaderboard.pop(key)
+
         deathValues = list(self.__leaderboard.values())
-        print(deathValues)
+
         orderedDeath = merge_sort(deathValues)
-       # deathValues.sort()
-       # orderedDeath = deathValues
 
         orderedLeader = []
         for deathValue in orderedDeath:
@@ -215,16 +221,11 @@ Parameters: serverType:string, playerNo:integer, serverKey:None, client=None
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
+def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
     leaderboard = None
     if serverType == "public":
-      #  if client is None:
-      #      raise Exception("None Type Error: client should be Client object type value, not NoneType")
-      #  else:
-      #      client.sendData({"type":"leaderGet"})
-      #      return leaderboard
-      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck")
-      return leaderboard
+      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
+      return leaderboard["data"]
     elif serverType == "private":
         if serverKey is None:
             raise Exception("None Type Error: severKey should be string type value, not NoneType")
@@ -234,7 +235,7 @@ def getLeaderboard(serverType, playerNo, serverKey=None, client=None):
                 "playerNo":playerNo
             }
             leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-            return leaderboard
+            return leaderboard["data"]
     else:
         raise ValueError("Server type must be either public or private")
 
@@ -323,6 +324,38 @@ def platformInfo(platforms, client, clientPlayer):
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         print(platformInfoDict)
         client.sendData(platformInfoDict)
+
+'''
+Name: data_handling
+Parameters: data:str
+Returns: list[dict]
+Purpose: Handles what should initially happen with data,
+to avoid extra data errors
+'''
+def data_handling(data: str) -> list[dict]:
+    try:
+        msgList: list[str] = data.split("}")
+
+        returnList: list[dict] = []
+
+        while '' in msgList:
+            msgList.remove('')
+
+        for i in range(len(msgList)):
+            noDicts: int = 0
+            temp: str = msgList[i]
+
+            for letter in temp:
+                if letter == '{':
+                    noDicts += 1
+            temp += '}' * noDicts
+
+            returnList.append(dict(json.loads(temp)))
+
+        return returnList
+
+    except Exception as e:
+        print("Data Handling Error:", e)
 
 # Unit Tests
 class LeaderboardTesting(unittest.TestCase):

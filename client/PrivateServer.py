@@ -1,5 +1,6 @@
 import socket, json, threading, time
 from random import randint, choice
+from gameLogic import data_handling
 
 '''
 Name: Platform
@@ -476,31 +477,26 @@ class Server:
                 break
             else:
                 try:
-                    # message = dict(json.loads(data.decode()))
-                    decodedData = data.decode()
-                    message = dict(json.loads(decodedData))
-                    self.__messageHandling(message, conn)
+                    if data.decode() is not None:
+                        msgList: list[dict] = data_handling(data.decode())
+                        if msgList is not None:
+                            for msg in msgList:
+                                self.__messageHandling(message=msg, conn=conn)
 
-                except json.JSONDecodeError as e:
-                    print("json extra data handling",e)
-                    for decodedMsg in data.decode():
-                        try:
-                            message = json.loads(decodedMsg)
-                            self.__messageHandling(message,conn)
-                        except Exception as e:
-                            print("Error:", e)
                 except Exception as err:
                     print(data.decode())
-                    print("Error:", err)
+                    print("Error2:", err)
 
                 finally:
                     try:
-                        for client in self.__clientList:
-                            if client is not None and client.getClient() != conn and (
-                                    message["type"] != "platformInfo" or message["type"] != "legalCheck"):
-                                client.sendData(data)
+                        if msgList is not None:
+                            for message in msgList:
+                                for client in self.__clientList:
+                                    if client is not None and client.getClient() != conn and (
+                                            message["type"] != "platformInfo" or message["type"] != "legalCheck"):
+                                        client.sendData(data)
                     except Exception as e:
-                        print("Error:", e)
+                        print("Error3:", e)
 
 if __name__ == "__main__":
     pass
