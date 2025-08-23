@@ -3,7 +3,6 @@ import random
 import socket
 import threading
 import time
-import traceback
 
 import pygame
 import pygame.freetype
@@ -108,6 +107,7 @@ class Client:
             addCharacter(msg["data"])
 
         if msg["type"] == "movement":
+            print(players.sprites())
             if len(players.sprites()) == 2:
                 movedPlayer: Character = players.sprites()[1]
             else:
@@ -307,6 +307,7 @@ Purpose: Adds a Platform object to the platforms pygame sprite group
 '''
 def createPlatform(data: dict) -> None:
     platforms.add(Platform(data['position'],data['size'],data['platformNo']))
+    print("Platform Created!!!")
 
 '''
 Name: Character
@@ -551,7 +552,8 @@ Purpose: Handles the data for the player to be able to play on a private server,
 '''
 def privateCreate(screen, clock, players, platforms, bullets, char: dict, creationData: dict, serverType: str) -> None:
     # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
-    server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
+    server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"])
+    
     threading.Thread(target=server.start).start()
 
     # Creates an instance of the Client object, and then joins to the private server, based
@@ -565,13 +567,16 @@ def privateCreate(screen, clock, players, platforms, bullets, char: dict, creati
     # Begins the waiting loop, which continues to run until the amount of players that the host initially
     # put in has been reached
     waiting(c, screen, creationData)
+    time.sleep(1)
 
     # The first object in the players sprite group will be this clients player, so this just sets it so that is the case
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
     # Sends the private server the platforms rect information
-    platformInfo(platforms, c, clientPlayer)
+   # while not platforms.has():
+        #     pass
+    #platformInfo(platforms, c, clientPlayer)
 
     time.sleep(0.1)
 
@@ -599,9 +604,12 @@ def privateJoin(screen, clock, players, platforms, bullets, char: dict, creation
 
     # Wait loop that runs while the server is waiting for all the players to join
     waiting(c, screen, creationData)
+    time.sleep(1)
 
     # Sends the private server the platforms rect information
-    platformInfo(platforms, c, clientPlayer)
+   # while not platforms.has():
+        #     pass
+    #platformInfo(platforms, c, clientPlayer)
 
     # After the wait loop is over, this players character will be at the front of the players sprite group sprites, so
     # this just turns that into a unique variable, to make handling it easier
@@ -610,11 +618,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char: dict, creation
 
     time.sleep(0.1)
 
+    print("Beginning Run Loop")
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c,serverType)
-
-def leaderBoardUpd(serverType, client):
-    if serverType == "public":
-        client.sendData({"type:leaderReq"})
         
 '''
 Name: mainRunLoop
@@ -679,9 +684,9 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
         # Sprite group collision handling; handles collisions between projectiles and players
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for b, p_list in pHit.items():
-            for pl in p_list:
-                if pl != b.playerOrigin:
+        for bullet, players_list in pHit.items():
+            for pl in players_list:
+                if pl != bullet.playerOrigin:
                     pl.HP -= b.damage
                     pl = youDied(pl, screen)
                     bullets.remove(b)
@@ -701,9 +706,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             leaderboard.draw(screen)
             f.render_to(screen,(200,25), leaderText, (0,0,0))
         if lastLeaderStatus and not showLeader:
-            lastLeaderStatus = Falsepygame.display.init()
-        pygame.font.init()
-        pygame.freetype.init()
+            lastLeaderStatus = False
+        
         clock.tick(60)
         pygame.display.update()
     exit()

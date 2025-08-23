@@ -28,6 +28,10 @@ def waiting(c, screen, creationData):
             if event.type == pygame.QUIT:
                 c.waitingOver()
                 exit()
+            if event.type == pygame.KEYDOWN:
+                if pygame.key.get_pressed()[pygame.K_k]:
+                    break
+
 
         f.render_to(screen, (300, 300), textOne, (0, 0, 0))
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))

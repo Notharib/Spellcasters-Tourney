@@ -5,247 +5,9 @@ import time
 from random import choice, randint
 
 from gameLogic import data_handling
+from PSLogic import (Client, Platform,
+                     generatePlatforms)
 
-'''
-Name: Platform
-Purpose: To have platforms that players are able to move around on
-'''
-class Platform:
-    '''
-    Name: __init__
-    Parameters: position: list, size:list
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the platform object
-    '''
-    def __init__(self, position, size=[20,500]):
-        self.__position = position
-        self.__size = size
-        self.__colour = (0,0,255)
-        self.__top = None
-        self.__left = None
-        self.__right = None
-        self.__bottom = None
-
-    # Getters and Setters
-
-    '''
-    Name: getPos
-    Parameters: None
-    Returns: self.__position:list
-    Purpose: Getter for self.__position
-    '''
-    def getPos(self):
-        return self.__position
-
-    '''
-    Name: getPos
-    Parameters: None
-    Returns: self.__size:list
-    Purpose: Getter for self.__size
-    '''
-    def getSize(self):
-        return self.__size
-
-    '''
-    Name: getTop
-    Parameters: None
-    Returns: self.__top
-    Purpose: Getter for self.__top
-    '''
-    def getTop(self):
-        return self.__top
-
-    '''
-    Name: getBottom
-    Parameters: None
-    Returns: self.__bottom
-    Purpose: Getter for self.__bottom
-    '''
-    def getBottom(self):
-        return self.__bottom
-
-    '''
-    Name: getLeft
-    Parameters: None
-    Returns: self.__left
-    Purpose: Getter for self.__left
-    '''
-    def getLeft(self):
-        return self.__left
-
-    '''
-    Name: getRight
-    Parameters: None
-    Returns: self.__right
-    Purpose: Getter for self.__right
-    '''
-    def getRight(self):
-        return self.__right
-
-    '''
-    Name: setTop
-    Parameters: top
-    Returns: None
-    Purpose: Setter for self.__top
-    '''
-    def setTop(self, top):
-        self.__top = top
-        return None
-
-    '''
-    Name: setLeft
-    Parameters: left
-    Returns: None
-    Purpose: Setter for self.__left
-    '''
-    def setLeft(self, left):
-        self.__left = left
-        return None
-
-    '''
-    Name: setRight
-    Parameters: right
-    Returns: None
-    Purpose: Setter for self.__right
-    '''
-    def setRight(self, right):
-        self.__right = right
-        return None
-
-    ''' 
-    Name: setBottom
-    Parameters: bottom
-    Returns: None
-    Purpose: Setter for self.__bottom
-    '''
-    def setBottom(self, bottom):
-        self.__bottom = bottom
-        return None
-
-    '''
-    Name: __repr__
-    Parameters: None
-    Returns: self.__postion
-    Purpose: Defines how this object should be represented if printed directly
-    '''
-    def __repr__(self):
-        return self.__position
-
-'''
-Name: Client
-Purpose: Client class for the private server, to make managing data about 
-any given player easier
-'''
-class Client:
-    '''
-    Name: __init__
-    Parameters: conn:object, spawnPoint:tuple[int,int] playerID:integer, size:list
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Client object
-    '''
-    def __init__(self, conn, spawnPoint:list[int], playerID:int, size: list[int] =[40,40]) -> None:
-        self.__client = conn
-        self.__spawnPoint: tuple[int,int] = spawnPoint
-        self.__element: str|None = None
-        self.__spellCaster: str|None = None
-        self.__playerID: int = playerID
-        self.__colour: tuple[int,int,int] = (randint(0, 255), randint(0, 255), randint(0, 255))
-        self.position: list[int]  = list(spawnPoint)
-        self.__size: list[int] = size
-
-    '''
-    Name: sendData
-    Parameters: msgToSend:dictionary
-    Returns: None
-    Purpose: Sends data through the connection
-    '''
-    def sendData(self, msgToSend:dict) -> None:
-        self.__client.send(msgToSend)
-
-    # Getters and setters
-
-    '''
-    Name: setElement
-    Parameters: element: str
-    Returns: None
-    Purpose: Setter for self.__element
-    '''
-    def setElement(self, element:str) -> None:
-        self.__element = element
-
-    '''
-    Name: setCaster
-    Parameters: spellCaster: str
-    Returns: None
-    Purpose: Setter for self.__spellCaster
-    '''
-    def setCaster(self, spellCaster:str) -> None:
-        self.__spellCaster = spellCaster
-
-    '''
-    Name: getSpawnPoint
-    Parameters: None
-    Returns: self.__spawnPoint:list
-    Purpose: Getter for self.__spawnPoint
-    '''
-    def getSpawnPoint(self) -> list:
-        return self.__spawnPoint
-
-    '''
-    Name: getSize
-    Parameters: None
-    Returns: self.__size:list
-    Purpose: Getter for self.__size 
-    '''
-    def getSize(self) -> list:
-        return self.__size
-
-    '''
-    Name: getClient
-    Parameters: None
-    Returns: self.__client:object
-    Purpose: Getter for self.__client
-    '''
-    def getClient(self):
-        return self.__client
-
-    '''
-    Name: getPlayerID
-    Parameters: None
-    Returns: self.__playerID:integer
-    Purpose: Getter for self.__playerID
-    '''
-    def getPlayerID(self) -> int:
-        return self.__playerID
-
-    '''
-    Name: getElement
-    Parameters: None
-    Returns: self.__element:str
-    Purpose: Getter for self.__element
-    '''
-    def getElement(self) -> str:
-        return self.__element
-
-    '''
-    Name: getPlayerColour
-    Parameters: None
-    Returns: self.__colour:tuple
-    Purpose: Getter for self.__colour
-    '''
-    def getPlayerColour(self) -> tuple[int,int,int]:
-        return self.__colour
-
-    '''
-    Name: getCaster
-    Parameters: None
-    Returns: self.__spellCaster:str
-    Purpose: Getter for self.__spellCaster
-    '''
-    def getCaster(self) -> str:
-        return self.__spellCaster
 
 '''
 Name: Server
@@ -255,22 +17,23 @@ Server class, due to the differences in functionality required from both of them
 class Server:
     '''
     Name: __init__
-    Parameters: maxClients:integer, lengthOfGame:integer, platformPositions:list
+    Parameters: maxClients:integer, lengthOfGame:integer
     Returns: None
     Purpose: Constructor to set the initial values
     of the Server object
     '''
-    def __init__(self, maxClients, lengthOfGame, platformPositions):
-        self.__HOST = socket.gethostbyname(socket.gethostname())
-        self.__PORT = 50001
-        self.__clientList = []
-        self.__maxClients = int(maxClients)
-        self.__lengthOfGame = int(lengthOfGame)
-        self.__platformPositions = platformPositions
-        self.__platforms = []
-        self.__spawnPoints = []
-        self.password = None
-        self.__beginTime = None
+    def __init__(self, maxClients:int, lengthOfGame:int) -> None:
+        self.__HOST: str = socket.gethostbyname(socket.gethostname())
+        self.__PORT: int = 50001
+        self.__clientList: list = []
+        self.__maxClients: int = int(maxClients)
+        self.__lengthOfGame: int = int(lengthOfGame)
+        self.__platformPositions: list[int] = [[randint(0,800),randint(0,800)] for i in range(3)]
+        print("Created Platforms Positions @", self.__platformPositions)
+        self.__platforms: list = generatePlatforms(self.__platformPositions)
+        self.__spawnPoints: list = []
+        self.password: None|str = None
+        self.__beginTime: None|int|float = None
 
     '''
     Name: start
@@ -279,7 +42,7 @@ class Server:
     Purpose: Starts listening for connections from different clients. Will only accept connections
     until it reaches the amount of clients connected as pre-determined on the creation of the object
     '''
-    def start(self):
+    def start(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.__HOST, self.__PORT))
             s.listen(1)
@@ -288,9 +51,6 @@ class Server:
 
             for i in range(len(self.__platformPositions)):
                 self.__spawnPoints.append((self.__platformPositions[i][0], self.__platformPositions[i][1]+20))
-
-            for platform in self.__platformPositions:
-                self.__platforms.append(Platform(platform))
 
             # Should only accept new connections while the length of the client lists is less than the max number of connections
             while len(self.__clientList) < self.__maxClients:
@@ -306,10 +66,8 @@ class Server:
                 # Separate function used so that it will still continue running after the while loop in this function stops running
                 self.startListening(conn)
                 # Once the required number of clients has joined, send the start information to all the clients in '__clientList'
-                if len(self.__clientList) >= self.__maxClients:
-                    print("Beginning Game!")
-                    self.beginGame()
-                    break
+            print("Beginning Game!")
+            self.beginGame()
 
     '''
     Name: startListening
@@ -318,7 +76,7 @@ class Server:
     Purpose: Creates a thread that will begin listening for messages from the connection passed into
     the function
     '''
-    def startListening(self, conn):
+    def startListening(self, conn) -> None:
             threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
     '''
@@ -329,7 +87,7 @@ class Server:
     and sends them the necessary information required to begin the game
     '''
     def beginGame(self):
-        messageDict = {
+        messageDict: dict = {
             "type": "beginGame",
             "data": {
                 "platformsPos": self.__platformPositions,
@@ -339,6 +97,8 @@ class Server:
                 "otherPlayersInfo": {}
             }
         }
+
+        msgHolder: dict = messageDict
 
         # Sends each of the clients the information that they will need to create the stage and all of the opponents
         for client in self.__clientList:
@@ -357,18 +117,9 @@ class Server:
                         "playerID": connection.getPlayerID()
                     }
 
-            # print(messageDict)
+            print(messageDict)
             client.sendData(json.dumps(messageDict).encode())
-            messageDict = {
-                "type": "beginGame",
-                "data": {
-                    "platformsPos": self.__platformPositions,
-                    "positionList": None,
-                    "playerID": None,
-                    "colourTuple": None,
-                    "otherPlayersInfo": {}
-                }
-            }
+            messageDict = msgHolder
         self.__beginTime = time.time()
     
     '''
@@ -437,18 +188,18 @@ class Server:
                 self.__clientList.pop(message["data"]["playerID"] - 1)
                 print("player disconnected")
 
-            if message["type"] == "platformInfo":
-                print("CREATING PLATFORM INFORMATION")
-                iterator = 0
-                for platform in message["data"]:
-                    self.__platforms[iterator].setTop(platform["platformTop"])
-                    self.__platforms[iterator].setBottom(platform["platformBottom"])
-                    self.__platforms[iterator].setLeft(platform["platformLeft"])
-                    self.__platforms[iterator].setRight(platform["platformRight"])
-                    print("PLATFORM INFO RECORDED")
-                    p = self.__platforms[iterator]
-                    print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
-                    iterator += 1
+#            if message["type"] == "platformInfo":
+#                print("CREATING PLATFORM INFORMATION")
+#                iterator = 0
+#                for platform in message["data"]:
+#                    self.__platforms[iterator].setTop(platform["platformTop"])
+#                    self.__platforms[iterator].setBottom(platform["platformBottom"])
+#                    self.__platforms[iterator].setLeft(platform["platformLeft"])
+#                    self.__platforms[iterator].setRight(platform["platformRight"])
+#                    print("PLATFORM INFO RECORDED")
+#                    p = self.__platforms[iterator]
+#                    print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
+#                    iterator += 1
 
             # Since spellcaster information is not automatically filled in, it needs to be set through a seperate message
             if message["type"] == "casterInfo":

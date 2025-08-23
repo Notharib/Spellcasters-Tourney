@@ -471,6 +471,7 @@ Purpose: Creates a list of all the information about all the platforms
 '''
 def sendPlatformInfo(platforms):
     data = []
+    print(platforms, platforms.sprites())
     for platform in platforms.sprites():
         dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
         data.append(dictionary)
