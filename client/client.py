@@ -1,6 +1,7 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
+from characterCreation import BaseCharacter, Fire, Water, Wizard, Druid
 from PrivateServer import Server
 from clientLogger import Logger
 
@@ -305,11 +306,8 @@ class Character(pygame.sprite.Sprite):
     '''
     def __init__(self, position:list[int], colour:tuple[int, int, int], playerID:int) -> None:
         super().__init__()
-        self.height: int = 40
-        self.width: int = 40
         self.X: int = position[0]
         self.Y: int = position[1]
-        self.HP: int = 10
         self.colour: tuple = colour
         self.image: pygame.Surface = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
@@ -674,13 +672,13 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                     clientPlayer.collided = True
 
         # Sprite group collision handling; handles collisions between projectiles and players
-        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for bullet, players_list in pHit.items():
-            for pl in players_list:
-                if pl != bullet.playerOrigin:
-                    pl.HP -= b.damage
-                    pl = youDied(pl, screen)
-                    bullets.remove(b)
+#        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+#        for bullet, players_list in pHit.items():
+#            for pl in players_list:
+#                if pl != bullet.playerOrigin:
+#                    pl.takeDamage(bullet.getDamage())
+#                    pl = youDied(pl, screen)
+#                    bullets.remove(b)
 
         bullets.update()
 

@@ -1,3 +1,33 @@
+import math
+
+# Base Character Class
+
+class BaseCharacter:
+
+    def __init__(self) -> None:
+        self._height: int = 40
+        self._width: int = 40
+        self._HP: int = 100
+        self._timeSinceLastHit: int = -1
+        self._Regeneration = lambda time: math.exp(time)
+        self._Element = None
+        self._Caster = None
+
+    def takeDamage(self, damage: int) -> None:
+        self._HP -= damage
+
+    def setCaster(self, casterType) -> None:
+        self._Caster = casterType
+
+    def setElement(self, elementType) -> None:
+        self._Element = elementType
+
+
+
+
+
+
+
 # Element Classes
 
 '''
