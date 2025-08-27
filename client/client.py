@@ -296,7 +296,7 @@ def createPlatform(data: dict) -> None:
 Name: Character
 Purpose: To manage data surrounding each player's character, and how to handle certain actions
 '''
-class Character(pygame.sprite.Sprite):
+class Character(pygame.sprite.Sprite, BaseCharacter):
     '''
     Name: __init__
     Parameters: position:list, colour:tuple, playerID:integer
@@ -305,7 +305,7 @@ class Character(pygame.sprite.Sprite):
     of the character object
     '''
     def __init__(self, position:list[int], colour:tuple[int, int, int], playerID:int) -> None:
-        super().__init__()
+        super(Character, self).__init__()
         self.X: int = position[0]
         self.Y: int = position[1]
         self.colour: tuple = colour
