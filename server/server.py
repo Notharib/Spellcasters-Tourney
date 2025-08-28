@@ -24,6 +24,16 @@ class Client:
         self.client = cl
         self.position = position
         self.colour = colour
+'''
+    Name: __getClientPosition
+    Parameters: conn:object
+    Returns: int
+    Purpose: Gets the position of a certain client object within the clientList variable
+    '''
+    def __getClientPosition(self, conn) -> int:
+        for client  in self.__clientList:
+            if client.getClient() == conn:
+                return client.getPlayerID() - 1
         self.playerID = playerID
         self.size = size
 
@@ -177,6 +187,18 @@ class Server:
                 client.client.send(json.dumps(messageDict).encode())
 
     '''
+    Name: __getClientPosition
+    Parameters: conn:object
+    Returns: int
+    Purpose: Gets the position of a certain client object within the clientList variable
+    '''
+    def __getClientPosition(self, conn) -> int:
+        for client  in self.__clientList:
+            if client.getClient() == conn:
+                return client.getPlayerID() - 1
+
+
+    '''
     Name: leaderUpd
     Parameters: None
     Returns: None
@@ -232,6 +254,13 @@ class Server:
                             self.__platforms[iterator].right = platform["platformRight"]
                             iterator += 1
 
+                    if message["type"] == "casterInfo":
+                        data = message["data"]
+                        clPos: int = self.__getClientPosition(conn)
+
+                        self.__clientList[clPos].setElement(data["element"])
+                        self.__clientList[clPos].setCaster(data["caster"])
+                    
                     if message["type"] == "legalCheck":
                         messageData = message["data"]
                         clientMove = self.__clientList[messageData["playerID"]-1]
@@ -246,6 +275,7 @@ class Server:
                                 else:
                                     if (platform.top >= clientMove.position[0]-messageData["amount"] or platform.top <= clientMove.position[0]-messageData["amount"]) and closestPlat.top - platform.top < 0:
                                         closestPlat = platform
+
 
                         if closestPlat is not None:
                             if messageData["direction"] == "y":

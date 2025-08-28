@@ -275,6 +275,9 @@ def addCharacter(data: dict) -> None:
     players.add(Character(data["positionList"],data["colourTuple"],data["playerID"]))
     print("Player created!")
 
+    charPos: int = len(players.sprites()) - 1
+    players.sprites()[charPos].UpdateCharacteristics["charType"]
+
 '''
 Name: createBullet
 Parameters: data:dictionary
@@ -322,6 +325,49 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
         self.lastLegalPos: list[int] = self.lastPos
         self.collided: bool = False
         self.lastBulletFired: float = time.time()
+
+    '''
+    Name: setCaster
+    Parameters: caster:str
+    Returns: None
+    Purpose: Setter for the Character Caster
+    '''
+    def setCaster(self, caster: str) -> None:
+        if caster == "Wizard":
+            self._Caster = Wizard()
+        elif caster == "Druid":
+            self._Caster = Druid()
+        else:
+            raise ValueError(f"Internal Value Error: Incorrect Caster Type ({caster)}")
+
+    '''
+    Name: setElement
+    Parameters: element: str
+    Returns: None
+    Purpose: Setter for the Character Element
+    '''
+    def setElement(self, element: str) -> None:
+        if element == "Water":
+            self._Element = Water()
+        elif element == "Fire":
+            self._Element = Fire()
+        elif element == "Earth":
+            self._Element = Earth()
+        else:
+            raise ValueError(f"Internal Value Error: Incorrect Element Type ({element})")
+
+    '''
+    Name: UpdateCharacteristics
+    Parameters: characteristics: dict
+    Returns: None
+    Purpose: Sets the character's characteristics
+    '''
+    def UpdateCharacteristics(self, characteristics: dict) -> None:
+        element: str = characteristics["element"]
+        caster: str = characteristics["caster"]
+
+        self.setElement(element)
+        self.setCaster(caster)
 
     '''
     Name: leaderboardReq
@@ -514,12 +560,16 @@ def publicGame(screen, clock, players, platforms, bullets, char, serverType):
 
     time.sleep(3)
 
+    sendCasterInfo(c, char)
+
     # After a certain amount of time has passed, the server will have sent all the neccessary information required
     # for the player to be able to join the server. And the first message that the server will send is the informaiton
     # that the client will need to create its own player, so this then sets the clientPlayer variable to the first object
     # in the players sprite group
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
+
+    clientPlayer.UpdateCharacteristics(char)
 
     # Runs the platformInfo functio, which will send data to the server with information about the platforms if
     # the player's playerID is 1
@@ -557,6 +607,8 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
     # The first object in the players sprite group will be this clients player, so this just sets it so that is the case
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
+
+    clientPlayer.UpdateCharacteristics(char)
 
     # Sends the private server the platforms rect information
    # while not platforms.has():
@@ -601,6 +653,8 @@ def privateJoin(screen, clock, players, platforms, bullets, char, creationData, 
     # this just turns that into a unique variable, to make handling it easier
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
+
+    clientPlayer.UpdateCharacteristics(char)
 
     time.sleep(0.1)
 

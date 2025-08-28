@@ -300,6 +300,7 @@ def characterBuilder(screen):
 
     elOne = "Press F for Fire"
     elTwo = "Press A for Water"
+    elThree = "Press E for Earth"
 
     finished = "Press Q when you're done creating your character"
 
@@ -325,6 +326,8 @@ def characterBuilder(screen):
                     currSelectedElement = "Water"
                 if keys[pygame.K_f]:
                     currSelectedElement = "Fire"
+                if keys[pygame.K_e]:
+                    currSelectedElement = "Earth"
                 if keys[pygame.K_q]:
                     running = False
 
@@ -333,6 +336,7 @@ def characterBuilder(screen):
             f.render_to(screen, (100, 450), clTwo, (0, 0, 0))
             f.render_to(screen, (100, 550), elOne, (0, 0, 0))
             f.render_to(screen, (100, 600), elTwo, (0, 0, 0))
+            f.render_to(screen, (100, 650), elThree, (0, 0, 0))
             f.render_to(screen, (100, 700), finished, (0, 0, 0))
             pygame.display.update()
 

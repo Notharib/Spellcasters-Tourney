@@ -5,6 +5,16 @@ import time
 from random import choice, randint
 
 from gameLogic import data_handling
+from characterCreation import BaseCharacter
+
+class Client(BaseCharacter):
+
+    def __init__(self, conn, position, playerNo) -> None:
+        super().__init__()
+        self.__conn = conn
+
+    def getConn(self) -> any:
+        return self.__conn
 
 '''
 Name: Server

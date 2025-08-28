@@ -35,24 +35,6 @@ class BaseCharacter:
     def takeDamage(self, damage: int) -> None:
         self._HP -= damage
 
-    '''
-    Name: setCaster
-    Parameters: casterType:object
-    Returns: None
-    Purpose: Setter that sets the caster variable
-    '''
-    def setCaster(self, casterType) -> None:
-        self._Caster = casterType
-
-    '''
-    Name: setElement
-    Parameters: elementType: object
-    Returns: None
-    Purpose: Setter for the element variable
-    '''
-    def setElement(self, elementType) -> None:
-        self._Element = elementType
-
 # Base Element Class
 
 class Element: 
