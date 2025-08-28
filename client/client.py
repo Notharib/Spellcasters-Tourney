@@ -1,7 +1,9 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
 from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
-from characterCreation import BaseCharacter, Fire, Water, Wizard, Druid
+from characterCreation import BaseCharacter
+from Elements import Fire, Water, Earth
+from Casters import Druid, Wizard
 from PrivateServer import Server
 from clientLogger import Logger
 

@@ -153,7 +153,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Constructor to set the initial values
     of the Leaderboard object
     '''
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__leaderboard: dict = {}
         self.__displayText: str = ""
@@ -175,7 +175,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates the values of different variables within the class as needed
     '''
-    def update(self, leaderboard: dict):
+    def update(self, leaderboard: dict) -> None:
         self.__displayText = ""
         self.__leaderboard = leaderboard
         leaderList: list[list[str]] = self.setupLeaderStructure()
@@ -272,49 +272,6 @@ class Platform(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
-
-'''
-Name: Bullet
-Inherits: pygame.sprite.Sprite
-Purpose: Manages projectiles and projectile behaviour
-'''
-class Bullet(pygame.sprite.Sprite):
-    '''
-    Name: __init__
-    Parameters: spawnPoint:array, direction: array, player:object, size:list, damage:integer
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Bullet object
-    '''
-    def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
-        super().__init__()
-        self.height = size[0]
-        self.width = size[1]
-        self.X = spawnPoint[0]
-        self.Y = spawnPoint[1]
-        self.direction = direction
-        self.playerOrigin = player
-        self.colour = (0,0,0)
-        self.image = pygame.Surface([self.width,self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.damage = damage
-
-    '''
-    Name: update
-    Parameters: None
-    Returns: None
-    Purpose: Update function that will update the object's rect position, depending on
-    what the direction is
-    '''
-    def update(self):
-        if self.direction[0] is not None:
-            self.rect.x -= self.direction[0]
-        if self.direction[1] is not None:
-            self.rect.y -= self.direction[1]
 
 
 # General functions

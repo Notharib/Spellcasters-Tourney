@@ -65,7 +65,8 @@ class Element:
     '''
     def __init__(self) -> None:
         self._type: str = ""
-        self._oppositeType: str = ""
+        self._strength str = ""
+        self._weakness: str = ""
 
     '''
     Name: getType
@@ -77,14 +78,24 @@ class Element:
         return self._type
 
     '''
-    Name: getOpposite
+    Name: getWeakness
     Parameters: None
-    Returns: self._oppositeType
-    Purpose: Getter for the opposite type
-    variable
+    Returns: self._weakness
+    Purpose: Getter for the element type that this element
+    takes more damage from
     '''
-    def getOpposite(self) -> str: 
-        return self._oppositeType
+    def getWeakness(self) -> str: 
+        return self._weakness
+
+    '''
+    Name: getStrength
+    Parameters: None
+    Returns: self._strength
+    Purpose: Getter for the element type that this element
+    does more damage to
+    '''
+    def getStrength(self) -> str:
+        return self._strength
 
     '''
     Name: __repr__
