@@ -13,29 +13,55 @@ any given player easier
 '''
 class Client:
     '''
-        Name: __init__
-        Parameters: position:list, colour:tuple, cl:object, playerID:integer, address:string, size:list
-        Returns: None
-        Purpose: Constructor to set the initial values
-        of the Client object
-        '''
-    def __init__(self, position,colour,cl,playerID, address, size=[40,40]):
-        self.addr = address
-        self.client = cl
-        self.position = position
-        self.colour = colour
-'''
-    Name: __getClientPosition
-    Parameters: conn:object
-    Returns: int
-    Purpose: Gets the position of a certain client object within the clientList variable
+    Name: __init__
+    Parameters: position:list, colour:tuple, cl:object, playerID:integer, address:string, size:list
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Client object
     '''
-    def __getClientPosition(self, conn) -> int:
-        for client  in self.__clientList:
-            if client.getClient() == conn:
-                return client.getPlayerID() - 1
-        self.playerID = playerID
-        self.size = size
+    def __init__(self, position,colour,cl,playerID, address, size=[40,40]):
+        self.__addr: str = address
+        self.__client = cl
+        self.__position: list[int] = position
+        self.__colour: tuple[int,int,int] = colour
+        self.__playerID: int = playerID
+        self.__size: list[int] = size
+
+    '''
+    Name: getPlayerID
+    Parameters: None
+    Returns: self.__playerID: int
+    Purpose: Getter for the client's playerID
+    '''
+    def getPlayerID(self) -> int:
+        return self.__playerID
+
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: self.__position:list[int]
+    Purpose: Getter for the client's position
+    '''
+    def getPosition(self) -> list[int]:
+        return self.__position
+
+    '''
+    Name: getClient 
+    Parameters: None
+    Returns: self.__client:object
+    Purpose: Getter for the client's client
+    '''
+    def getClient(self) -> any:
+        return self.__client
+
+    '''
+    Name: setPosition
+    Parameters: position:list[int]
+    Returns: None
+    Purpose: Setter for the client's position
+    '''
+    def setPosition(self, position: list[int]) -> None:
+        self.__position = position
 
 '''
 Name: Platform
@@ -43,12 +69,12 @@ Purpose: To have platforms that players are able to move around on
 '''
 class Platform:
     '''
-        Name: __init__
-        Parameters: position:list, platformId: integer, colour:tuple, platformSize:list
-        Returns: None
-        Purpose: Constructor to set the initial values
-        of the Platform object
-        '''
+    Name: __init__
+    Parameters: position:list, platformId: integer, colour:tuple, platformSize:list
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Platform object
+    '''
     def __init__(self, position, platformId, colour=(0,255,0),platformSize=[20,500]):
         self.position = position
         self.colour = colour
@@ -66,12 +92,12 @@ Server class, due to the differences in functionality required from both of them
 '''
 class Server:
     '''
-        Name: __init__
-        Parameters: None
-        Returns: None
-        Purpose: Constructor to set the initial values
-        of the Server object
-        '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Server object
+    '''
     def __init__(self):
         self.__HOST = '127.0.0.1'
         self.__PORT = 50000
@@ -129,6 +155,17 @@ class Server:
             if client.client != connection:
                 message = json.dumps({"type":"playerJoin","data":{"playerID":len(self.__clientList)+1, "colourTuple": colour, "positionList":position}})
                 client.client.send(message.encode())
+
+    '''
+    Name: __getClientPosition
+    Parameters: conn:object
+    Returns: int
+    Purpose: Gets the position of a certain client object within the clientList variable
+    '''
+    def __getClientPosition(self, conn) -> int:
+        for client  in self.__clientList:
+            if client.getClient() == conn:
+                return client.getPlayerID() - 1
 
     '''
     Name: checkIfFull

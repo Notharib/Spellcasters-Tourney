@@ -275,8 +275,10 @@ def addCharacter(data: dict) -> None:
     players.add(Character(data["positionList"],data["colourTuple"],data["playerID"]))
     print("Player created!")
 
-    charPos: int = len(players.sprites()) - 1
-    players.sprites()[charPos].UpdateCharacteristics["charType"]
+    if data["charType"] is not None:
+        charPos: int = len(players.sprites()) - 1
+        players.sprites()[charPos].UpdateCharacteristics(data["charType"])
+        print("Characteristics Automatically Filled In")
 
 '''
 Name: createBullet

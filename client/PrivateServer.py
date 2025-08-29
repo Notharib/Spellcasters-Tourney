@@ -6,15 +6,7 @@ from random import choice, randint
 
 from gameLogic import data_handling
 from characterCreation import BaseCharacter
-
-class Client(BaseCharacter):
-
-    def __init__(self, conn, position, playerNo) -> None:
-        super().__init__()
-        self.__conn = conn
-
-    def getConn(self) -> any:
-        return self.__conn
+from PrivateServerLogic import generatePlatforms, Platform, Client
 
 '''
 Name: Server
@@ -117,11 +109,13 @@ class Server:
             for connection in self.__clientList:
                 if connection != client:
                     messageDict["data"]["otherPlayersInfo"][connection.getPlayerID()] = {
-                        "type": connection.getCaster(),
-                        "element": connection.getElement(),
                         "positionList": connection.getSpawnPoint(),
                         "colourTuple": connection.getPlayerColour(),
                         "playerID": connection.getPlayerID()
+                        "charType": {
+                                "caster": connection.getCaster(),
+                                "element": connection.getElement()
+                            }
                     }
 
             print(messageDict)
