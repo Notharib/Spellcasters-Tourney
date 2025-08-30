@@ -317,9 +317,9 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
         self.X: int = position[0]
         self.Y: int = position[1]
         self.colour: tuple = colour
-        self.image: pygame.Surface = pygame.Surface([self.width, self.height])
+        self.image: pygame.Surface = pygame.Surface([self._width, self._height])
         self.image.fill(colour)
-        pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.width, self.height])
+        pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self._width, self._height])
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y

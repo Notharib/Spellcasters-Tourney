@@ -136,7 +136,7 @@ class Server:
         time.sleep(3)
 
         for i in range(len(self.__platforms)):
-            plat = self.platforms[i]
+            plat = self.__platforms[i]
             platPos: list[int] = plat.getPos()
             
             if plat.getTop() is None:
