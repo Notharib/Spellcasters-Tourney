@@ -145,7 +145,7 @@ class Client:
                                 print(msg['data'])
                                 # addCharacter(msg["data"])
                                 clPlData = {
-                                    "clientNo": msg["data"]["clientNo"],
+                                    "clientNo": msg["data"]["playerID"],
                                     "positionList": msg['data']['positionList'],
                                     'colourTuple': msg['data']['colourTuple']
                                 }
