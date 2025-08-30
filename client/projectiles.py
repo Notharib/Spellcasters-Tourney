@@ -75,9 +75,9 @@ class Bullet(pygame.sprite.Sprite, Projectile):
 
 class ConeAttack(pygame.sprite.Sprite, Projectile):
 
-    def __init__(self, spawnPoint, playerNo, size= [10,10], damage = 10):
+    def __init__(self, spawnPoint, playerID, size= [10,10], damage = 10):
         pygame.sprite.Sprite.__init__()
-        Projectile.__init__(size, playerNo, damage, spawnPoint)
+        Projectile.__init__(size, playerID, damage, spawnPoint)
 
         self._colour: tuple[int,int,int] = (200,200,200)
         self._image = pygame.Surface(size)

@@ -106,9 +106,9 @@ class Client:
                             if msg["type"] == "leaderGet":
                                 self.setLeaderBoard(msg["data"])
 
-                            if msg["type"] == "clientNo":
+                            if msg["type"] == "playerID":
                                 print("client player created")
-                                self.clientNo = msg["data"]["clientNo"]
+                                self.playerID = msg["data"]["playerID"]
                                 addCharacter(msg["data"])
 
                             if msg["type"] == "playerJoin":
@@ -122,7 +122,7 @@ class Client:
                                     iteration = 0
                                     # print(players.sprites())
                                     for player in players.sprites():
-                                        if player.characterNo == msg["data"]["playerNo"]:
+                                        if player.playerID == msg["data"]["playerID"]:
                                             # print("found moved player")
                                             movedPlayer = player
                                             break
@@ -137,7 +137,7 @@ class Client:
                                 self.__noOfPlatforms += 1
 
                             if msg["type"] == "disconn":
-                                players.remove(players.sprites()[msg["data"]["clientNo"]])
+                                players.remove(players.sprites()[msg["data"]["playerID"]])
                                 print("Player Disconnected")
 
                             if msg["type"] == "beginGame":
@@ -145,14 +145,14 @@ class Client:
                                 print(msg['data'])
                                 # addCharacter(msg["data"])
                                 clPlData = {
-                                    "clientNo": msg["data"]["playerID"],
+                                    "playerID": msg["data"]["playerID"],
                                     "positionList": msg['data']['positionList'],
                                     'colourTuple': msg['data']['colourTuple']
                                 }
                                 addCharacter(clPlData)
                                 for player in list(msg["data"]["otherPlayersInfo"].keys()):
                                     playerData = msg["data"]["otherPlayersInfo"][player]
-                                    playerData["playerNo"] = player
+                                    playerData["playerID"] = player
                                     addCharacter(playerData)
 
                                 iterator = 0

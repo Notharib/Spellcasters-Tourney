@@ -317,7 +317,7 @@ Parameters: serverType:string, playerID:integer|None, serverKey:string|None, cli
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerNo=None, serverKey=None, client=None):
+def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
     leaderboard = None
     if serverType == "public":
       leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
