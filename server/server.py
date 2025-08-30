@@ -28,6 +28,15 @@ class Client:
         self.__size: list[int] = size
 
     '''
+    Name: sendData
+    Parameters: message:str
+    Returns: None
+    Purpose: Sends data to the client
+    '''
+    def sendData(self, message: str) -> None:
+        self.__conn.send(message.encode())
+
+    '''
     Name: getPlayerID
     Parameters: None
     Returns: self.__playerID: int
@@ -37,7 +46,7 @@ class Client:
         return self.__playerID
 
     '''
-    Name: __init__
+    Name: getPosition
     Parameters: None
     Returns: self.__position:list[int]
     Purpose: Getter for the client's position

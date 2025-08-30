@@ -162,17 +162,27 @@ players/connections
 class Client(BaseCharacter):
     '''
     Name: __init__
-    Parameters: conn:object, position:list[int], playerNo:int
+    Parameters: conn:object, position:list[int], playerNo:int, colour:tuple[int,int,int]
     Returns: None
     Purpose: Constructor to set the initial values
     of the Client object
     '''
-    def __init__(self, conn, position: list[int], playerNo: int) -> None:
+    def __init__(self, conn, position: list[int], playerNo: int, colour: tuple[int,int,int]) -> None:
         super().__init__()
         self.__conn = conn
         self.__X: int = position[0]
         self.__Y: int = position[1]
         self.__playerID: int = playerNo
+        self.__colour: tuple[int,int,int] = colour
+
+    '''
+    Name: sendData
+    Parameters: message:str
+    Returns: None
+    Purpose: Sends data to the client
+    '''
+    def sendData(self, message: str) -> None:
+        self.__conn.send(message.encode())
 
     '''
     Name: getClient

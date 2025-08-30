@@ -59,7 +59,7 @@ class Server:
                 position = choice(self.__spawnPoints)
 
                 time.sleep(0.1)
-                self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1))
+                self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1, colour))
                 print(len(self.__clientList))
                 # Separate function used so that it will still continue running after the while loop in this function stops running
                 self.startListening(conn)
@@ -118,7 +118,7 @@ class Server:
                     }
 
             print(messageDict)
-            client.sendData(json.dumps(messageDict).encode())
+            client.sendData(json.dumps(messageDict))
             messageDict = msgHolder
         self.__beginTime = time.time()
         self.checkForPlatInfo()
