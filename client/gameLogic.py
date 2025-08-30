@@ -469,21 +469,5 @@ def data_handling(data: str) -> list[dict]:
     except Exception as e:
         print("Data Handling Error:", e)
 
-# Unit Tests
-class LeaderboardTesting(unittest.TestCase):
-    '''
-    Name: setUp
-    Parameters: None
-    Returns: None
-    Purpose: Sets up the unit test
-    '''
-    def setUp(self):
-        self.leaderboard = Leaderboard()
-        
-        for i in range(3):
-            randomPlayer = [random.randint(0,100),random.randint(0,100)]
-            self.leaderboard.addToLeader(randomPlayer)
-
-
 if __name__ == "__main__":
     pass

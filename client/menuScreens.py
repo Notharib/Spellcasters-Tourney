@@ -3,7 +3,6 @@ import socket
 import pygame
 import pygame.freetype
 import requests
-from characterCreation import Druid, Fire, Water, Wizard
 from menuClasses import Pointer, TextBox
 
 '''

@@ -272,3 +272,20 @@ class Client(BaseCharacter):
     def setHP(self, HP:int) -> None:
         self._HP = HP
 
+    '''
+    Name: setElement
+    Parameters: element:str
+    Returns: None
+    Purpose: Setter for the client's Element
+    '''
+    def setElement(self, element:str) -> None:
+        self._Element = element
+
+    '''
+    Name: setHP
+    Parameters: caster:str
+    Returns: None
+    Purpose: Setter for the client's Caster
+    '''
+    def setCaster(self, caster: str) -> None:
+        self._Caster = caster

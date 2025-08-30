@@ -1,11 +1,12 @@
 import pygame,pygame.freetype, time, threading, socket, json, random
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
+from gameLogic import Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
 from characterCreation import BaseCharacter
 from Elements import Fire, Water, Earth
 from Casters import Druid, Wizard
 from PrivateServer import Server
 from clientLogger import Logger
+from projectiles import Bullet
 
 '''
 Name: Client
@@ -32,7 +33,7 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard: dict|None = None #Dictionary?
         self.__lastMessageSent: float = time.time() #Float
-        self.__messageQueue: queue = queue() #Queue
+        #self.__messageQueue: queue = queue() #Queue
 
 
     '''
@@ -47,22 +48,22 @@ class Client:
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
-        threading.Thread(target=self.queueEmptying).start()
+#        threading.Thread(target=self.queueEmptying).start()
 
-    '''
-    Name: queueEmptying 
-    Parameters: Self
-    Returns: None
-    Description: Empties the next message in the messageQueue
-    '''
-    def queueEmptying(self) -> None:
-        while True:
-            if not self.__messageQueue.is_empty():
-                sendValue: dict = self.__messageQueue.dequeue()
-                strSendValue: str = json.dumps(sendValue)
-                self.__socket.send(strSendValue.encode())
-                self.__lastMessageSent = time.time()
-                time.sleep(0.01)
+#    '''
+#    Name: queueEmptying 
+#    Parameters: Self
+#    Returns: None
+#    Description: Empties the next message in the messageQueue
+#    '''
+ #   def queueEmptying(self) -> None:
+ #       while True:
+ #           if not self.__messageQueue.is_empty():
+ #               sendValue: dict = self.__messageQueue.dequeue()
+ #               strSendValue: str = json.dumps(sendValue)
+ #               self.__socket.send(strSendValue.encode())
+ #               self.__lastMessageSent = time.time()
+ #               time.sleep(0.01)
 
     '''
     Name: sendData
@@ -71,16 +72,16 @@ class Client:
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
     def sendData(self,message: dict) -> None:
-        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.is_empty():
-            strMessage: str = json.dumps(message)
-            self.__socket.send(strMessage.encode())
-            self.__lastMessageSent = time.time()
-        else:
-            if self.__messageQueue.is_empty() or message != self.__messageQueue.getBack():
-                if not self.__messageQueue.is_full():
-                    self.__messageQueue.enqueue(message)
-                else:
-                    raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
+#        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.is_empty():
+        strMessage: str = json.dumps(message)
+        self.__socket.send(strMessage.encode())
+        self.__lastMessageSent = time.time()
+#        else:
+#            if self.__messageQueue.is_empty() or message != self.__messageQueue.getBack():
+#                if not self.__messageQueue.is_full():
+#                    self.__messageQueue.enqueue(message)
+#                else:
+#                    raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
 
    
     '''
@@ -340,7 +341,7 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
         elif caster == "Druid":
             self._Caster = Druid()
         else:
-            raise ValueError(f"Internal Value Error: Incorrect Caster Type ({caster)}")
+            raise ValueError(f"Internal Value Error: Incorrect Caster Type ({caster})")
 
     '''
     Name: setElement

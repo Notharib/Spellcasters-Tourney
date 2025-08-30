@@ -5,7 +5,6 @@ import time
 from random import choice, randint
 
 from gameLogic import data_handling
-from characterCreation import BaseCharacter
 from PrivateServerLogic import generatePlatforms, Platform, Client
 
 '''
@@ -111,7 +110,7 @@ class Server:
                     messageDict["data"]["otherPlayersInfo"][connection.getPlayerID()] = {
                         "positionList": connection.getSpawnPoint(),
                         "colourTuple": connection.getPlayerColour(),
-                        "playerID": connection.getPlayerID()
+                        "playerID": connection.getPlayerID(),
                         "charType": {
                                 "caster": connection.getCaster(),
                                 "element": connection.getElement()

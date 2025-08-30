@@ -47,7 +47,7 @@ class Element:
     '''
     def __init__(self) -> None:
         self._type: str = ""
-        self._strength str = ""
+        self._strength: str = ""
         self._weakness: str = ""
 
     '''

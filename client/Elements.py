@@ -38,3 +38,20 @@ class Water(Element):
         self._type: str = "Water"
         self._strength: str = "Fire"
 
+'''
+Name: Earth
+Purpose: To handle properties to do with the earth element
+'''
+class Earth(Element):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the Earth object
+    '''
+    def __init__(self) -> None:
+        super().__init__()
+        self._weakness: str = "Fire"
+        self._type: str = "Earth"
+        self._strength: str = "Water"
