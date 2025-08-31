@@ -1,4 +1,7 @@
 import pygame
+import maths
+
+from time import time
 
 '''
 Name: Projectile
@@ -48,16 +51,17 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         pygame.sprite.Sprite.__init__()
         Projectile.__init__(size, player, damage,spawnPoint)
         
-        self.direction = direction
+        self.__direction = direction
+        self.__gravity: int = lambda time: math.exp(time // 3)
+        self.__updTimer: float = time()
         self.playerOrigin = player
         self.colour = (0,0,0)
         self.image = pygame.Surface([self.width,self.height])
         self.image.fill(self.colour)
         pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
         self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.damage = damage
+        self.rect.x = self._X
+        self.rect.y = self._Y
 
     '''
     Name: update
@@ -67,15 +71,30 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     what the direction is
     '''
     def update(self):
+
+        tempTime: float = time()
+
         if self.direction[0] is not None:
             self.rect.x -= self.direction[0]
         if self.direction[1] is not None:
             self.rect.y -= self.direction[1]
 
+        if (int(self.__updTimer - tempTime)) % 1 == 0:
+            self.__direction[1] -= self.__gravity(int(self.__updTimer-tempTime))
+            
+
+            
+
 
 class ConeAttack(pygame.sprite.Sprite, Projectile):
-
-    def __init__(self, spawnPoint, playerID, size= [10,10], damage = 10):
+    '''
+    Name: __init__
+    Parameters: spawnPoint: list[int], playerID: int, size: list[int], damage:int
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the ConeAttack object
+    '''
+    def __init__(self, spawnPoint: list[int], playerID: int, size= [10,10], damage = 10) -> None:
         pygame.sprite.Sprite.__init__()
         Projectile.__init__(size, playerID, damage, spawnPoint)
 
