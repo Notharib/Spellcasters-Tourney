@@ -265,28 +265,32 @@ to avoid extra data errors
 '''
 def data_handling(data: str) -> list[dict]:
     try:
-        msgList: list[str] = data.split("}")
+        if '}{' in data:
+            msgList: list[str] = data.split("}")
 
-        returnList: list[dict] = []
+            returnList: list[dict] = []
 
-        while '' in msgList:
-            msgList.remove('')
+            while '' in msgList:
+                msgList.remove('')
 
-        for i in range(len(msgList)):
-            noDicts: int = 0
-            temp: str = msgList[i]
+            for i in range(len(msgList)):
+                noDicts: int = 0
+                temp: str = msgList[i]
 
-            for letter in temp:
-                if letter == '{':
-                    noDicts += 1
-            temp += '}' * noDicts
+                for letter in temp:
+                    if letter == '{':
+                        noDicts += 1
+                temp += '}' * noDicts
 
-            returnList.append(dict(json.loads(temp)))
+                returnList.append(dict(json.loads(temp)))
 
-        return returnList
+            return returnList
+        else:
+            return [dict(json.loads(data))]
 
     except Exception as e:
         print("Data Handling Error:", e)
+        print("Origin Message:", data)
 
 if __name__ == "__main__":
     pass

@@ -246,6 +246,9 @@ class Server:
                 print("LEGALMOVECHECK")
                 print(messageData)
                 clientMove = self.__clientList[messageData["playerID"] - 1]
+
+                clientCPos: list[int] = [clientMove.getX(), clientMove.getY()] 
+
                 closestPlat = None
                 for platform in self.__platforms:
                     if closestPlat is None:
@@ -253,26 +256,26 @@ class Server:
                     else:
                         print("NonePlatCheck:", platform.getTop())
                         if messageData["direction"] == "y":
-                            if (platform.getTop() >= clientMove.position[1] - messageData[
-                                "amount"] or platform.getTop() <= clientMove.position[1] - messageData[
+                            if (platform.getTop() >= clientCPos[1] - messageData[
+                                "amount"] or platform.getTop() <= clientCPos[1] - messageData[
                                     "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
                                 closestPlat = platform
                         else:
-                            if (platform.getTop() >= clientMove.position[0] - messageData[
-                                "amount"] or platform.getTop() <= clientMove.position[0] - messageData[
+                            if (platform.getTop() >= clientCPos[0] - messageData[
+                                "amount"] or platform.getTop() <= clientCPos[0] - messageData[
                                     "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
                                 closestPlat = platform
 
                 if closestPlat is not None:
                     if messageData["direction"] == "y":
-                        if clientMove.position[1] - messageData["amount"] <= closestPlat.getPos()[1] + \
+                        if clientCPos[1] - messageData["amount"] <= closestPlat.getPos()[1] + \
                                 closestPlat.getSize()[0]:
                             clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                         else:
                             clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
                     else:
-                        if clientMove.position[0] - messageData["amount"] + clientMove.getSize()[0] == \
-                                closestPlat.getPos()[0] or clientMove.position[0] - messageData["amount"] <= \
+                        if clientCPos[0] - messageData["amount"] + clientCPos[0] == \
+                                closestPlat.getPos()[0] or clientCPos[0] - messageData["amount"] <= \
                                 closestPlat.getPos()[0] + closestPlat.getSize()[1]:
                             clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
                         else:

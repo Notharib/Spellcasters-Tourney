@@ -513,8 +513,8 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
     def gravity(self, cl: Client) -> None:
         if not self.collided:
             self.rect.y += 1
-            if self.rect.y > 800 - self.height:
-                self.rect.y = 800 - self.height
+            if self.rect.y > 800 - self._height:
+                self.rect.y = 800 - self._height
             else:
                 self.__moveMessage(cl)
                 self.lastPos = [self.rect.x, self.rect.y]

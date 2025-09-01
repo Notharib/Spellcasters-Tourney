@@ -1,5 +1,6 @@
 import socket
 
+from time import sleep
 import pygame
 import pygame.freetype
 import requests
@@ -36,6 +37,7 @@ def waiting(c, screen, creationData):
         f.render_to(screen, (300, 350), textTwo, (0, 0, 0))
         f.render_to(screen, (300, 400), textThree, (0, 0, 0))
         pygame.display.flip()
+    sleep(3)
 
 '''
 Name: gameStart
