@@ -1,5 +1,5 @@
 import pygame
-import maths
+import math
 
 from time import time
 

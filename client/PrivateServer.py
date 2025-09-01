@@ -310,7 +310,7 @@ class Server:
                                 for client in self.__clientList:
                                     if client is not None and client.getClient() != conn and (
                                             message["type"] != "platformInfo" or message["type"] != "legalCheck"):
-                                        client.sendData(data)
+                                        client.sendData(data.decode())
                     except Exception as e:
                         print("Error3:", e)
 

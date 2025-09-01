@@ -35,6 +35,24 @@ class BaseCharacter:
     def takeDamage(self, damage: int) -> None:
         self._HP -= damage
 
+    '''
+    Name: getWidth
+    Parameters: None
+    Returns: self._width:int
+    Purpose: Getter for the character's width
+    '''
+    def getWidth(self) -> int:
+        return self._width
+
+    '''
+    Name: getHeight
+    Parameters: None
+    Returns: self._height:int
+    Purpose: Getter for the character's height
+    '''
+    def getHeight(self) -> int:
+        return self._height
+
 # Base Element Class
 
 class Element: 

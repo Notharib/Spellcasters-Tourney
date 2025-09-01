@@ -1,12 +1,20 @@
-import pygame,pygame.freetype, time, threading, socket, json, random
+import pygame, pygame.freetype
+import time
+import threading
+import socket
+import json
+import random
+
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
+from gameLogic import getDirection, youDied, data_handling
 from characterCreation import BaseCharacter
+from arenaHandling import Platform, onPlat, platformInfo
+from Leaderboard import Leaderboard, getLeaderboard
 from Elements import Fire, Water, Earth
 from Casters import Druid, Wizard
 from PrivateServer import Server
 from clientLogger import Logger
-from projectiles import Bullet
+from projectiles import Bullet, ConeAttack
 
 '''
 Name: Client
@@ -33,8 +41,6 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard: dict|None = None #Dictionary?
         self.__lastMessageSent: float = time.time() #Float
-        #self.__messageQueue: queue = queue() #Queue
-
 
     '''
     Name: connect
@@ -48,22 +54,6 @@ class Client:
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
-#        threading.Thread(target=self.queueEmptying).start()
-
-#    '''
-#    Name: queueEmptying 
-#    Parameters: Self
-#    Returns: None
-#    Description: Empties the next message in the messageQueue
-#    '''
- #   def queueEmptying(self) -> None:
- #       while True:
- #           if not self.__messageQueue.is_empty():
- #               sendValue: dict = self.__messageQueue.dequeue()
- #               strSendValue: str = json.dumps(sendValue)
- #               self.__socket.send(strSendValue.encode())
- #               self.__lastMessageSent = time.time()
- #               time.sleep(0.01)
 
     '''
     Name: sendData
@@ -72,17 +62,9 @@ class Client:
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
     def sendData(self,message: dict) -> None:
-#        if (time.time() - self.__lastMessageSent) >= 0.01 and self.__messageQueue.is_empty():
         strMessage: str = json.dumps(message)
         self.__socket.send(strMessage.encode())
         self.__lastMessageSent = time.time()
-#        else:
-#            if self.__messageQueue.is_empty() or message != self.__messageQueue.getBack():
-#                if not self.__messageQueue.is_full():
-#                    self.__messageQueue.enqueue(message)
-#                else:
-#                    raise Exception("Data Leak Error: Unique Message Not Sent to Server due to Queue issues")
-
    
     '''
     Name: listen
@@ -143,7 +125,7 @@ class Client:
                             if msg["type"] == "beginGame":
                                 self.__waiting = False
                                 print(msg['data'])
-                                # addCharacter(msg["data"])
+  
                                 clPlData = {
                                     "playerID": msg["data"]["playerID"],
                                     "positionList": msg['data']['positionList'],
@@ -276,10 +258,12 @@ def addCharacter(data: dict) -> None:
     players.add(Character(data["positionList"],data["colourTuple"],data["playerID"]))
     print("Player created!")
 
-    if data["charType"] is not None:
+    try:
         charPos: int = len(players.sprites()) - 1
         players.sprites()[charPos].UpdateCharacteristics(data["charType"])
         print("Characteristics Automatically Filled In")
+    except KeyError:
+        pass
 
 '''
 Name: createBullet
@@ -313,13 +297,15 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
     of the character object
     '''
     def __init__(self, position:list[int], colour:tuple[int, int, int], playerID:int) -> None:
-        super(Character, self).__init__()
+        pygame.sprite.Sprite.__init__(self)
+        BaseCharacter.__init__(self)
+
         self.X: int = position[0]
         self.Y: int = position[1]
         self.colour: tuple = colour
         self.image: pygame.Surface = pygame.Surface([self._width, self._height])
         self.image.fill(colour)
-        pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self._width, self._height])
+        pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.getWidth(), self.getHeight()])
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
@@ -541,12 +527,16 @@ Purpose: Sends information about the type of spellcaster that the player is
 to the private server
 '''
 def sendCasterInfo(client, creationData:dict) -> None:
-    msgDict: dict = {
-                "type": "casterInfo",
-                "data": creationData
-            }
+    try:
+        msgDict: dict = {
+                    "type": "casterInfo",
+                    "data": creationData
+                }
 
-    client.sendData(msgDict)
+        client.sendData(msgDict)
+        print("Successfully sent caster info to server!")
+    except Exception as e:
+        print("SendCasterInfoError:",e)
 
 '''
 Name: publicGame
@@ -688,6 +678,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
     f.origin = True
 
     leaderText = ""
+    leaderUpd = time.time()
 
     # Run loop
     while running:
@@ -744,7 +735,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
         if (time.time()-leaderUpd) >= 30:
             leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
             timeUpd = time.time()
-        clientPlayer.gravity(c, plat)
+        clientPlayer.gravity(c)
         clientPlayer.move(c, plat)
         clientPlayer.fire(c)
         platforms.draw(screen)

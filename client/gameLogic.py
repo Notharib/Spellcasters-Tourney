@@ -3,7 +3,6 @@ import random
 import json
 
 import pygame
-import requests
 
 # Non-player objects to be used within the game
 
@@ -140,139 +139,6 @@ class queue:
 
         return noneValues
 
-'''
-Name: Leaderboard
-Inherits: pygame.sprite.Sprite
-Purpose: To display what the current leaderboard is
-'''
-class Leaderboard(pygame.sprite.Sprite):
-    '''
-    Name: __init__
-    Parameters: None
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Leaderboard object
-    '''
-    def __init__(self) -> None:
-        super().__init__()
-        self.__leaderboard: dict = {}
-        self.__displayText: str = ""
-        self.X: int = 200
-        self.Y: int = 0
-        self.width: int = 400
-        self.height: int = 300
-        self.colour: tuple = (0,0,255)
-        self.image: pygame.Surface = pygame.Surface([self.width, self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x: int = self.X
-        self.rect.y: int = self.Y
-
-    '''
-    Name: update
-    Parameters: leaderboard:dictionary
-    Returns: None
-    Purpose: Updates the values of different variables within the class as needed
-    '''
-    def update(self, leaderboard: dict) -> None:
-        self.__displayText = ""
-        self.__leaderboard = leaderboard
-        leaderList: list[list[str]] = self.setupLeaderStructure()
-        for i in range(len(leaderList)):
-            if i == 0:
-                self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
-            else:
-                self.__displayText += "\n{position}: {user}, {deathCount}".format(position=i+1, user=leaderList[i][0], deathCount=leaderList[i][1])
-        print(self.__displayText)
-
-    '''
-    Name: getDisplayText
-    Parameters: None
-    Returns: string
-    Purpose: Getter for the displayText variable
-    '''
-    def getDisplayText(self) -> str:
-        return self.__displayText
-
-    '''
-    Name: getLeaderboard 
-    Parameters: None 
-    Returns: dictionary 
-    Purpose: Getter for the leaderboard variable
-    '''    
-    def getLeaderboard(self) -> dict:
-        return self.__leaderboard
-
-
-    '''
-    Name: addToLeader
-    Parameters: examplePlayer:list
-    Returns: None
-    Purpose: Function only used for unit testing to add players to
-    the leaderboard
-    '''
-    def addToLeader(self,examplePlayer) -> None:
-        self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
-
-    '''
-    Name: setupLeaderStructure
-    Parameters: None
-    Returns: orderedLeader:list
-    Purpose: Organises the leaderboard so that
-    '''
-    def setupLeaderStructure(self):
-        keysToPop = []
-        for key in list(self.__leaderboard.keys()):
-            if self.__leaderboard[key] is None:
-                keysToPop.append(key)
-        if len(keysToPop) != 0:
-            for key in keysToPop:
-                self.__leaderboard.pop(key)
-
-        deathValues = list(self.__leaderboard.values())
-
-        orderedDeath = merge_sort(deathValues)
-
-        orderedLeader = []
-        for deathValue in orderedDeath:
-            for key in self.__leaderboard.keys():
-                if self.__leaderboard[key] == deathValue:
-                    orderedLeader.append([key, deathValue])
-                    break
-        return orderedLeader
-
-    def __repr__(self):
-        return self.__leaderboard
-
-'''
-Name: Platform
-Inherits: pygame.sprite.Sprite
-Purpose: To have platforms that players are able to move around on
-'''
-class Platform(pygame.sprite.Sprite):
-    '''
-    Name: __init__
-    Parameters: position:list, size: list, platformNo: integer
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Platform object
-    '''
-    def __init__(self,position, size, platformNo):
-        super().__init__()
-        self.height = size[0]
-        self.width = size[1]
-        self.X = position[0]
-        self.Y = position[1]
-        self.colour = (0,255,0)
-        self.platformNo = platformNo
-        self.image = pygame.Surface([self.width,self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-
 
 # General functions
 
@@ -311,30 +177,7 @@ def merge(left, right):
     output.extend(right[j:])
     return output
 
-'''
-Name: getLeaderboard
-Parameters: serverType:string, playerID:integer|None, serverKey:string|None, client=Client|None
-Returns: leaderboard:dictionary|None
-Purpose: Gets the current updated version of the leaderboard for the player to see
-'''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
-    leaderboard = None
-    if serverType == "public":
-      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
-      return leaderboard["data"]
-    elif serverType == "private":
-        if serverKey is None:
-            raise Exception("None Type Error: severKey should be string type value, not NoneType")
-        else:
-            jsonInfo = {
-                "serverKey":serverKey,
-                "playerID":playerID
-            }
-            leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
 
-            return leaderboard["data"]
-    else:
-        raise ValueError("Server type must be either public or private")
 
 
 '''
@@ -396,19 +239,7 @@ def youDied(player, screen):
             pygame.display.update()
     return player
 
-'''
-Name: onPlat
-Parameters: player: object, platforms: object
-Returns: boolean
-Purpose: Determines whether a player is on top of a platform, and therefore
-shouldn't be affected by gravity
-'''
-def onPlat(player, platforms):
-    for platform in platforms.sprites():
-        if platform.rect.top == player.rect.bottom or platform.rect.top == player.rect.bottom + 1 or platform.rect.top == player.rect.bottom - 1:
-            print("on platform")
-            return True
-    return False
+
 
 '''
 Name: sendPlatformInfo
@@ -424,18 +255,6 @@ def sendPlatformInfo(platforms):
         data.append(dictionary)
     return data
 
-'''
-Name: platformInfo
-Parameters: platforms: pygame Sprite group, client:object, clientPlayer:object
-Returns: None
-Purpose: Send information about the platforms within the sprite group to the server
-'''
-def platformInfo(platforms, client, clientPlayer):
-    if clientPlayer.playerID - 1 == 0:
-        platformInfo = sendPlatformInfo(platforms)
-        platformInfoDict = {"type": "platformInfo", "data": platformInfo}
-        print(platformInfoDict)
-        client.sendData(platformInfoDict)
 
 '''
 Name: data_handling
