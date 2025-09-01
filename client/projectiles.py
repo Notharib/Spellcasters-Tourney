@@ -23,14 +23,69 @@ class Projectile:
         self._playerOrigin: int = playerOrg
         self._damage: int = damage
 
+    '''
+    Name: getDamage
+    Parameters: None
+    Returns: self._damage:int
+    Purpose: Getter for the projectile's damage
+    '''
     def getDamage(self) -> int:
         return self._damage
 
+    '''
+    Name: getPlayerOrigin
+    Parameters: None
+    Returns: self._playerOrigin:int
+    Purpose: Getter for the playerID of the
+    playerm who created this projectile    
+    '''
     def getPlayerOrigin(self) -> int:
         return self._playerOrigin
 
+    '''
+    Name: getSize
+    Parameters: None
+    Returns: list[int]
+    Purpose: Getter for the size of the projectile
+    '''
     def getSize(self) -> list[int]:
         return [self._height, self._width]
+
+    '''
+    Name: getX
+    Parameters: None
+    Returns: self._X: int
+    Purpose: Getter for the projectile's X coordinate
+    '''
+    def getX(self) -> int:
+        return self._X
+
+    '''
+    Name: getY
+    Parameters: None
+    Returns: self._Y:int
+    Purpose: Getter for the projectile's Y coordinate
+    '''
+    def getY(self) -> int:
+        return self._Y
+
+    '''
+    Name: getHeight
+    Parameters: None
+    Returns: self._height:int
+    Purpose: Getter for the height of the projectile
+    '''
+    def getHeight(self) -> int:
+        return self._height
+
+    '''
+    Name: getWidth
+    Parameters: None
+    Returns: self._width:int
+    Purpose: Getter for the width of the projectile
+    '''
+    def getWidth(self) -> int:
+        return self._width
 
 
 '''
@@ -48,8 +103,8 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     '''
     def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
         
-        pygame.sprite.Sprite.__init__()
-        Projectile.__init__(size, player, damage,spawnPoint)
+        pygame.sprite.Sprite.__init__(self)
+        Projectile.__init__(self,size, player, damage,spawnPoint)
         
         self.__direction = direction
         self.__gravity: int = lambda time: math.exp(time // 3)
@@ -58,7 +113,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         self.colour = (0,0,0)
         self.image = pygame.Surface([self.width,self.height])
         self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
+        pygame.draw.rect(self.image,self.colour,[self.getX(),self.getY(),self.getWidth(),self.height])
         self.rect = self.image.get_rect()
         self.rect.x = self._X
         self.rect.y = self._Y
@@ -81,11 +136,13 @@ class Bullet(pygame.sprite.Sprite, Projectile):
 
         if (int(self.__updTimer - tempTime)) % 1 == 0:
             self.__direction[1] -= self.__gravity(int(self.__updTimer-tempTime))
-            
-
-            
 
 
+'''
+Name: ConeAttack
+Inherits: pygame.sprite.Sprite, Projectile
+Purpose: Manages the cone attck projectile
+'''
 class ConeAttack(pygame.sprite.Sprite, Projectile):
     '''
     Name: __init__
@@ -95,15 +152,13 @@ class ConeAttack(pygame.sprite.Sprite, Projectile):
     of the ConeAttack object
     '''
     def __init__(self, spawnPoint: list[int], playerID: int, size= [10,10], damage = 10) -> None:
-        pygame.sprite.Sprite.__init__()
-        Projectile.__init__(size, playerID, damage, spawnPoint)
+        pygame.sprite.Sprite.__init__(self)
+        Projectile.__init__(self,size, playerID, damage, spawnPoint)
 
-        self._colour: tuple[int,int,int] = (200,200,200)
-        self._image = pygame.Surface(size)
-        self._image.fill(self._colour)
-        self.__RECT = pygame.Rect((spawnPoint[0], spawnPoint[1]), (size[0]+10, size[1]+10))
+        self.colour: tuple[int,int,int] = (200,200,200)
+        self.image = self.image.load("spellCone.png")
 
-        pygame.draw.arc(self._image, self._colour, [1,2], width=2)
+        pygame.draw.rect(self.image, self.colour, [self.getX(), self.getY(), self.getWidth(), self.getHeight()])
         self._rect = self._image.get_rect()
         self._rect.x = self._X
         self._rect.y = self._y
