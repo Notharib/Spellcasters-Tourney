@@ -260,37 +260,32 @@ def sendPlatformInfo(platforms):
 Name: data_handling
 Parameters: data:str
 Returns: list[dict]
-Purpose: Handles what should initially happen with data,
+Purpose: Handles what should initially happen with JSON data, 
 to avoid extra data errors
 '''
 def data_handling(data: str) -> list[dict]:
-    try:
+    try: 
         if '}{' in data:
-            msgList: list[str] = data.split("}")
-
-            returnList: list[dict] = []
+            msgList: list[str] = data.split("}{")
 
             while '' in msgList:
                 msgList.remove('')
 
             for i in range(len(msgList)):
-                noDicts: int = 0
-                temp: str = msgList[i]
+                if i == 0:
+                    msgList[0] += '}'
 
-                for letter in temp:
-                    if letter == '{':
-                        noDicts += 1
-                temp += '}' * noDicts
-
-                returnList.append(dict(json.loads(temp)))
-
-            return returnList
+                else:
+                    msgList[i] = '{' + msgList[i] + '}'
+            return msgList
+        
         else:
             return [dict(json.loads(data))]
 
     except Exception as e:
         print("Data Handling Error:", e)
         print("Origin Message:", data)
+
 
 if __name__ == "__main__":
     pass

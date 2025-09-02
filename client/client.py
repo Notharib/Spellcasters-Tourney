@@ -142,6 +142,10 @@ class Client:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
 
+                except KeyError as err:
+                    print(data.decode())
+                    print("KEY ERROR:", err)
+
     '''
     Name: tellServerDisconn
     Parameters: None
@@ -394,7 +398,7 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
     Returns: boolean
     Purpose: Sends a request to the server to check if a move was legal
     '''
-    def checkIfLegal(self,direction: str,amount: int, client: Client) -> bool:
+    def checkIfLegal(self, direction: str,amount: int, client: Client) -> bool:
         checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "playerID":self.playerID}}
         client.sendData(checkIfLegalDict)
         time.sleep(0.01)
@@ -488,7 +492,7 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
         if mouseKeys[0] and (time.time() - self.lastBulletFired) > 0.1:
             direction = getDirection(self)
             bullets.add(Bullet([self.rect.x,self.rect.y],direction,self))
-            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self.width,self.rect.y], "playerOrg":self.playerID}})
+            client.sendData({"type":"bullCreate","data":{"direction":direction,"spawnPoint":[self.rect.x+self._width,self.rect.y], "playerOrg":self.playerID}})
 
     '''
     Name: gravity
