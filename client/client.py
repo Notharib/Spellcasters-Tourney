@@ -144,7 +144,11 @@ class Client:
 
                 except KeyError as err:
                     print(data.decode())
-                    print("KEY ERROR:", err)
+                    print("DECODING KEY ERROR:", err)
+
+                except TypeError as err:
+                    print(data.decode())
+                    print("DECODING TYPE ERROR:", err)
 
     '''
     Name: tellServerDisconn

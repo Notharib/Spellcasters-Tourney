@@ -282,6 +282,7 @@ class Server:
                             clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
         except Exception as e:
             print("Error1:", e)
+            print("Err1 Org Messsage:", message)
 
     '''
     Name: recv_from_client
@@ -316,6 +317,7 @@ class Server:
                                         client.sendData(data.decode())
                     except Exception as e:
                         print("Error3:", e)
+                        print("Err3 Org Decode:", data.decode())
 
 if __name__ == "__main__":
     pass

@@ -265,16 +265,23 @@ to avoid extra data errors
 '''
 def data_handling(data: str) -> list[dict]:
     try: 
+        # Doesn't need to handle data to prevent extra data errors if there is no extra data
         if '}{' in data:
             msgList: list[str] = data.split("}{")
 
+            # Shouldn't be possible, but just in case. May remove later
             while '' in msgList:
                 msgList.remove('')
 
-            for i in range(len(msgList)):
+            msgListLen: int = len(msgList)
+
+            for i in range(msgListLen):
                 if i == 0:
                     msgList[0] += '}'
 
+                elif i == msgListLen - 1:
+                    msgList[i] = '{' msgList[i]
+                
                 else:
                     msgList[i] = '{' + msgList[i] + '}'
             return msgList
