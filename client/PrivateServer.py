@@ -212,7 +212,7 @@ class Server:
             if message["type"] == "movement":
                 clPos: int = self.__getClientPosition(conn)
 
-                self.__clientList[clPos].position[0], self.__clientList[clPos].position[1] = message["data"]["posX"], message["data"]["posY"]
+                self.__clientList[clPos].setPosition([message["data"]["posX"], message["data"]["posY"]])
 
             if message["type"] == "disconn":
                 self.tellClientsOfDisconn(message["data"]["playerID"] - 1)
@@ -270,16 +270,16 @@ class Server:
                     if messageData["direction"] == "y":
                         if clientCPos[1] - messageData["amount"] <= closestPlat.getPos()[1] + \
                                 closestPlat.getSize()[0]:
-                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
+                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
                         else:
-                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
+                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
                     else:
                         if clientCPos[0] - messageData["amount"] + clientCPos[0] == \
                                 closestPlat.getPos()[0] or clientCPos[0] - messageData["amount"] <= \
                                 closestPlat.getPos()[0] + closestPlat.getSize()[1]:
-                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}).encode())
+                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
                         else:
-                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}).encode())
+                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
         except Exception as e:
             print("Error1:", e)
 

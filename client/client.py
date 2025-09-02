@@ -98,21 +98,8 @@ class Client:
                                 addCharacter(msg["data"])
 
                             if msg["type"] == "movement":
-                                if len(players.sprites()) == 2:
-                                    movedPlayer = players.sprites()[1]
-                                else:
-                                    iteration = 0
-                                    # print(players.sprites())
-                                    for player in players.sprites():
-                                        if player.playerID == msg["data"]["playerID"]:
-                                            # print("found moved player")
-                                            movedPlayer = player
-                                            break
-                                if msg["data"]["direction"] == "y":
-                                    movedPlayer.rect.y = msg["data"]["movedTo"]
-                                elif msg["data"]["direction"] == "x":
-                                    movedPlayer.rect.x = msg["data"]["movedTo"]
-
+                                players.sprites()[msg["data"]["playerID"]].rect.x = msg["data"]["posX"]
+                                players.sprites()[msg["data"]["playerID"]].rect.y = msg["data"]["posY"] 
                             if msg["type"] == "createPlat":
                                 print("Created platform")
                                 platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
@@ -736,7 +723,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
             timeUpd = time.time()
         clientPlayer.gravity(c)
-        clientPlayer.move(c, plat)
+        clientPlayer.move(c)
         clientPlayer.fire(c)
         platforms.draw(screen)
         bullets.draw(screen)
