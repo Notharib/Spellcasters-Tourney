@@ -267,23 +267,22 @@ def data_handling(data: str) -> list[dict]:
     try: 
         # Doesn't need to handle data to prevent extra data errors if there is no extra data
         if '}{' in data:
+            # Splits the string into its unique messages
             msgList: list[str] = data.split("}{")
-
-            # Shouldn't be possible, but just in case. May remove later
-            while '' in msgList:
-                msgList.remove('')
 
             msgListLen: int = len(msgList)
 
+            # Adds the appropriate curly brackets onto the string depending on its position in the list,
+            # and then turns it into a dictionary
             for i in range(msgListLen):
                 if i == 0:
-                    msgList[0] += '}'
+                    msgList[0] = dict(json.loads(msgList[0] + '}'))
 
                 elif i == msgListLen - 1:
-                    msgList[i] = '{' msgList[i]
+                    msgList[i] = dict(json.loads('{' + msgList[i]))
                 
                 else:
-                    msgList[i] = '{' + msgList[i] + '}'
+                    msgList[i] = dict(json.loads('{' + msgList[i] + '}'))
             return msgList
         
         else:

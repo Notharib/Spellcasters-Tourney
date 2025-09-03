@@ -283,6 +283,7 @@ class Server:
         except Exception as e:
             print("Error1:", e)
             print("Err1 Org Messsage:", message)
+            print("Err1 Type:", type(message))
 
     '''
     Name: recv_from_client
