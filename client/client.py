@@ -98,8 +98,8 @@ class Client:
                                 addCharacter(msg["data"])
 
                             if msg["type"] == "movement":
-                                players.sprites()[msg["data"]["playerID"]].rect.x = msg["data"]["posX"]
-                                players.sprites()[msg["data"]["playerID"]].rect.y = msg["data"]["posY"] 
+                                players.sprites()[msg["data"]["playerID"]-1].rect.x = msg["data"]["posX"]
+                                players.sprites()[msg["data"]["playerID"]-1].rect.y = msg["data"]["posY"] 
                             if msg["type"] == "createPlat":
                                 print("Created platform")
                                 platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
