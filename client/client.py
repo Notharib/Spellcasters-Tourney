@@ -29,7 +29,7 @@ class Client:
     Purpose: Constructor to set the initial values
     of the client object
     '''
-    def __init__(self,IPToConnectTo:str, port: int=50000) -> None:
+    def __init__(self,IPToConnectTo:str, charData:dict, port: int=50000) -> None:
         self.__HOST: str = IPToConnectTo #String
         self.__PORT: int = port #Integer
         self.playerID: int|None = None #Integer
@@ -41,6 +41,7 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard: dict|None = None #Dictionary?
         self.__lastMessageSent: float = time.time() #Float
+        self.__casterInfo: dict = charData
 
     '''
     Name: connect
@@ -85,6 +86,12 @@ class Client:
                     
                     if messageList is not None:
                         for msg in messageList:
+                            if msg["type"] == "missingCaster":
+                                self.sendData({"type": "missingCaster", "data": self.__casterInfo["caster"]})
+
+                            if msg["type"] == "missingElement":
+                                self.sendData({"type": "missingElement", "data": self.__casterInfo["element"]})
+
                             if msg["type"] == "leaderGet":
                                 self.setLeaderBoard(msg["data"])
 
@@ -543,7 +550,7 @@ Purpose: Handles the data for the player to be able to play on the public server
 def publicGame(screen, clock, players, platforms, bullets, char, serverType):
 
     # Creates an instance of the client object and connects it to the server
-    c = Client("127.0.0.1")
+    c = Client("127.0.0.1", char)
     c.connect()
 
     time.sleep(3)
@@ -581,7 +588,7 @@ def privateCreate(screen, clock, players, platforms, bullets, char, creationData
 
     # Creates an instance of the Client object, and then joins to the private server, based
     # off the fact the server will be hosted by the same machine you're joining on
-    c = Client(socket.gethostbyname(socket.gethostname()),port=50001)
+    c = Client(socket.gethostbyname(socket.gethostname()), char, port=50001)
     c.connect()
 
     #Send the caster's information to be stored on the private server
@@ -620,7 +627,7 @@ Purpose: Handles joining a private server that someone else is hosting
 def privateJoin(screen, clock, players, platforms, bullets, char, creationData, serverType):
 
     # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
-    c = Client(creationData["IPAddress"], port=50001)
+    c = Client(creationData["IPAddress"], char, port=50001)
     c.connect()
 
     print("Joined up to the private server!")

@@ -32,6 +32,7 @@ class Server:
         self.__spawnPoints: list = []
         self.password: None|str = None
         self.__beginTime: None|int|float = None
+        self.__waiting: int = 0
 
     '''
     Name: start
@@ -75,7 +76,30 @@ class Server:
     the function
     '''
     def startListening(self, conn) -> None:
-            threading.Thread(target=self.recv_from_client, args=(conn,)).start()
+        threading.Thread(target=self.recv_from_client, args=(conn,)).start()
+
+    
+    def preStartChecks(self) -> None:
+        for client in self.__clientList:
+            if client.getElement() is None:
+                self.__waiting += 1
+
+                msgDict: dict = {
+                            "type": "missingElement",
+                            "data": "Server Missing Client Element"
+                        }
+                client.sendData(json.dumps(msgDict))
+                
+            if client.getCaster() is None:
+                self.__waiting += 1
+
+                msgDict: dict = {
+                            "type": "missingCaster",
+                            "data": "Server Missing Client Caster"
+                        }
+
+                client.sendData(json.dumps(msgDict))
+
 
     '''
     Name: beginGame
@@ -85,6 +109,12 @@ class Server:
     and sends them the necessary information required to begin the game
     '''
     def beginGame(self):
+        
+        self.preStartChecks()
+
+        while self.__waiting != 0:
+            pass
+
         messageDict: dict = {
             "type": "beginGame",
             "data": {
@@ -213,6 +243,16 @@ class Server:
                 clPos: int = self.__getClientPosition(conn)
 
                 self.__clientList[clPos].setPosition([message["data"]["posX"], message["data"]["posY"]])
+
+            if message["type"] == "missingCaster":
+                clPos: int = self.__getClientPosition(conn)
+                self.__clientList[clPos].setCaster(message["data"])
+                self.__waiting -= 1
+
+            if message["type"] == "missingElement":
+                clPos: int = self.__getClientPosition(conn)
+                self.__clientList[clPos].setElement(message["data"])
+                self.__waiting -= 1
 
             if message["type"] == "disconn":
                 self.tellClientsOfDisconn(message["data"]["playerID"] - 1)
