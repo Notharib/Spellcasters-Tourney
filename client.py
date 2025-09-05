@@ -86,64 +86,7 @@ class Client:
                     
                     if messageList is not None:
                         for msg in messageList:
-                            if msg["type"] == "missingCaster":
-                                self.sendData({"type": "missingCaster", "data": self.__casterInfo["caster"]})
-
-                            if msg["type"] == "missingElement":
-                                self.sendData({"type": "missingElement", "data": self.__casterInfo["element"]})
-
-                            if msg["type"] == "leaderGet":
-                                self.setLeaderBoard(msg["data"])
-
-                            if msg["type"] == "playerID":
-                                print("client player created")
-                                self.playerID = msg["data"]["playerID"]
-                                addCharacter(msg["data"])
-
-                            if msg["type"] == "playerJoin":
-                                print("external player added")
-                                addCharacter(msg["data"])
-
-                            if msg["type"] == "movement":
-                                players.sprites()[msg["data"]["playerID"]-1].rect.x = msg["data"]["posX"]
-                                players.sprites()[msg["data"]["playerID"]-1].rect.y = msg["data"]["posY"] 
-                            if msg["type"] == "createPlat":
-                                print("Created platform")
-                                platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
-                                self.__noOfPlatforms += 1
-
-                            if msg["type"] == "disconn":
-                                players.remove(players.sprites()[msg["data"]["playerID"]])
-                                print("Player Disconnected")
-
-                            if msg["type"] == "beginGame":
-                                self.__waiting = False
-                                print(msg['data'])
-  
-                                clPlData = {
-                                    "playerID": msg["data"]["playerID"],
-                                    "positionList": msg['data']['positionList'],
-                                    'colourTuple': msg['data']['colourTuple']
-                                }
-                                addCharacter(clPlData)
-                                for player in list(msg["data"]["otherPlayersInfo"].keys()):
-                                    playerData = msg["data"]["otherPlayersInfo"][player]
-                                    playerData["playerID"] = player
-                                    addCharacter(playerData)
-
-                                iterator = 0
-                                for platform in msg['data']['platformsPos']:
-                                    createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
-                                    iterator += 1
-
-                            if msg["type"] == "endGame":
-                                self.__playing = False
-                                self.__endGameData = msg["data"]
-
-                            if msg["type"] == "MOVELEGAL":
-                                self.__clientPlayer.legalMove()
-                            if msg["type"] == "MOVENOTLEGAL":
-                                self.__clientPlayer.illegalMove()
+                           self.__messageHandling(msg) 
 
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -156,6 +99,110 @@ class Client:
                 except TypeError as err:
                     print(data.decode())
                     print("DECODING TYPE ERROR:", err)
+
+    '''
+    Name: __messageHandling
+    Parameters: msg:dict
+    Returns: None
+    Purpose: Handles what to do with messages
+    '''
+    def __messageHandling(self, msg: dict) -> None:
+        if msg["type"] == "missingCaster":
+            self.sendData({"type": "missingCaster", "data": self.__casterInfo["caster"]})
+
+        if msg["type"] == "missingElement":
+            self.sendData({"type": "missingElement", "data": self.__casterInfo["element"]})
+
+        if msg["type"] == "leaderGet":
+            self.setLeaderBoard(msg["data"])
+
+        if msg["type"] == "playerID":
+            print("client player created")
+            self.playerID = msg["data"]["playerID"]
+            addCharacter(msg["data"])
+
+        if msg["type"] == "playerJoin":
+            print("external player added")
+            addCharacter(msg["data"])
+
+        if msg["type"] == "movement":
+            self.__playerMoved(msg["data"])
+
+        if msg["type"] == "createPlat":
+            self.__createPlat(msg["data"])
+
+        if msg["type"] == "disconn":
+            players.remove(players.sprites()[msg["data"]["playerID"]])
+            print("Player Disconnected")
+
+        if msg["type"] == "beginGame":
+            self.__beginGame(msg["data"])
+
+        if msg["type"] == "endGame":
+                self.__playing = False
+                self.__endGameData = msg["data"]
+
+        if msg["type"] == "MOVELEGAL":    
+            clientPlayer.legalMove()
+        if msg["type"] == "MOVENOTLEGAL":
+            clientPlayer.illegalMove()
+    
+    '''
+    Name: __playerMoved 
+    Parameters: msgData:dict
+    Returns: None
+    Purpose: Handles what to do if an external
+    player moves
+    '''
+    def __playerMoved(self, msgData:dict) -> None:
+        try:
+            players.sprites()[msgData["playerID"]-1].rect.x = msgData["posX"]
+            players.sprites()[msgData["playerID"]-1].rect.y = msgData["posY"] 
+        except Exception as e:
+            logger.addToLog(f"Player Moved Error: {e}")
+
+    '''
+    Name: __platCreate 
+    Parameters: msgData:dict
+    Returns: None
+    Purpose: Handles the platform create message from the server
+    '''
+    def __platCreate(self, msgData:dict) -> None:
+        try:
+            print("Created platform")
+            platforms.add(Platform([msgData["positionX"], msgData["positionY"]],[msgData["sizeHeight"], msgData["sizeWidth"]],self.__noOfPlatforms))
+            self.__noOfPlatforms += 1
+        except Exception as e:
+            logger.addToLog(f"platCreate Error: {e}")
+
+    '''
+    Name: __beginGame 
+    Parameters: msgData:dict
+    Returns: None
+    Purpose: Handles the beginning of a private server game
+    '''
+    def __beginGame(self, msgData:dict) -> None:
+        try:
+            self.__waiting = False
+            print(msg['data'])
+
+            clPlData = {
+                "playerID": msg["data"]["playerID"],
+                "positionList": msg['data']['positionList'],
+                'colourTuple': msg['data']['colourTuple']
+                }
+            addCharacter(clPlData)
+            for player in list(msg["data"]["otherPlayersInfo"].keys()):
+                playerData = msg["data"]["otherPlayersInfo"][player]
+                playerData["playerID"] = player
+                addCharacter(playerData)
+
+            iterator = 0
+            for platform in msg['data']['platformsPos']:
+                createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
+                iterator += 1
+        except Exception as e:
+            logger.addToLog(f"beginGame Error: {e}")
 
     '''
     Name: tellServerDisconn
@@ -512,14 +559,16 @@ class Character(pygame.sprite.Sprite, BaseCharacter):
     Purpose: Adjusts the position of the character rect if the player 
     is not on a platform
     '''
-    def gravity(self, cl: Client) -> None:
-        if not self.collided:
+    def gravity(self, cl: Client, collided: bool) -> None:
+        if not collided:
             self.rect.y += 1
             if self.rect.y > 800 - self._height:
                 self.rect.y = 800 - self._height
             else:
                 self.__moveMessage(cl)
                 self.lastPos = [self.rect.x, self.rect.y]
+        else:
+            pass
 
 '''
 Name: sendCasterInfo
@@ -671,21 +720,23 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
     leaderboard.add(Leaderboard())
 
 
-    running = True
-    showLeader = False
-    lastLeaderStatus = False
+    running: bool = True
+    showLeader: bool = False
+    lastLeaderStatus: bool = False
     lastLeaderUpd = time.time()
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
+    collided: bool = False
 
-    leaderText = ""
+    leaderText: str = ""
     leaderUpd = time.time()
 
     # Run loop
     while running:
 
-        clientPlayer.collided = False
+        collided = False
+
         plat = None
 
         screen.fill(WHITE)
@@ -714,30 +765,24 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                 keys = pygame.key.get_pressed()
                 # mods = pygame.key.get_mods()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                mouseKey = pygame.mouse.get_pressed(3)
+                mouseKey = pygame.mouse.get_pressed()
 
         # Sprite group collision handling; handles collisions between platforms and players
         collisions = pygame.sprite.groupcollide(platforms, players, False, False)
         for platform, player_list in collisions.items():
             for player in player_list:
                 if player == clientPlayer:
-                    clientPlayer.collided = True
-
-        # Sprite group collision handling; handles collisions between projectiles and players
-#        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-#        for bullet, players_list in pHit.items():
-#            for pl in players_list:
-#                if pl != bullet.playerOrigin:
-#                    pl.takeDamage(bullet.getDamage())
-#                    pl = youDied(pl, screen)
-#                    bullets.remove(b)
+                    collided = True
+                    
+            
+            
 
         bullets.update()
 
         if (time.time()-leaderUpd) >= 30:
             leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
             timeUpd = time.time()
-        clientPlayer.gravity(c)
+        clientPlayer.gravity(c, collided)
         clientPlayer.move(c)
         clientPlayer.fire(c)
         platforms.draw(screen)
@@ -762,8 +807,6 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
 
 def main(players, platforms, bullets) -> None:
-    logger = Logger()
-
     try:
         WINDOW_SIZE = (800, 800)
 
@@ -788,6 +831,8 @@ def main(players, platforms, bullets) -> None:
 
 
 if __name__ == '__main__':
+    logger = Logger()
+
     pygame.display.init()
     pygame.font.init()
     pygame.freetype.init()

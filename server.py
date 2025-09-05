@@ -95,7 +95,7 @@ class PublicServer(Server):
     '''
     def createAlreadyJoinedPlayers(self,connection):
         for client in self._clientList:
-            message = json.dumps({"type": "playerJoin","data": {"playerID": client.getPlayerID(), "colourTuple": client.colour,"positionList": client.getPosition()}})
+            message = json.dumps({"type": "playerJoin","data": {"playerID": client.getPlayerID(), "colourTuple": client.getColour(),"positionList": client.getPosition()}})
             connection.send(message.encode())
             time.sleep(0.2)
 

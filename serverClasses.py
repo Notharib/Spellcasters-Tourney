@@ -98,7 +98,7 @@ class Server:
                 print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
                 iterator += 1
         except Exception as e:
-            print("PS platformInfoCreate Error:",e)
+            print("platformInfoCreate Error:",e)
             print("Org msgData:", msgData)
 
     '''
@@ -135,7 +135,7 @@ class Server:
                 if closestPlat is None:
                     closestPlat = platform
                 else:
-                    print("NonePlatCheck:", platform.getTop())
+                    #print("PlatCheck:", platform.getTop())
                     if msgData["direction"] == "y":
                         if (platform.getTop() >= clientCPos[1] - msgData["amount"] or platform.getTop() <= clientCPos[1] - msgData["amount"]) and closestPlat.getTop() - platform.getTop() < 0:
                             closestPlat = platform
@@ -155,7 +155,7 @@ class Server:
                     else:
                         clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
         except Exception as e:
-            print("PS LegalMove Error",e)
+            print("LegalMove Error",e)
             print("Org msgData:", msgData)
 
 
