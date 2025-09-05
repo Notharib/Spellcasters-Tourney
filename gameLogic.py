@@ -240,22 +240,6 @@ def youDied(player, screen):
     return player
 
 
-
-'''
-Name: sendPlatformInfo
-Parameters: platforms: pygame Sprite Group
-Returns: data:list
-Purpose: Creates a list of all the information about all the platforms
-'''
-def sendPlatformInfo(platforms):
-    data = []
-    print(platforms, platforms.sprites())
-    for platform in platforms.sprites():
-        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
-        data.append(dictionary)
-    return data
-
-
 '''
 Name: data_handling
 Parameters: data:str

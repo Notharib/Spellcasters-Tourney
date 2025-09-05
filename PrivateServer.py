@@ -5,14 +5,15 @@ import time
 from random import choice, randint
 
 from gameLogic import data_handling
-from PrivateServerLogic import generatePlatforms, Platform, Client
+from serverClasses import Server, Client
+from basePlatform import Platform
 
 '''
 Name: Server
 Purpose: Server class to handle connections from the different clients. Different to the public server's
 Server class, due to the differences in functionality required from both of them
 '''
-class Server:
+class PrivateServer(Server):
     '''
     Name: __init__
     Parameters: maxClients:integer, lengthOfGame:integer
@@ -21,16 +22,9 @@ class Server:
     of the Server object
     '''
     def __init__(self, maxClients:int, lengthOfGame:int) -> None:
-        self.__HOST: str = socket.gethostbyname(socket.gethostname())
-        self.__PORT: int = 50001
-        self.__clientList: list = []
-        self.__maxClients: int = int(maxClients)
+        Server.__init__(self,host=socket.gethostbyname(socket.gethostname()), port=50001, maxClients=maxClients)
         self.__lengthOfGame: int = int(lengthOfGame)
-        self.__platformPositions: list[int] = [[randint(0,800),randint(0,800)] for i in range(3)]
-        print("Created Platforms Positions @", self.__platformPositions)
-        self.__platforms: list = generatePlatforms(self.__platformPositions)
-        self.__spawnPoints: list = []
-        self.password: None|str = None
+        self.__password: None|str = None
         self.__beginTime: None|int|float = None
         self.__waiting: int = 0
 
@@ -43,16 +37,13 @@ class Server:
     '''
     def start(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((self.__HOST, self.__PORT))
+            s.bind((self._HOST, self._PORT))
             s.listen(1)
-            print("Server Setup and listening on port", self.__PORT)
-            print(self.__maxClients)
-
-            for i in range(len(self.__platformPositions)):
-                self.__spawnPoints.append((self.__platformPositions[i][0], self.__platformPositions[i][1]+20))
+            print("Server Setup and listening on port", self._PORT)
+            print(self._maxClients)
 
             # Should only accept new connections while the length of the client lists is less than the max number of connections
-            while len(self.__clientList) < self.__maxClients:
+            while len(self._clientList) < self._maxClients:
                 conn, addr = s.accept()
                 print("New Connection from ", addr)
 
@@ -60,8 +51,8 @@ class Server:
                 position = choice(self.__spawnPoints)
 
                 time.sleep(0.1)
-                self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1, colour))
-                print(len(self.__clientList))
+                self._clientList.append(Client(conn, choice(self._spawnPoints),len(self._clientList) + 1, colour))
+                print(len(self._clientList))
                 # Separate function used so that it will still continue running after the while loop in this function stops running
                 self.startListening(conn)
                 # Once the required number of clients has joined, send the start information to all the clients in '__clientList'
@@ -88,7 +79,7 @@ class Server:
         idToPos: dict = {}
         iteration: int = 0
 
-        for client in self.__clientList:
+        for client in self._clientList:
             
             clientID: int = client.getPlayerID()
             idToPos[clientID] = iteration
@@ -113,7 +104,7 @@ class Server:
 
                 client.sendData(json.dumps(msgDict))
         
-        if len(self.__clientList) > self.__maxClients:
+        if len(self._clientList) > self._maxClients:
            self.__dealWithDupes(idToPos) 
     
     '''
@@ -128,7 +119,7 @@ class Server:
         if dupeIDs is not None:
             noDeleted: int = 0
             for ID in dupeIDs:
-                self.__clientList.remove(idToPos[ID]+noDeleted)
+                self._clientList.remove(idToPos[ID]+noDeleted)
                 noDeleted += 1
         else:
             raise Exception("Internal Client Handling Error: Dupes Detected when\n there shouldn't be")
@@ -168,7 +159,7 @@ class Server:
         messageDict: dict = {
             "type": "beginGame",
             "data": {
-                "platformsPos": self.__platformPositions,
+                "platformsPos": self._platformPositions,
                 "positionList": None,
                 "playerID": None,
                 "colourTuple": None,
@@ -179,7 +170,7 @@ class Server:
         msgHolder: dict = messageDict
 
         # Sends each of the clients the information that they will need to create the stage and all of the opponents
-        for client in self.__clientList:
+        for client in self._clientList:
 
             messageDict["data"]["positionList"] = client.getSpawnPoint()
             messageDict["data"]["playerID"] = client.getPlayerID()
@@ -215,21 +206,21 @@ class Server:
     def checkForPlatInfo(self, size: list[int] = [20,500]):
         time.sleep(3)
 
-        for i in range(len(self.__platforms)):
-            plat = self.__platforms[i]
+        for i in range(len(self._platforms)):
+            plat = self._platforms[i]
             platPos: list[int] = plat.getPos()
             
             if plat.getTop() is None:
-                self.__platforms[i].setTop(platPos[1])
+                self._platforms[i].setTop(platPos[1])
             
             if plat.getBottom() is None:
-                self.__platforms[i].setBottom(platPos[1]+size[0])
+                self._platforms[i].setBottom(platPos[1]+size[0])
             
             if plat.getLeft() is None:
-                self.__platforms[i].setLeft(platPos[0])
+                self._platforms[i].setLeft(platPos[0])
             
             if plat.getRight() is None:
-                self.__platforms[i].setRight(platPos[0]+size[1])
+                self._platforms[i].setRight(platPos[0]+size[1])
 
 
 
@@ -253,7 +244,7 @@ class Server:
     on the timer
     '''
     def getTimeRemaining(self):
-        for client in self.__clientList:
+        for client in self._clientList:
             timeRemaining = {
                     "type": "timeLeft",
                     "data": self.__lengthOfGame - (time.time()-self.__beginTime) 
@@ -271,32 +262,6 @@ class Server:
         pass
 
     '''
-    Name: __getClientPosition
-    Parameters: conn:object
-    Returns: int
-    Purpose: Gets the position of a certain client object within the clientList variable
-    '''
-    def __getClientPosition(self, conn) -> int:
-        for client  in self.__clientList:
-            if client.getClient() == conn:
-                return client.getPlayerID() - 1
-
-    '''
-    Name: __clientMoved 
-    Parameters: conn:object, msgData: dict
-    Returns: None
-    Purpose: To handle what the server should do when
-    a player moves
-    '''
-    def __clientMoved(self, conn, msgData: dict) -> None:
-        try:
-            clPos: int = self.__getClientPosition(conn)
-            self.__clientList[clPos].setPosition([msgData["posX"], msgData["posY"]])
-        except Exception as e:
-            print("PS Client Move Error:", e)
-            print("Org msgData:", msgData)
-
-    '''
     Name: __missingCaster
     Parameters: conn:object, msgData: str
     Returns: None
@@ -305,9 +270,9 @@ class Server:
     '''
     def __missingCaster(self, conn, msgData: str) -> None:
         try:
-            clPos: int = self.__getClientPosition(conn)
-            self.__clientList[clPos].setCaster(msgData)
-            self.__waiting -= 1
+            clPos: int = self._getClientPosition(conn)
+            self._clientList[clPos].setCaster(msgData)
+            self._waiting -= 1
         except Exception as e:
             print("PS Missing Caster Error:", e)
             print("Org msgData:", msgData)
@@ -321,52 +286,11 @@ class Server:
     '''
     def __missingElement(self, conn, msgData: str) -> None:
         try:
-            clPos: int = self.__getClientPosition(conn)
-            self.__clientList[clPos].setElement(msgData)
-            self.__waiting -= 1
+            clPos: int = self._getClientPosition(conn)
+            self._clientList[clPos].setElement(msgData)
+            self._waiting -= 1
         except Exception as e:
             print("PS Missing Element Error:", e)
-            print("Org msgData:", msgData)
-
-    '''
-    Name: __clientDisconn 
-    Parameters: msgData: dict
-    Returns: None
-    Purpose: To handle what should happen when the server recieves the
-    message that a client has disconnected from the server
-    '''    
-    def __clientDisconn(self, msgData: dict) -> None:
-        try:
-            self.tellClientsOfDisconn(msgData["playerID"]-1)
-            self.__clientList[msgData["playerID"] - 1].getClient().close()
-            self.__clientList.pop(msgData["playerID"] - 1)
-            print("Player Disconnected")
-        except Exception as e:
-            print("PS Client Disconnection Error:", e)
-            print("Org msgData:", msgData)
-
-    '''
-    Name: __platformInfoCreate
-    Parameters: msgData:list[dict]
-    Returns: None
-    Purpose: Creates internal platform objects
-    based off of the information given by the client
-    '''    
-    def __platformInfoCreate(self, msgData: list[dict]) -> None:
-        try:
-            print("CREATING PLATFORM INFORMATION")
-            iterator = 0
-            for platform in msgData:
-                self.__platforms[iterator].setTop(platform["platformTop"])
-                self.__platforms[iterator].setBottom(platform["platformBottom"])
-                self.__platforms[iterator].setLeft(platform["platformLeft"])
-                self.__platforms[iterator].setRight(platform["platformRight"])
-                print("PLATFORM INFO RECORDED")
-                p = self.__platforms[iterator]
-                print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
-                iterator += 1
-        except Exception as e:
-            print("PS platformInfoCreate Error:",e)
             print("Org msgData:", msgData)
 
     '''
@@ -386,48 +310,6 @@ class Server:
             print("Org msgData:", msgData)
 
     '''
-    Name: __legalMove 
-    Parameters: msgData:dict
-    Returns: None
-    Purpose: To determine whether a move that a client is about to
-    make would be legal
-    '''    
-    def __legalMove(self, msgData: dict) -> None:
-        try:
-            clientMove = self.__clientList[msgData["playerID"] - 1]
-
-            clientCPos: list[int] = [clientMove.getX(), clientMove.getY()] 
-
-            closestPlat = None
-            for platform in self.__platforms:
-                if closestPlat is None:
-                    closestPlat = platform
-                else:
-                    print("NonePlatCheck:", platform.getTop())
-                    if messageData["direction"] == "y":
-                        if (platform.getTop() >= clientCPos[1] - msgData["amount"] or platform.getTop() <= clientCPos[1] - msgData["amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                            closestPlat = platform
-                        else:
-                            if (platform.getTop() >= clientCPos[0] - msgData["amount"] or platform.getTop() <= clientCPos[0] - msgData["amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                                closestPlat = platform
-
-            if closestPlat is not None:
-                if messageData["direction"] == "y":
-                    if clientCPos[1] - msgData["amount"] <= closestPlat.getPos()[1] + closestPlat.getSize()[0]:                            
-                        clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
-                    else:
-                        clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
-                else:
-                    if clientCPos[0] - msgData["amount"] + clientCPos[0] == closestPlat.getPos()[0] or clientCPos[0] - msgData["amount"] <= closestPlat.getPos()[0] + closestPlat.getSize()[1]:
-                        clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))                        
-                    else:
-                        clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
-        except Exception as e:
-            print("PS LegalMove Error",e)
-            print("Org msgData:", msgData)
-
-
-    '''
     Name: __messageHandling
     Parameters: message:dictionary, conn:object
     Returns: None
@@ -436,7 +318,7 @@ class Server:
     def __messageHandling(self, message:dict, conn) -> None:
         try:
             if message["type"] == "movement":
-                self.__clientMoved(conn, message["data"])
+                self._clientMoved(conn, message["data"])
 
             if message["type"] == "missingCaster": 
                 self.__missingCaster(conn, message["data"])
@@ -445,57 +327,23 @@ class Server:
                 self.__missingElement(conn, message["data"])
 
             if message["type"] == "disconn":
-                self.__clientDisconn(message["data"])
+                self._clientDisconn(message["data"])
 
             if message["type"] == "platformInfo":
-                self.__platformInfoCreate(message["data"])
+                self._platformInfoCreate(message["data"])
 
             # Since spellcaster information is not automatically filled in, it needs to be set through a seperate message
             if message["type"] == "casterInfo":
-               self.__casterInfoFill(conn, message["data"])
+               self._casterInfoFill(conn, message["data"])
 
             if message["type"] == "legalCheck":
-                self.__legalMove(message["data"])
+                self._legalMove(message["data"])
 
         except Exception as e:
             print("Error1:", e)
             print("Err1 Org Messsage:", message)
             print("Err1 Type:", type(message))
 
-    '''
-    Name: recv_from_client
-    Parameters: conn:object
-    Returns: None
-    Purpose: Listens for a message from the client, and handles what to do with it
-    '''
-    def recv_from_client(self, conn):
-        while True:
-            data = conn.recv(1024)
-            if not data:
-                break
-            else:
-                try:
-                    if data.decode() is not None:
-                        msgList: list[dict] = data_handling(data.decode())
-                        if msgList is not None:
-                            for msg in msgList:
-                                self.__messageHandling(message=msg, conn=conn)
-
-                except Exception as err:
-                    print(data.decode())
-                    print("Error2:", err)
-
-                finally:
-                    try:
-                        if msgList is not None:
-                            for message in msgList:
-                                for client in self.__clientList:
-                                    if client is not None and client.getClient() != conn and (
-                                            message["type"] != "platformInfo" or message["type"] != "legalCheck"):
-                                        client.sendData(data.decode())
-                    except Exception as e:
-                        print("Error3:", e)
-                        print("Err3 Org Decode:", data.decode())
 
 if __name__ == "__main__":
     pass

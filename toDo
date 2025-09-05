@@ -1,0 +1,12 @@
+Ability to Fire the Projectiles/Attacks
+	- Left Click Main Attack
+	- Right Click Alt Attack
+Collision system
+	- Server-Side Checks
+Health System
+	- Take Damage
+	- Regeneration
+Respawn System
+	- Leaderboard System
+Visual Difference Between Attacks
+	- Just Make the projectiles different colours

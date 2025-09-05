@@ -43,6 +43,21 @@ def onPlat(player, platforms):
     return False
 
 '''
+Name: sendPlatformInfo
+Parameters: platforms: pygame Sprite Group
+Returns: data:list
+Purpose: Creates a list of all the information about all the platforms
+'''
+def sendPlatformInfo(platforms):
+    data = []
+    print(platforms, platforms.sprites())
+    for platform in platforms.sprites():
+        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
+        data.append(dictionary)
+    return data
+
+
+'''
 Name: platformInfo
 Parameters: platforms: pygame Sprite group, client:object, clientPlayer:object
 Returns: None
