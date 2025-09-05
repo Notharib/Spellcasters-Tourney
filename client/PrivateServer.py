@@ -85,7 +85,15 @@ class Server:
     Purpose: Runs the necessary checks before beginning the game
     '''
     def preStartChecks(self) -> None:
+        idToPos: dict = {}
+        iteration: int = 0
+
         for client in self.__clientList:
+            
+            clientID: int = client.getPlayerID()
+            idToPos[clientID] = iteration
+            iteration += 1
+
             if client.getElement() is None:
                 self.__waiting += 1
 
@@ -104,7 +112,44 @@ class Server:
                         }
 
                 client.sendData(json.dumps(msgDict))
+        
+        if len(self.__clientList) > self.__maxClients:
+           self.__dealWithDupes(idToPos) 
+    
+    '''
+    Name: __dealWithDupes
+    Parameters: idToPos: dict
+    Returns: None
+    Purpose: To deal with the potential that there are duplicate
+    players internally
+    '''
+    def __dealWithDupes(self, idToPos: dict) -> None:
+        dupeIDs: list[int]|None = self.__findDupeIDs(list(idToPos.keys()))
+        if dupeIDs is not None:
+            noDeleted: int = 0
+            for ID in dupeIDs:
+                self.__clientList.remove(idToPos[ID]+noDeleted)
+                noDeleted += 1
+        else:
+            raise Exception("Internal Client Handling Error: Dupes Detected when\n there shouldn't be")
 
+    '''
+    Name: __findDupeIDs 
+    Parameters: IDs:list[int]
+    Returns: list[int]|None
+    Purpose: To find duplicate playerIDs within the given list
+    '''
+    def __findDupeIDs(self, IDs:list[int]) -> list[int]|None:
+        retVal: list[int] = []
+        for ID in IDs:
+            noTimes: int = IDs.count(ID)
+            if noTimes > 1:
+                retVal.append(ID)
+
+        if retVal[0] is None:
+            return None
+        else:
+            return retVal
 
     '''
     Name: beginGame
@@ -310,16 +355,16 @@ class Server:
     def __platformInfoCreate(self, msgData: list[dict]) -> None:
         try:
             print("CREATING PLATFORM INFORMATION")
-                iterator = 0
-                for platform in msgData:
-                    self.__platforms[iterator].setTop(platform["platformTop"])
-                    self.__platforms[iterator].setBottom(platform["platformBottom"])
-                    self.__platforms[iterator].setLeft(platform["platformLeft"])
-                    self.__platforms[iterator].setRight(platform["platformRight"])
-                    print("PLATFORM INFO RECORDED")
-                    p = self.__platforms[iterator]
-                    print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
-                    iterator += 1
+            iterator = 0
+            for platform in msgData:
+                self.__platforms[iterator].setTop(platform["platformTop"])
+                self.__platforms[iterator].setBottom(platform["platformBottom"])
+                self.__platforms[iterator].setLeft(platform["platformLeft"])
+                self.__platforms[iterator].setRight(platform["platformRight"])
+                print("PLATFORM INFO RECORDED")
+                p = self.__platforms[iterator]
+                print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
+                iterator += 1
         except Exception as e:
             print("PS platformInfoCreate Error:",e)
             print("Org msgData:", msgData)
