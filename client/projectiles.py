@@ -111,9 +111,9 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         self.__updTimer: float = time()
         self.playerOrigin = player
         self.colour = (0,0,0)
-        self.image = pygame.Surface([self.width,self.height])
+        self.image = pygame.Surface([self.getWidth(),self.getHeight()])
         self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.getX(),self.getY(),self.getWidth(),self.height])
+        pygame.draw.rect(self.image,self.colour,[self.getX(),self.getY(),self.getWidth(),self.getHeight()])
         self.rect = self.image.get_rect()
         self.rect.x = self._X
         self.rect.y = self._Y

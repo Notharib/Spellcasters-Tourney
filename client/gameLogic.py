@@ -272,21 +272,36 @@ def data_handling(data: str) -> list[dict]:
 
             msgListLen: int = len(msgList)
 
+            temp: str = ""
+
             # Adds the appropriate curly brackets onto the string depending on its position in the list,
             # and then turns it into a dictionary
             for i in range(msgListLen):
+                
                 if i == 0:
-                    msgList[0] = dict(json.loads(msgList[0] + '}'))
+                    temp = msgList[0] + '}'
+                    msgList[0] = dict(json.loads(temp))
 
                 elif i == msgListLen - 1:
-                    msgList[i] = dict(json.loads('{' + msgList[i]))
+                    temp = '{' + msgList[i]
+                    msgList[i] = dict(json.loads(temp))
                 
                 else:
-                    msgList[i] = dict(json.loads('{' + msgList[i] + '}'))
+                    temp = '{' + msgList[i] + '}'
+                    msgList[i] = dict(json.loads(temp))
+                
+                temp = ""
+            
             return msgList
         
         else:
             return [dict(json.loads(data))]
+    
+    except SyntaxError as e:
+        print("Data Handling Syntax Error:",e)
+
+    except json.JSONDecodeError as e:
+        print("Data Handling JSON Error:",e)
 
     except Exception as e:
         print("Data Handling Error:", e)

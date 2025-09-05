@@ -78,7 +78,12 @@ class Server:
     def startListening(self, conn) -> None:
         threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
-    
+    '''
+    Name: preStartChecks
+    Parameters: None
+    Returns: None
+    Purpose: Runs the necessary checks before beginning the game
+    '''
     def preStartChecks(self) -> None:
         for client in self.__clientList:
             if client.getElement() is None:
