@@ -237,7 +237,153 @@ class Server:
                 return client.getPlayerID() - 1
 
     '''
-    Name: messageHandling
+    Name: __clientMoved 
+    Parameters: conn:object, msgData: dict
+    Returns: None
+    Purpose: To handle what the server should do when
+    a player moves
+    '''
+    def __clientMoved(self, conn, msgData: dict) -> None:
+        try:
+            clPos: int = self.__getClientPosition(conn)
+            self.__clientList[clPos].setPosition([msgData["posX"], msgData["posY"]])
+        except Exception as e:
+            print("PS Client Move Error:", e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __missingCaster
+    Parameters: conn:object, msgData: str
+    Returns: None
+    Purpose: To fill out the missing caster
+    information given by a client
+    '''
+    def __missingCaster(self, conn, msgData: str) -> None:
+        try:
+            clPos: int = self.__getClientPosition(conn)
+            self.__clientList[clPos].setCaster(msgData)
+            self.__waiting -= 1
+        except Exception as e:
+            print("PS Missing Caster Error:", e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __missingElement
+    Parameters: conn:object, msgData:str
+    Returns: None
+    Purpose: To fill out the missing element
+    information given by a client
+    '''
+    def __missingElement(self, conn, msgData: str) -> None:
+        try:
+            clPos: int = self.__getClientPosition(conn)
+            self.__clientList[clPos].setElement(msgData)
+            self.__waiting -= 1
+        except Exception as e:
+            print("PS Missing Element Error:", e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __clientDisconn 
+    Parameters: msgData: dict
+    Returns: None
+    Purpose: To handle what should happen when the server recieves the
+    message that a client has disconnected from the server
+    '''    
+    def __clientDisconn(self, msgData: dict) -> None:
+        try:
+            self.tellClientsOfDisconn(msgData["playerID"]-1)
+            self.__clientList[msgData["playerID"] - 1].getClient().close()
+            self.__clientList.pop(msgData["playerID"] - 1)
+            print("Player Disconnected")
+        except Exception as e:
+            print("PS Client Disconnection Error:", e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __platformInfoCreate
+    Parameters: msgData:list[dict]
+    Returns: None
+    Purpose: Creates internal platform objects
+    based off of the information given by the client
+    '''    
+    def __platformInfoCreate(self, msgData: list[dict]) -> None:
+        try:
+            print("CREATING PLATFORM INFORMATION")
+                iterator = 0
+                for platform in msgData:
+                    self.__platforms[iterator].setTop(platform["platformTop"])
+                    self.__platforms[iterator].setBottom(platform["platformBottom"])
+                    self.__platforms[iterator].setLeft(platform["platformLeft"])
+                    self.__platforms[iterator].setRight(platform["platformRight"])
+                    print("PLATFORM INFO RECORDED")
+                    p = self.__platforms[iterator]
+                    print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
+                    iterator += 1
+        except Exception as e:
+            print("PS platformInfoCreate Error:",e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __casterInfoFill
+    Parameters: conn, msgData: dict
+    Returns: None
+    Purpose: To fill out a client's caster information
+    based upon the info given
+    '''    
+    def __casterInfoFill(self, conn, msgData: dict) -> None:
+        try:
+            clPos: int = self.__getClientPosition(conn)
+            self.__clientList[clPos].setElement(msgData["element"])
+            self.__clientList[clPos].setCaster(msgData["caster"])
+        except Exception as e:
+            print("casterInfoFill Error:", e)
+            print("Org msgData:", msgData)
+
+    '''
+    Name: __legalMove 
+    Parameters: msgData:dict
+    Returns: None
+    Purpose: To determine whether a move that a client is about to
+    make would be legal
+    '''    
+    def __legalMove(self, msgData: dict) -> None:
+        try:
+            clientMove = self.__clientList[msgData["playerID"] - 1]
+
+            clientCPos: list[int] = [clientMove.getX(), clientMove.getY()] 
+
+            closestPlat = None
+            for platform in self.__platforms:
+                if closestPlat is None:
+                    closestPlat = platform
+                else:
+                    print("NonePlatCheck:", platform.getTop())
+                    if messageData["direction"] == "y":
+                        if (platform.getTop() >= clientCPos[1] - msgData["amount"] or platform.getTop() <= clientCPos[1] - msgData["amount"]) and closestPlat.getTop() - platform.getTop() < 0:
+                            closestPlat = platform
+                        else:
+                            if (platform.getTop() >= clientCPos[0] - msgData["amount"] or platform.getTop() <= clientCPos[0] - msgData["amount"]) and closestPlat.getTop() - platform.getTop() < 0:
+                                closestPlat = platform
+
+            if closestPlat is not None:
+                if messageData["direction"] == "y":
+                    if clientCPos[1] - msgData["amount"] <= closestPlat.getPos()[1] + closestPlat.getSize()[0]:                            
+                        clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
+                    else:
+                        clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
+                else:
+                    if clientCPos[0] - msgData["amount"] + clientCPos[0] == closestPlat.getPos()[0] or clientCPos[0] - msgData["amount"] <= closestPlat.getPos()[0] + closestPlat.getSize()[1]:
+                        clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))                        
+                    else:
+                        clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
+        except Exception as e:
+            print("PS LegalMove Error",e)
+            print("Org msgData:", msgData)
+
+
+    '''
+    Name: __messageHandling
     Parameters: message:dictionary, conn:object
     Returns: None
     Purpose: Handles what to do with the message received from a client
@@ -245,86 +391,27 @@ class Server:
     def __messageHandling(self, message:dict, conn) -> None:
         try:
             if message["type"] == "movement":
-                clPos: int = self.__getClientPosition(conn)
+                self.__clientMoved(conn, message["data"])
 
-                self.__clientList[clPos].setPosition([message["data"]["posX"], message["data"]["posY"]])
-
-            if message["type"] == "missingCaster":
-                clPos: int = self.__getClientPosition(conn)
-                self.__clientList[clPos].setCaster(message["data"])
-                self.__waiting -= 1
+            if message["type"] == "missingCaster": 
+                self.__missingCaster(conn, message["data"])
 
             if message["type"] == "missingElement":
-                clPos: int = self.__getClientPosition(conn)
-                self.__clientList[clPos].setElement(message["data"])
-                self.__waiting -= 1
+                self.__missingElement(conn, message["data"])
 
             if message["type"] == "disconn":
-                self.tellClientsOfDisconn(message["data"]["playerID"] - 1)
-                self.__clientList[message["data"]["playerID"] - 1].client.close()
-                self.__clientList.pop(message["data"]["playerID"] - 1)
-                print("player disconnected")
+                self.__clientDisconn(message["data"])
 
-#            if message["type"] == "platformInfo":
-#                print("CREATING PLATFORM INFORMATION")
-#                iterator = 0
-#                for platform in message["data"]:
-#                    self.__platforms[iterator].setTop(platform["platformTop"])
-#                    self.__platforms[iterator].setBottom(platform["platformBottom"])
-#                    self.__platforms[iterator].setLeft(platform["platformLeft"])
-#                    self.__platforms[iterator].setRight(platform["platformRight"])
-#                    print("PLATFORM INFO RECORDED")
-#                    p = self.__platforms[iterator]
-#                    print([p.getTop(), p.getBottom(), p.getLeft(), p.getRight()])
-#                    iterator += 1
+            if message["type"] == "platformInfo":
+                self.__platformInfoCreate(message["data"])
 
             # Since spellcaster information is not automatically filled in, it needs to be set through a seperate message
             if message["type"] == "casterInfo":
-                data = message["data"]
-                clPos: int = self.__getClientPosition(conn)
-
-                self.__clientList[clPos].setElement(data["element"])
-                self.__clientList[clPos].setCaster(data["caster"])
+               self.__casterInfoFill(conn, message["data"])
 
             if message["type"] == "legalCheck":
-                messageData = message["data"]
-                print("LEGALMOVECHECK")
-                print(messageData)
-                clientMove = self.__clientList[messageData["playerID"] - 1]
+                self.__legalMove(message["data"])
 
-                clientCPos: list[int] = [clientMove.getX(), clientMove.getY()] 
-
-                closestPlat = None
-                for platform in self.__platforms:
-                    if closestPlat is None:
-                        closestPlat = platform
-                    else:
-                        print("NonePlatCheck:", platform.getTop())
-                        if messageData["direction"] == "y":
-                            if (platform.getTop() >= clientCPos[1] - messageData[
-                                "amount"] or platform.getTop() <= clientCPos[1] - messageData[
-                                    "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                                closestPlat = platform
-                        else:
-                            if (platform.getTop() >= clientCPos[0] - messageData[
-                                "amount"] or platform.getTop() <= clientCPos[0] - messageData[
-                                    "amount"]) and closestPlat.getTop() - platform.getTop() < 0:
-                                closestPlat = platform
-
-                if closestPlat is not None:
-                    if messageData["direction"] == "y":
-                        if clientCPos[1] - messageData["amount"] <= closestPlat.getPos()[1] + \
-                                closestPlat.getSize()[0]:
-                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
-                        else:
-                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
-                    else:
-                        if clientCPos[0] - messageData["amount"] + clientCPos[0] == \
-                                closestPlat.getPos()[0] or clientCPos[0] - messageData["amount"] <= \
-                                closestPlat.getPos()[0] + closestPlat.getSize()[1]:
-                            clientMove.sendData(json.dumps({"type": "MOVENOTLEGAL"}))
-                        else:
-                            clientMove.sendData(json.dumps({"type": "MOVELEGAL"}))
         except Exception as e:
             print("Error1:", e)
             print("Err1 Org Messsage:", message)

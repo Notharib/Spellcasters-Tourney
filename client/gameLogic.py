@@ -265,38 +265,19 @@ to avoid extra data errors
 '''
 def data_handling(data: str) -> list[dict]:
     try: 
-        # Doesn't need to handle data to prevent extra data errors if there is no extra data
-        if '}{' in data:
-            # Splits the string into its unique messages
-            msgList: list[str] = data.split("}{")
-
-            msgListLen: int = len(msgList)
-
-            temp: str = ""
-
-            # Adds the appropriate curly brackets onto the string depending on its position in the list,
-            # and then turns it into a dictionary
-            for i in range(msgListLen):
-                
-                if i == 0:
-                    temp = msgList[0] + '}'
-                    msgList[0] = dict(json.loads(temp))
-
-                elif i == msgListLen - 1:
-                    temp = '{' + msgList[i]
-                    msgList[i] = dict(json.loads(temp))
-                
-                else:
-                    temp = '{' + msgList[i] + '}'
-                    msgList[i] = dict(json.loads(temp))
-                
-                temp = ""
-            
-            return msgList
         
-        else:
-            return [dict(json.loads(data))]
-    
+        decoder = json.JSONDecoder()
+        iterator: int = 0
+        retVal: list[dict] = []
+
+        while iterator < len(data):
+            data = data.lstrip()
+            msg, offset = decoder.raw_decode(data[iterator:])
+            retVal.append(msg)
+            iterator += offset
+
+        return retVal
+
     except SyntaxError as e:
         print("Data Handling Syntax Error:",e)
 
