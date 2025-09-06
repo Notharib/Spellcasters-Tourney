@@ -136,17 +136,17 @@ any given player easier
 class Client:
     '''
     Name: __init__
-    Parameters: conn:object, spawnPoint:tuple, playerNo:integer, size:list
+    Parameters: conn:object, spawnPoint:tuple, playerID:integer, size:list
     Returns: None
     Purpose: Constructor to set the initial values
     of the Client object
     '''
-    def __init__(self, conn, spawnPoint, playerNo, size=[40,40]):
+    def __init__(self, conn, spawnPoint, playerID, size=[40,40]):
         self.__client = conn
         self.__spawnPoint = spawnPoint
         self.__element = None
         self.__spellCaster = None
-        self.__playerNo = playerNo
+        self.__playerID = playerID
         self.__colour = (randint(0, 255), randint(0, 255), randint(0, 255))
         self.position = list(spawnPoint)
         self.__size = size
@@ -208,13 +208,13 @@ class Client:
         return self.__client
 
     '''
-    Name: getPlayerNo
+    Name: getplayerID
     Parameters: None
-    Returns: self.__playerNo:integer
-    Purpose: Getter for self.__playerNo
+    Returns: self.__playerID:integer
+    Purpose: Getter for self.__playerID
     '''
-    def getPlayerNo(self):
-        return self.__playerNo
+    def getplayerID(self):
+        return self.__playerID
 
     '''
     Name: getElement
@@ -295,11 +295,11 @@ class Server:
 
                 colour = (randint(0, 255), randint(0, 255), randint(0, 255))
                 position = choice(self.__spawnPoints)
-                # clientNoMessage = json.dumps({"type": "clientNo",
-                #                               "data": {"clientNo": len(self.__clientList) + 1, "colourTuple": colour,
+                # playerIDMessage = json.dumps({"type": "playerID",
+                #                               "data": {"playerID": len(self.__clientList) + 1, "colourTuple": colour,
                 #                                        "positionList": position}})
-                # print(clientNoMessage)
-                # conn.send(clientNoMessage.encode())
+                # print(playerIDMessage)
+                # conn.send(playerIDMessage.encode())
                 time.sleep(0.1)
                 self.__clientList.append(Client(conn, choice(self.__spawnPoints),len(self.__clientList) + 1))
                 print(len(self.__clientList))
@@ -334,7 +334,7 @@ class Server:
             "data": {
                 "platformsPos": self.__platformPositions,
                 "positionList": None,
-                "clientNo": None,
+                "playerID": None,
                 "colourTuple": None,
                 "otherPlayersInfo": {}
             }
@@ -344,17 +344,17 @@ class Server:
         for client in self.__clientList:
 
             messageDict["data"]["positionList"] = client.getSpawnPoint()
-            messageDict["data"]["clientNo"] = client.getPlayerNo()
+            messageDict["data"]["playerID"] = client.getplayerID()
             messageDict["data"]["colourTuple"] = client.getPlayerColour()
 
             for connection in self.__clientList:
                 if connection != client:
-                    messageDict["data"]["otherPlayersInfo"][connection.getPlayerNo()] = {
+                    messageDict["data"]["otherPlayersInfo"][connection.getplayerID()] = {
                         "type": connection.getCaster(),
                         "element": connection.getElement(),
                         "positionList": connection.getSpawnPoint(),
                         "colourTuple": connection.getPlayerColour(),
-                        "clientNo": connection.getPlayerNo()
+                        "playerID": connection.getplayerID()
                     }
 
             # print(messageDict)
@@ -364,7 +364,7 @@ class Server:
                 "data": {
                     "platformsPos": self.__platformPositions,
                     "positionList": None,
-                    "clientNo": None,
+                    "playerID": None,
                     "colourTuple": None,
                     "otherPlayersInfo": {}
                 }
@@ -447,7 +447,7 @@ class Server:
             if message["type"] == "movement":
                 for client in self.__clientList:
                     if client.getClient() == conn:
-                        clPos = client.getPlayerNo() - 1
+                        clPos = client.getplayerID() - 1
 
                 if message["data"]["direction"] == "y":
                     self.__clientList[clPos].position[1] = message["data"]["movedTo"]
@@ -456,9 +456,9 @@ class Server:
                     self.__clientList[clPos].position[0] = message["data"]["movedTo"]
                     # print("player position changed")
             if message["type"] == "disconn":
-                self.tellClientsOfDisconn(message["data"]["clientNo"] - 1)
-                self.__clientList[message["data"]["clientNo"] - 1].client.close()
-                self.__clientList.pop(message["data"]["clientNo"] - 1)
+                self.tellClientsOfDisconn(message["data"]["playerID"] - 1)
+                self.__clientList[message["data"]["playerID"] - 1].client.close()
+                self.__clientList.pop(message["data"]["playerID"] - 1)
                 print("player disconnected")
 
             if message["type"] == "platformInfo":
@@ -478,7 +478,7 @@ class Server:
                 messageData = message["data"]
                 print("LEGALMOVECHECK")
                 print(messageData)
-                clientMove = self.__clientList[messageData["clientNo"] - 1]
+                clientMove = self.__clientList[messageData["playerID"] - 1]
                 closestPlat = None
                 for platform in self.__platforms:
                     if closestPlat is None:
