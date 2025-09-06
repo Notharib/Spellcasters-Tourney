@@ -1,8 +1,18 @@
-import pygame,pygame.freetype, time, threading, socket, json, random
+import pygame
+import pygame.freetype 
+import time
+import threading
+import socket
+import json
+import random
+
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Bullet, Platform, Leaderboard, getDirection, youDied, onPlat, platformInfo, getLeaderboard, Leaderboard, data_handling
+from gameLogic import Platform, getDirection, youDied, onPlat, platformInfo, data_handling
 from PrivateServer import Server
 from clientLogger import Logger
+from Leaderboard import *
+from Elements import *
+
 
 '''
 Name: Client
@@ -284,7 +294,7 @@ class Character(pygame.sprite.Sprite):
         self.width = 40
         self.X = position[0]
         self.Y = position[1]
-        self.HP = 10
+        self.HP = 100
         self.colour = colour
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
@@ -297,6 +307,39 @@ class Character(pygame.sprite.Sprite):
         self.lastLegalPos = self.lastPos
         self.collided = False
         self.lastBulletFired = time.time()
+        self.__regeneration: int = lambda t: round(math.exp(t // 4))
+        self.__timeOfLastHit: float = time.time()
+        self.__Element = None
+        self.__Caster = None
+        self.__RegenTime
+
+    '''
+    Name: update
+    Parameters: None
+    Returns: None
+    Purpose: Updates certain variables each tick
+    '''
+    def update(self) -> None:
+        if self.HP != 100 and self.HP < 100:
+            self.HP += self.__regeneration(time.time() - self.__timeOfLastHit)
+        if self.HP > 100:
+            self.HP = 100
+
+    '''
+    Name: takeDamage
+    Parameters: damage: int
+    Returns: None
+    Purpose: Setter for the client's health
+    '''
+    def takeDamage(self, damage: int) -> None:
+        self.__HP -= damage
+        if self.__HP <= 0:
+            self.rect.x = self.X
+            self.rect.y = self.Y
+            self.__HP = 100
+            requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.playerID})
+        else:
+            self.__timeOfLastHit = time.time()
 
     '''
     Name: leaderboardReq
