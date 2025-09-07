@@ -15,13 +15,23 @@ class Projectile:
     Purpose: Constructor to set the initial values
     of the Projectile object
     '''
-    def __init__(self, size: list[int], playerOrg: int, damage: int, spawnPoint: list[int]) -> None:
+    def __init__(self, size: list[int], playerOrg: int, damage: int, spawnPoint: list[int], element: str) -> None:
         self._height: int = size[0]
         self._width: int = size[1]
         self._X: int = spawnPoint[0]
         self._Y: int = spawnPoint[1]
         self._playerOrigin: int = playerOrg
         self._damage: int = damage
+        self._Element: str = element
+
+    '''
+    Name: getElement
+    Parameters: None
+    Returns: self._Element:str
+    Purpose: Getter for the projectile's element
+    '''
+    def getElement(self) -> str:
+        return self._Element
 
     '''
     Name: getDamage
@@ -96,15 +106,14 @@ Purpose: Manages projectiles and projectile behaviour
 class Bullet(pygame.sprite.Sprite, Projectile):
     '''
     Name: __init__
-    Parameters: spawnPoint:array, direction: array, player:int, size:list, damage:integer
+    Parameters: spawnPoint:array, direction: array, player:int, size:list, damage:integer, element: str
     Returns: None
     Purpose: Constructor to set the initial values
     of the Bullet object
     '''
-    def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
-        
+    def __init__(self,spawnPoint:list[int], direction:list[int], player:int, element:str, size:list[int]=[10,10],damage:int = 2):
         pygame.sprite.Sprite.__init__(self)
-        Projectile.__init__(self,size, player, damage,spawnPoint)
+        Projectile.__init__(self,size, player, damage,spawnPoint, element)
         
         self.__direction = direction
         self.__gravity: int = lambda time: math.exp(time // 3)
@@ -146,19 +155,50 @@ Purpose: Manages the cone attck projectile
 class ConeAttack(pygame.sprite.Sprite, Projectile):
     '''
     Name: __init__
-    Parameters: spawnPoint: list[int], playerID: int, size: list[int], damage:int
+    Parameters: spawnPoint: list[int], playerID: int, size: list[int], damage:int, element: str
     Returns: None
     Purpose: Constructor to set the initial values
     of the ConeAttack object
     '''
-    def __init__(self, spawnPoint: list[int], playerID: int, size= [10,10], damage = 10) -> None:
+    def __init__(self, spawnPoint: list[int], playerID: int, element: str, size= [10,10], damage = 10) -> None:
         pygame.sprite.Sprite.__init__(self)
-        Projectile.__init__(self,size, playerID, damage, spawnPoint)
+        Projectile.__init__(self,size, playerID, damage, spawnPoint, element)
 
         self.colour: tuple[int,int,int] = (200,200,200)
-        self.image = self.image.load("spellCone.png")
+        self.image = pygame.image.load("spellCone.png")
 
         pygame.draw.rect(self.image, self.colour, [self.getX(), self.getY(), self.getWidth(), self.getHeight()])
-        self._rect = self._image.get_rect()
-        self._rect.x = self._X
-        self._rect.y = self._y
+        self.rect = self.image.get_rect()
+        self.rect.x = self._X
+        self.rect.y = self._Y
+        self.__ticksExisted: int = 0
+
+    '''
+    Name: update
+    Parameters: None
+    Returns: None
+    Purpose: Updates internal variables of the ConeAttack object 
+    '''
+    def update(self) -> None:
+        self.__ticksExisted += 1
+        if self.__ticksExisted > 120:
+            pass
+
+
+'''
+Name: generateCooldown
+Parameters: element
+Returns: int
+Purpose: Generates the cooldown time 
+based on the element type
+'''
+def generateCooldown(element: str) -> int:
+    if element == "Fire":
+        return 3
+    elif element == "Water":
+        return 1
+    elif element == "Earth":
+        return 5
+    else:
+        raise ValueError("Internal Value Error. Element Passed in:",element)
+

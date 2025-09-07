@@ -1,110 +1,6 @@
 import pygame, math, requests, unittest, random, json
 
-# Non-player objects to be used within the game
 
-'''
-Name: Leaderboard
-Inherits: pygame.sprite.Sprite
-Purpose: To display what the current leaderboard is
-'''
-class Leaderboard(pygame.sprite.Sprite):
-    '''
-    Name: __init__
-    Parameters: None
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Leaderboard object
-    '''
-    def __init__(self):
-        super().__init__()
-        self.__leaderboard = {}
-        self.__displayText = ""
-        self.X = 200
-        self.Y = 0
-        self.width = 400
-        self.height = 300
-        self.colour = (0,0,255)
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-
-    '''
-    Name: update
-    Parameters: leaderboard:dictionary
-    Returns: None
-    Purpose: Updates the values of different variables within the class as needed
-    '''
-    def update(self, leaderboard):
-        self.__displayText = ""
-        self.__leaderboard = leaderboard
-        leaderList = self.setupLeaderStructure()
-        for i in range(len(leaderList)):
-            if i == 0:
-                self.__displayText += "1: {firstUser}, {firstDeaths}".format(firstUser=leaderList[i][0], firstDeaths=leaderList[i][1])
-            else:
-                self.__displayText += "\n{position}: {user}, {deathCount}".format(position=i+1, user=leaderList[i][0], deathCount=leaderList[i][1])
-
-    '''
-    Name: getDisplayText
-    Parameters: None
-    Returns: string
-    Purpose: Getter for the displayText variable
-    '''
-    def getDisplayText(self):
-        return self.__displayText
-
-    '''
-    Name: getLeaderboard 
-    Parameters: None 
-    Returns: dictionary 
-    Purpose: Getter for the leaderboard variable
-    '''    
-    def getLeaderboard(self):
-        return self.__leaderboard
-
-
-    '''
-    Name: addToLeader
-    Parameters: examplePlayer:list
-    Returns: None
-    Purpose: Function only used for unit testing to add players to
-    the leaderboard
-    '''
-    def addToLeader(self,examplePlayer):
-        self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
-
-    '''
-    Name: setupLeaderStructure
-    Parameters: None
-    Returns: orderedLeader:list
-    Purpose: Organises the leaderboard so that
-    '''
-    def setupLeaderStructure(self):
-        keysToPop = []
-        for key in list(self.__leaderboard.keys()):
-            if self.__leaderboard[key] is None:
-                keysToPop.append(key)
-        if len(keysToPop) != 0:
-            for key in keysToPop:
-                self.__leaderboard.pop(key)
-
-        deathValues = list(self.__leaderboard.values())
-
-        orderedDeath = merge_sort(deathValues)
-
-        orderedLeader = []
-        for deathValue in orderedDeath:
-            for key in self.__leaderboard.keys():
-                if self.__leaderboard[key] == deathValue:
-                    orderedLeader.append([key, deathValue])
-                    break
-        return orderedLeader
-
-    def __repr__(self):
-        return self.__leaderboard
 
 '''
 Name: Platform
@@ -133,49 +29,6 @@ class Platform(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
-
-'''
-Name: Bullet
-Inherits: pygame.sprite.Sprite
-Purpose: Manages projectiles and projectile behaviour
-'''
-class Bullet(pygame.sprite.Sprite):
-    '''
-    Name: __init__
-    Parameters: spawnPoint:array, direction: array, player:object, size:list, damage:integer
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the Bullet object
-    '''
-    def __init__(self,spawnPoint, direction, player, size=[10,10],damage = 2):
-        super().__init__()
-        self.height = size[0]
-        self.width = size[1]
-        self.X = spawnPoint[0]
-        self.Y = spawnPoint[1]
-        self.direction = direction
-        self.playerOrigin = player
-        self.colour = (0,0,0)
-        self.image = pygame.Surface([self.width,self.height])
-        self.image.fill(self.colour)
-        pygame.draw.rect(self.image,self.colour,[self.X,self.Y,self.width,self.height])
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.damage = damage
-
-    '''
-    Name: update
-    Parameters: None
-    Returns: None
-    Purpose: Update function that will update the object's rect position, depending on
-    what the direction is
-    '''
-    def update(self):
-        if self.direction[0] is not None:
-            self.rect.x -= self.direction[0]
-        if self.direction[1] is not None:
-            self.rect.y -= self.direction[1]
 
 
 # General functions
@@ -215,29 +68,7 @@ def merge(left, right):
     output.extend(right[j:])
     return output
 
-'''
-Name: getLeaderboard
-Parameters: serverType:string, playerID:integer, serverKey:None, client=None
-Returns: leaderboard:dictionary|None
-Purpose: Gets the current updated version of the leaderboard for the player to see
-'''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
-    leaderboard = None
-    if serverType == "public":
-      leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
-      return leaderboard["data"]
-    elif serverType == "private":
-        if serverKey is None:
-            raise Exception("None Type Error: severKey should be string type value, not NoneType")
-        else:
-            jsonInfo = {
-                "serverKey":serverKey,
-                "playerID":playerID
-            }
-            leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-            return leaderboard["data"]
-    else:
-        raise ValueError("Server type must be either public or private")
+
 
 
 '''
@@ -334,26 +165,29 @@ to avoid extra data errors
 '''
 def data_handling(data: str) -> list[dict]:
     try:
-        msgList: list[str] = data.split("}")
+        if '}{' in data:
+            msgList: list[str] = data.split("}{")
 
-        returnList: list[dict] = []
+            returnList: list[dict] = []
 
-        while '' in msgList:
-            msgList.remove('')
+            temp: str = ""
 
-        for i in range(len(msgList)):
-            noDicts: int = 0
-            temp: str = msgList[i]
+            for i in range(len(msgList)):
+                if i == 0:
+                    temp = msgList[0] + '}'
+                    returnList.append(dict(json.loads(temp)))
+                elif i == len(msgList) -1:
+                    temp = '{' + msgList[i]
+                    returnList.append(dict(json.loads(temp)))
+                else:
+                    temp = '{' + msgList[i] + '}'
+                    returnList.append(dict(json.loads(temp)))
 
-            for letter in temp:
-                if letter == '{':
-                    noDicts += 1
-            temp += '}' * noDicts
-
-            returnList.append(dict(json.loads(temp)))
-
-        return returnList
-
+            return returnList
+        
+        else:
+            return [dict(json.loads(data))]
+            
     except Exception as e:
         print("Data Handling Error:", e)
 

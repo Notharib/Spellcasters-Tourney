@@ -143,6 +143,15 @@ class Caster:
         pass
 
     '''
+    Name: getType
+    Parameters: None
+    Returns: self._type:str
+    Purpose: Getter for the type variable
+    '''
+    def getType(self) -> str:
+        return self._type
+
+    '''
     Name: __repr__
     Parameters: None
     Returns: self._type:str
