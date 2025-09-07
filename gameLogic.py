@@ -150,7 +150,7 @@ Returns: None
 Purpose: Send information about the platforms within the sprite group to the server
 '''
 def platformInfo(platforms, client, clientPlayer):
-    if clientPlayer.playerID - 1 == 0:
+    if clientPlayer.getPlayerID() - 1 == 0:
         platformInfo = sendPlatformInfo(platforms)
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         print(platformInfoDict)
