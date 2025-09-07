@@ -102,11 +102,12 @@ class Client:
                                 addCharacter(msg["data"])
 
                             if msg["type"] == "fire":
+                                print("EXTERNAL PROJECTILE")
                                 msgData: dict = msg["data"]
                                 
-                                if msg["casterType"] == "Druid":
+                                if msgData["casterType"] == "Druid":
                                     bullets.add(Bullet(msgData["spawnPoint"],msgData["direction"], msgData["playerID"], msgData["elementType"]))
-                                elif msg["casterType"] == "Wizard":
+                                elif msgData["casterType"] == "Wizard":
                                     bullets.add(ConeAttack(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"]))
 
                             if msg["type"] == "movement":
@@ -596,7 +597,7 @@ class Character(pygame.sprite.Sprite):
     '''
     def __tellServerFire(self, spawnPoint:list[int], client, direction: list[int]|int) -> None:
         msgDict = {
-                    "type": "attack",
+                    "type": "fire",
                     "data": {
                             "playerID": self.__playerID,
                             "casterType": self.__Caster.getType(),
