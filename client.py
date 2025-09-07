@@ -8,9 +8,8 @@ import random
 import requests
 import math
 
-from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Platform,Queue, getDirection, youDied, onPlat, platformInfo, data_handling
-from PrivateServer import Server
+from menuScreens import gameStart, characterBuilder
+from gameLogic import Platform,getDirection, onPlat, platformInfo, data_handling
 from clientLogger import Logger
 from Leaderboard import *
 from Elements import *
@@ -43,7 +42,7 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard = None #Object
         self.__lastMessageSent = time.time() #Float
-        self.__messageQueue = Queue()
+
 
     '''
     Name: connect
@@ -58,7 +57,7 @@ class Client:
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
-        #threading.Thread(target=self.queueEmptying).start()
+
 
     '''
     Name: sendData
@@ -661,69 +660,6 @@ def publicGame(screen, clock, players, platforms, bullets, char, serverType):
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
 
 '''
-Name: privateCreate
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
-Returns: None
-Purpose: Handles the data for the player to be able to play on a private server, if they are the one who is hosting it
-'''
-def privateCreate(screen, clock, players, platforms, bullets, char, creationData, serverType):
-    # Creates an instance of the private server, and then initialises it, using a Thread to continue to have the server run in the background
-    server = Server(creationData["noOfPlayers"],creationData["lengthOfGame"], [[random.randint(0,800),random.randint(0,800)] for i in range(3)])
-    threading.Thread(target=server.start).start()
-
-    # Creates an instance of the Client object, and then joins to the private server, based
-    # off the fact the server will be hosted by the same machine you're joining on
-    c = Client(socket.gethostbyname(socket.gethostname()),socket=50001)
-    c.connect()
-
-    # Begins the waiting loop, which continues to run until the amount of players that the host initially
-    # put in has been reached
-    waiting(c, screen, creationData)
-
-    # The first object in the players sprite group will be this clients player, so this just sets it so that is the case
-    clientPlayer = players.sprites()[0]
-    c.setClientPlayer(clientPlayer)
-
-    # Sends the private server the platforms rect information
-    platformInfo(platforms, c, clientPlayer)
-
-    time.sleep(0.1)
-
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
-
-'''
-Name: privateJoin
-Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, creationData:dictionary 
-Returns: None
-Purpose: Handles joining a private server that someone else is hosting
-'''
-def privateJoin(screen, clock, players, platforms, bullets, char, creationData, serverType):
-
-    # Creates a client object with the IP address given to the player by the API, and then connects that client to the server
-    c = Client(creationData["IPAddress"], socket=50001)
-    c.connect()
-
-    print("Joined up to the private server!")
-
-    # Wait loop that runs while the server is waiting for all the players to join
-    waiting(c, screen, creationData)
-
-    # After the wait loop is over, this players character will be at the front of the players sprite group sprites, so
-    # this just turns that into a unique variable, to make handling it easier
-    clientPlayer = players.sprites()[0]
-    c.setClientPlayer(clientPlayer)
-
-    time.sleep(0.1)
-
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
-
-def leaderBoardUpd(serverType, client):
-    if serverType == "public":
-        client.sendData({"type:leaderReq"})
-        
-    
-
-'''
 Name: mainRunLoop
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object
 Returns: None
@@ -843,10 +779,5 @@ if __name__ == '__main__':
         if beginInfo["type"] == "publicGame":
             publicGame(screen, clock, players, platforms, bullets, char, "public")
 
-        if beginInfo["type"] == "privateCreate":
-            privateCreate(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
-
-        if beginInfo["type"] == "privateJoin":
-            privateJoin(screen, clock, players, platforms, bullets, char, beginInfo["data"], "private")
     except Exception as e:
         logger.addToLog(str(e))
