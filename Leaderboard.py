@@ -95,7 +95,9 @@ class Leaderboard(pygame.sprite.Sprite):
 
         deathValues = list(self.__leaderboard.values())
 
-        orderedDeath = merge_sort(deathValues)
+        #orderedDeath = merge_sort(deathValues)
+        deathValues.sort()
+        orderedDeath = deathValues
 
         orderedLeader = []
         for deathValue in orderedDeath:

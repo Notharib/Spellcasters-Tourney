@@ -4,6 +4,47 @@ import math
 from time import time
 
 '''
+Name: ProjectileGroup
+Inherits: pygame.sprite.Group
+Purpose: Custom Sprite Group with a unique update function
+'''
+class ProjectileGroup(pygame.sprite.Group):
+    '''
+    Name: __init__
+    Parameters: None
+    Returns: None
+    Purpose: Constructor to set the initial values
+    of the ProjectileGroup object
+    '''
+    def __init__(self) -> None:
+        super().__init__()
+
+    '''
+    Name: update
+    Parameters: None
+    Returns: None
+    Purpose: Function to update each of the sprites within
+    the sprite group
+    '''
+    def update(self) -> None:
+        sprites = self.sprites()
+        
+        for sprite in sprites:
+            proType: int = sprite.getProType()
+            
+            if proType == 1:
+                sprite.update()
+            elif proType == 2:
+                # The ConeAttack projectile is only supposed to last ~2 seconds,
+                # so after that time the projectile needs to delete itself
+                if not sprite.getDelTime():
+                    sprite.update()
+                else:
+                    self.remove(sprite)
+            else:
+                raise ValueError("Internal Value Error: Incorrect Projectile Type")
+                
+'''
 Name: Projectile
 Purpose: Parent Class for all Projectiles
 '''
@@ -23,6 +64,7 @@ class Projectile:
         self._playerOrigin: int = playerOrg
         self._damage: int = damage
         self._Element: str = element
+        self._ProType: int = 0
 
     '''
     Name: getElement
@@ -97,6 +139,9 @@ class Projectile:
     def getWidth(self) -> int:
         return self._width
 
+    def getProType(self) -> int:
+        return self._ProType
+
 
 '''
 Name: Bullet
@@ -116,7 +161,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         Projectile.__init__(self,size, player, damage,spawnPoint, element)
         
         self.__direction = direction
-        self.__gravity: int = lambda time: math.exp(time // 3)
+        self.__gravity: int = lambda time: math.exp(time // 10)
         self.__updTimer: float = time()
         self.playerOrigin = player
         self.colour = (0,0,0)
@@ -126,6 +171,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         self.rect = self.image.get_rect()
         self.rect.x = self._X
         self.rect.y = self._Y
+        self._ProType: int = 1
 
     '''
     Name: update
@@ -138,10 +184,10 @@ class Bullet(pygame.sprite.Sprite, Projectile):
 
         tempTime: float = time()
 
-        if self.direction[0] is not None:
-            self.rect.x -= self.direction[0]
-        if self.direction[1] is not None:
-            self.rect.y -= self.direction[1]
+        if self.__direction[0] is not None:
+            self.rect.x -= self.__direction[0]
+        if self.__direction[1] is not None:
+            self.rect.y -= self.__direction[1]
 
         if (int(self.__updTimer - tempTime)) % 1 == 0:
             self.__direction[1] -= self.__gravity(int(self.__updTimer-tempTime))
@@ -170,8 +216,11 @@ class ConeAttack(pygame.sprite.Sprite, Projectile):
         pygame.draw.rect(self.image, self.colour, [self.getX(), self.getY(), self.getWidth(), self.getHeight()])
         self.rect = self.image.get_rect()
         self.rect.x = self._X
-        self.rect.y = self._Y
+        self.rect.y = self._Y + 10
+        self.__getRotation()
         self.__ticksExisted: int = 0
+        self._ProType: int = 2
+        self.__delTime: bool = False
 
     '''
     Name: update
@@ -182,7 +231,34 @@ class ConeAttack(pygame.sprite.Sprite, Projectile):
     def update(self) -> None:
         self.__ticksExisted += 1
         if self.__ticksExisted > 120:
-            pass
+            self.__delTime = True
+
+    '''
+    Name: getDelTime
+    Parameters: None
+    Returns: self.__delTime
+    Purpose: Getter for the delete time variable
+    '''
+    def getDelTime(self) -> bool:
+        return self.__delTime
+
+    '''
+    Name: __getRotation
+    Parameters: None
+    Returns: None
+    Purpose: Updates the image variable/projectile position
+    based off of mouse position
+    '''
+    def __getRotation(self) -> None:
+        mousePos = pygame.mouse.get_pos()
+
+        if mousePos[0] > self.rect.x:
+            self.rect.x += 60
+        elif mousePos[0] < self.rect.x:
+            self.image = pygame.transform.rotate(self.image,180)
+        else:
+            self.image = pygame.transform.rotate(self.image, 90)
+
 
 
 '''

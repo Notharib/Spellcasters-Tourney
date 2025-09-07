@@ -9,13 +9,13 @@ import requests
 import math
 
 from menuScreens import gameStart, characterBuilder, waiting
-from gameLogic import Platform, getDirection, youDied, onPlat, platformInfo, data_handling
+from gameLogic import Platform,Queue, getDirection, youDied, onPlat, platformInfo, data_handling
 from PrivateServer import Server
 from clientLogger import Logger
 from Leaderboard import *
 from Elements import *
 from Casters import *
-from projectiles import Bullet, ConeAttack, generateCooldown
+from projectiles import ProjectileGroup, Bullet, ConeAttack, generateCooldown
 
 
 '''
@@ -43,6 +43,7 @@ class Client:
         self.__clientPlayer = None #String?
         self.__leaderBoard = None #Object
         self.__lastMessageSent = time.time() #Float
+        self.__messageQueue = Queue()
 
     '''
     Name: connect
@@ -57,6 +58,7 @@ class Client:
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((self.__HOST, self.__PORT))
         threading.Thread(target=self.listen).start()
+        #threading.Thread(target=self.queueEmptying).start()
 
     '''
     Name: sendData
@@ -64,11 +66,9 @@ class Client:
     Returns: None
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
     '''
-    def sendData(self,message):
-        if (time.time() - self.__lastMessageSent) >= 0.1:
-            strMessage = json.dumps(message)
-            self.__socket.send(strMessage.encode())
-            self.__lastMessageSent = time.time()
+    def sendData(self,message: dict) -> None:
+        strMessage: str = json.dumps(message)
+        self.__socket.send(strMessage.encode())
 
     '''
     Name: listen
@@ -77,7 +77,7 @@ class Client:
     Purpose: Ran through a Thread object, it listens for data being sent by the server,
     and then handles what to do with it
     '''
-    def listen(self):
+    def listen(self) -> None:
         global clientPlayer
         while True:
             data = self.__socket.recv(1024)
@@ -100,6 +100,14 @@ class Client:
                             if msg["type"] == "playerJoin":
                                 print("external player added")
                                 addCharacter(msg["data"])
+
+                            if msg["type"] == "fire":
+                                msgData: dict = msg["data"]
+                                
+                                if msg["casterType"] == "Druid":
+                                    bullets.add(Bullet(msgData["spawnPoint"],msgData["direction"], msgData["playerID"], msgData["elementType"]))
+                                elif msg["casterType"] == "Wizard":
+                                    bullets.add(ConeAttack(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"]))
 
                             if msg["type"] == "movement":
                                 if len(players.sprites()) == 2:
@@ -551,10 +559,6 @@ class Character(pygame.sprite.Sprite):
                     self.lastPos = [self.rect.x, self.rect.y]
                     time.sleep(0.01)
     
-    
-    def ability(self) -> None:
-        pass
-
 
     '''
     Name: fire
@@ -562,7 +566,7 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
     '''
-    def fire(self, client):
+    def fire(self, client) -> None:
         mouseKeys = pygame.mouse.get_pressed(3)
 
         currTime: float = time.time()
@@ -571,29 +575,39 @@ class Character(pygame.sprite.Sprite):
             #main attack
             elementType: str = self.__Element.getType()
             casterType: str = self.__Caster.getType()
-            
-            if elementType == "Fire":
-                if casterType == "Wizard":
-                    bullets.add(ConeAttack([self.rect.x-20, self.rect.y+10], self.__playerID, "Fire"))
-                elif casterType == "Druid":
-                    bullets.add(Bullet([self.rect.x, self.rect.y], getDirection(self), self.__playerID, "Fire"))
-            elif elementType == "Water":
-                if casterType == "Wizard":
-                    bullets.add(ConeAttack([self.rect.x-20, self.rect.y+10], self.__playerID, "Water"))
-                elif casterType == "Druid":
-                    bullets.add(Bullet([self.rect.x, self.rect.y], getDirection(self), self.__playerID, "Water"))
-            elif elementType == "Earth":
-                if casterType == "Wizard":
-                    bullets.add(ConeAttack([self.rect.x-20, self.rect.y+10], self.__playerID, "Earth"))
-                elif casterType == "Druid":
-                    bullets.add(Bullet([self.rect.x, self.rect.y], getDirection(self), self.__playerID, "Earth"))
-            
-            self.__lastAttackTime = currTime
-        
-        elif mouseKeys[2]:
-            #alt attack
-            pass
 
+            if casterType == "Wizard":
+                spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
+                direction: int = 0
+                bullets.add(ConeAttack(spawnPoint, self.__playerID, elementType))
+            elif casterType == "Druid":
+                spawnPoint: list[int] = [self.rect.x, self.rect.y]
+                direction: list[int] = getDirection(self)
+                bullets.add(Bullet(spawnPoint, direction, self.__playerID, elementType))
+             
+            self.__lastAttackTime = currTime
+            self.__tellServerFire(spawnPoint, client, direction)
+    
+    '''
+    Name: __tellServerFire
+    Parameters: spawnPoint:list[int], client:object, direction: list[int]|None
+    Returns: None
+    Purpose: Sends a message to ther server that the player has created a bullet object
+    '''
+    def __tellServerFire(self, spawnPoint:list[int], client, direction: list[int]|int) -> None:
+        msgDict = {
+                    "type": "attack",
+                    "data": {
+                            "playerID": self.__playerID,
+                            "casterType": self.__Caster.getType(),
+                            "elementType": self.__Element.getType(),
+                            "spawnPoint": spawnPoint,
+                            "direction": direction
+                        }
+                }
+
+        client.sendData(msgDict)
+        
     '''
     Name: gravity
     Parameters: cl:object, platform:object
@@ -778,7 +792,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
         bullets.update()
         if (time.time()-leaderUpd) >= 30:
-            leaderboard.update(leaderboard.sprites()[0].getLeaderboard())
+            leaderboard.update(getLeaderboard(serverType))
             timeUpd = time.time()
 
         clientPlayer.update()
@@ -818,7 +832,7 @@ if __name__ == '__main__':
 
         players = pygame.sprite.Group()
         platforms = pygame.sprite.Group()
-        bullets = pygame.sprite.Group()
+        bullets = ProjectileGroup()
 
         char = characterBuilder(screen)
 
