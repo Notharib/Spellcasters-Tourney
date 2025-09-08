@@ -9,7 +9,8 @@ import requests
 import math
 
 from menuScreens import gameStart, characterBuilder
-from gameLogic import Platform,getDirection, onPlat, platformInfo, data_handling
+from gameLogic import getDirection, data_handling
+from arenaHandling import Platform, onPlat, platformInfo
 from clientLogger import Logger
 from Leaderboard import *
 from Elements import *

@@ -16,7 +16,8 @@ whether it be play on the public server, or join/create a private server
 def gameStart(screen):
     running = True
     textOne = "Welcome to Wizards Tourney. These are your options for playing:"
-    textTwo = "1) Press P to join the public server"    textFour = ""
+    textTwo = "1) Press P to join the public server"    
+    textFour = ""
 
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
