@@ -85,10 +85,12 @@ class Client:
                 break
             else:
                 try:
-                    messageList: list[dict] = data_handling(data.decode())
+                    messageQueue = data_handling(data.decode())
                     
                     if messageList is not None:
-                        for msg in messageList:
+                        while not messageQueue.is_empty():
+                            msg = messageQueue.dequeue()
+                            
                             if msg["type"] == "leaderGet":
                                 self.setLeaderBoard(msg["data"])
 
