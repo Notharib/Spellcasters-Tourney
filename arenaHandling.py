@@ -67,4 +67,3 @@ def platformInfo(platforms, client, clientPlayer):
         platformInfoDict = {"type": "platformInfo", "data": platformInfo}
         print(platformInfoDict)
         client.sendData(platformInfoDict)
-

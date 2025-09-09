@@ -75,7 +75,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Purpose: Function only used for unit testing to add players to
     the leaderboard
     '''
-    def addToLeader(self,examplePlayer) -> None:
+    def addToLeader(self,examplePlayer:list) -> None:
         self.__leaderboard[examplePlayer[0]] = examplePlayer[1]
 
     '''
@@ -84,7 +84,7 @@ class Leaderboard(pygame.sprite.Sprite):
     Returns: orderedLeader:list
     Purpose: Organises the leaderboard so that
     '''
-    def setupLeaderStructure(self):
+    def setupLeaderStructure(self) -> list:
         keysToPop = []
         for key in list(self.__leaderboard.keys()):
             if self.__leaderboard[key] is None:
@@ -114,25 +114,14 @@ class Leaderboard(pygame.sprite.Sprite):
 
 '''
 Name: getLeaderboard
-Parameters: serverType:string, playerID:integer|None, serverKey:string|None, client=Client|None
-Returns: leaderboard:dictionary|None
+Parameters: serverType:string
+Returns: leaderboard:dictionary
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
+def getLeaderboard(serverType: str = "public") -> dict:
     leaderboard = None
     if serverType == "public":
       leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
       return leaderboard["data"]
-    elif serverType == "private":
-        if serverKey is None:
-            raise Exception("None Type Error: severKey should be string type value, not NoneType")
-        else:
-            jsonInfo = {
-                "serverKey":serverKey,
-                "playerID":playerID
-            }
-            leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-
-            return leaderboard["data"]
     else:
         raise ValueError("Server type must be either public or private")

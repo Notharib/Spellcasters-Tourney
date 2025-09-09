@@ -277,4 +277,3 @@ def generateCooldown(element: str) -> int:
         return 5
     else:
         raise ValueError("Internal Value Error. Element Passed in:",element)
-
