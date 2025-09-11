@@ -71,7 +71,7 @@ Returns: list[dict]
 Purpose: Handles what should initially happen with JSON data, 
 to avoid extra data errors
 '''
-def data_handling(data: str) -> list[dict]:
+def data_handling(data: str) -> Queue:
     try: 
         
         decoder = json.JSONDecoder()
