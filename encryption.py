@@ -1,5 +1,7 @@
 import random
 
+from databaseHandling import checkIfInDatabase, addToDatabase, getWord, getWordID
+
 alphabet: list[str] = "a b c d e f g h i j l k m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z { } [ ] ' : ".split(" ")
 alphabet.append(" ")
 
@@ -107,23 +109,28 @@ def generateCoPrime(b: int, a: int = 2) -> int:
         retVal += 1
     return retVal
 
-def encrypt(message: int, e: int, n: int) -> int:
+def encrypt(message: str, e: int, n: int) -> int:
     '''
     Name: encrypt
-    Parameters: message: int, e: int, n: int
+    Parameters: message: str, e: int, n: int
     Returns: int
     Purpose: Encrypts a message using the given values
     '''
-    return (message ** e) % n
+    if not checkIfInDatabase(message):
+        addToDatabase(message)
+    
+    return (getWordID(message) ** e) % n
 
-def decrypt(message, d, n) -> int:
+def decrypt(message: int, d: int, n: int) -> str:
     '''
     Name: decrypt
-    Parameters: message:int, d: int, n:int
+    Parameters: message: int, d: int, n:int
     Returns: int
     Purpose: Decrypts a message using the given values
     '''
-    return (message ** d) % n
+    orgID: int = (message ** d) % n
+
+    return getWord(orgID)
 
 def generateKeyPair(key_length: int) -> dict:
     '''

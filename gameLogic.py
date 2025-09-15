@@ -1,6 +1,5 @@
 import math
 import requests
-import unittest
 import random
 import json
 import pygame
