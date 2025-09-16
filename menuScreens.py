@@ -39,9 +39,6 @@ def gameStart(screen):
                         else:
                             running = False
                             return {"type":"publicGame"}
-                    elif keys[pygame.K_a]:
-                         g = privateGame(screen)
-                         return g
 
             f.render_to(screen,(50,300),textOne, (0,0,0))
             f.render_to(screen, (100, 400), textTwo, (0, 0, 0))

@@ -323,11 +323,13 @@ class Character(pygame.sprite.Sprite):
         self.collided = False
         self.__lastAttackTime = time.time()
         self.__regeneration: int = lambda t: round(math.exp(t // 4))
-        self.__timeOfLastHit: float = time.time()
+        self.__timeOfLastHit: float = self.__lastAttackTime
         self.__Element = None
         self.__Caster = None
         self.__OnFire: bool = False
         self.__attackCooldown: int|None = None
+        self.__gravityEq: int = lambda t: 0.5 * 9.81 * t
+        self.__fallTime: float = self.__lastAttackTime
 
     '''
     Name: update
@@ -619,15 +621,17 @@ class Character(pygame.sprite.Sprite):
     is not on a platform
     '''
     def gravity(self, cl, platform):
+        timothy: float = time.time()
         if not self.collided:
-            self.rect.y += 1
+            self.rect.y += self.__gravityEq(timothy - self.__fallTime)
             if self.rect.y > 800 - self.height:
                 self.rect.y = 800 - self.height
             else:
-                #self.lastMoveMade = ["y", 1]
                 moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y}}
                 cl.sendData(moveMessage)
                 self.lastPos = [self.rect.x, self.rect.y]
+        else:
+            self.__fallTime = timothy
 
 '''
 Name: publicGame
