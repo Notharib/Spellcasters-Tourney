@@ -104,29 +104,10 @@ class Client:
                                 addCharacter(msg["data"])
 
                             if msg["type"] == "fire":
-                                print("EXTERNAL PROJECTILE")
-                                msgData: dict = msg["data"]
+                                self.__projectileFired(msg["data"])
                                 
-                                if msgData["casterType"] == "Druid":
-                                    bullets.add(Bullet(msgData["spawnPoint"],msgData["direction"], msgData["playerID"], msgData["elementType"]))
-                                elif msgData["casterType"] == "Wizard":
-                                    bullets.add(ConeAttack(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"]))
-
                             if msg["type"] == "movement":
-                                if len(players.sprites()) == 2:
-                                    movedPlayer = players.sprites()[1]
-                                else:
-                                    iteration = 0
-                                    # print(players.sprites())
-                                    for player in players.sprites():
-                                        if player.getPlayerID() == msg["data"]["playerID"]:
-                                            # print("found moved player")
-                                            movedPlayer = player
-                                            break
-                                if msg["data"]["direction"] == "y":
-                                    movedPlayer.rect.y = msg["data"]["movedTo"]
-                                elif msg["data"]["direction"] == "x":
-                                    movedPlayer.rect.x = msg["data"]["movedTo"]
+                                self.__playerMoved(msg["data"])
 
                             if msg["type"] == "createPlat":
                                 print("Created platform")
@@ -169,6 +150,40 @@ class Client:
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
+
+    '''
+    Name: __projectileFired
+    Parameters: msgData: dict
+    Returns: None
+    Purpose: Handles a projectile being fired by an external client
+    '''
+    def __projectileFired(self, msgData: dict) -> None:
+        if msgData["casterType"] == "Druid":
+            bullets.add(Bullet(msgData["spawnPoint"],msgData["direction"], msgData["playerID"], msgData["elementType"]))
+        elif msgData["casterType"] == "Wizard":
+            bullets.add(ConeAttack(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"]))
+
+    '''
+    Name: __playerMoved
+    Parameters: msgData: dict
+    Returns: None
+    Purpose: Handles an external player moving
+    '''
+    def __playerMoved(self, msgData) -> None:
+        if len(players.sprites()) == 2:
+            movedPlayer = players.sprites()[1]
+        else:
+            iteration = 0
+            # print(players.sprites())
+            for player in players.sprites():
+                if player.getPlayerID() == msgData["playerID"]:
+                    # print("found moved player")
+                    movedPlayer = player
+                    break
+        if msgData["direction"] == "y":
+            movedPlayer.rect.y = msgData["movedTo"]
+        elif msgData["direction"] == "x":
+            movedPlayer.rect.x = msgData["movedTo"]
 
     '''
     Name: tellServerDisconn
@@ -359,17 +374,39 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Setter for the client's health
     '''
-    def takeDamage(self, damage: int, fireEl: bool = False) -> None:
+    def takeDamage(self, damage: int, cl, fireEl: bool = False) -> None:
         self.__HP -= damage
         self.__onFire = fireEl
 
         if self.__HP <= 0:
-            self.rect.x = self.X
-            self.rect.y = self.Y
-            self.__HP = 100
-            requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
+            self.__charDeath(cl)
         else:
             self.__timeOfLastHit = time.time()
+
+    '''
+    Name: __charDeath
+    Parameters: cl: Client
+    Returns: None
+    Purpose: Handles what to do when a character dies
+    '''
+    def __charDeath(self, cl) -> None:
+        self.rect.x = self.X
+        self.rect.y = self.Y
+        self.__HP = 100
+        requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
+        
+        for letter in [["y", self.rect.y], ["x", self.rect.x]]:
+            moveMsg: dict = {
+                "type": "movement",
+                "data": {
+                    "playerID", self.__playerID,
+                    "direction", letter[0],
+                    "movedTo", letter[1],
+                    "collided", self.collided
+                }
+            }
+            cl.sendData(moveMsg)
+            time.sleep(0.01)
 
     '''
     Name: setCaster
@@ -491,79 +528,80 @@ class Character(pygame.sprite.Sprite):
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("y",4, cl)
             if legalMove:
-                self.rect.y -= 4
+                self.__changeRect("y", 4, cl)
                 legalMove = self.checkIfLegal("x",2, cl)
+                
                 if legalMove:
-                    self.rect.x -= 2
-                    if self.rect.y < 0:
-                        self.rect.y = 0
-                    elif self.rect.x < 0:
-                        self.rect.x = 0
-                    else:
-                        self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
+                   self.__changeRect("x", 2, cl)
+
         elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
             legalMove = self.checkIfLegal("y", 4, cl)
             if legalMove:
-                self.rect.y -= 4
+                self.__changeRect("y", 4, cl)
+
                 legalMove = self.checkIfLegal("x", -2, cl)
                 if legalMove:
-                    self.rect.x += 2
-                    if self.rect.y < 0:
-                        self.rect.y = 0
-                    elif self.rect.x > 800:
-                        self.rect.x = 800 - self.rect.x
-                    else:
-                        self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
+                    self.__changeRect("x", -2, cl)
 
         elif keys[pygame.K_UP] == True:
             legalMove = self.checkIfLegal("y", 4, cl)
             if legalMove:
-                self.rect.y -= 4
-                if self.rect.y < 0:
-                    self.rect.y = 0
-                else:
-                    self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerID": self.__playerID, "direction":"y", "movedTo":self.rect.y, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                self.__changeRect("y", 4, cl)
+
         elif keys[pygame.K_RIGHT] == True:
-            legalMove = self.checkIfLegal("x", -2, cl)
-            if legalMove:
-                self.rect.x += 2
-                if self.rect.x > 800:
-                    self.rect.x = 800 - self.rect.x
-                else:
-                    self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
-        elif keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("x", 2, cl)
             if legalMove:
-                self.rect.x -= 2
-                if self.rect.x < 0:
-                    self.rect.x = 0
-                else:
-                    self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                self.__changeRect("x", 2, cl)
+        
+        elif keys[pygame.K_LEFT] == True:
+            legalMove = self.checkIfLegal("x", -2, cl)
+            if legalMove:
+                self.__changeRect("x", -2, cl)
     
+    '''
+    Name: __changeRect
+    Parameters: direction: str, amount: int, cl: Client
+    Returns: None
+    Purpose: Changes the character's internal rect
+    '''
+    def __changeRect(self, direction: str, amount: int, cl) -> None:
+        if direction == "y" or direction == "x":
+            if direction == "y":
+                self.rect.y += amount
+                movedTo: int = self.rect.y
+            elif direction == "x":
+                self.rect.x += amount
+                movedTo: int = self.rect.x
+            
+            moveMessage: dict = {
+                "type": "movement",
+                "data": {
+                    "playerID": self.__playerID,
+                    "direction": direction, 
+                    "movedTo": movedTo,
+                    "collided": self.collided
+                }
+            }
+            cl.sendData(moveMessage)
+            self.lastPos = [self.rect.x, self.rect.y]
+            time.sleep(0.01)
+            self.__outOfBoundsCheck(cl)
+        else:
+            raise ValueError(f"Internal Rect Change Value, Expecgted direction to be 'x' or 'y', got {direction}")
+
+    '''
+    Name: __outOfBoundsCheck
+    Parameters: cNone
+    Returns: None
+    Purpose: Checks if the character has moved out of bounds, and handles what to do if they have
+    '''
+    def __outOfBoundsCheck(self, cl) -> None:
+        if self.rect.y >= 800:
+            self.__charDeath(cl)
+        elif self.rect.x + self.width < 0:
+            self.__charDeath(cl)
+        elif self.rect.x >= 800:
+            self.__charDeath(cl)
 
     '''
     Name: fire
@@ -623,13 +661,7 @@ class Character(pygame.sprite.Sprite):
     def gravity(self, cl, platform):
         timothy: float = time.time()
         if not self.collided:
-            self.rect.y += self.__gravityEq(timothy - self.__fallTime)
-            if self.rect.y > 800 - self.height:
-                self.rect.y = 800 - self.height
-            else:
-                moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y}}
-                cl.sendData(moveMessage)
-                self.lastPos = [self.rect.x, self.rect.y]
+            self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime), cl)
         else:
             self.__fallTime = timothy
 
