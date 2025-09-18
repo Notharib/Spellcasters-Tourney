@@ -518,12 +518,12 @@ class Character(pygame.sprite.Sprite):
 
     '''
     Name: move
-    Parameters: cl:object, platform:object
+    Parameters: cl:object
     Returns: None
     Purpose: Changes the position of the sprite position based upon what key is being pressed
     by a pre-determined amount
     '''
-    def move(self, cl, platform):
+    def move(self, cl):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
             legalMove = self.checkIfLegal("y",4, cl)
@@ -653,12 +653,12 @@ class Character(pygame.sprite.Sprite):
         
     '''
     Name: gravity
-    Parameters: cl:object, platform:object
+    Parameters: cl:object
     Returns: None
     Purpose: Adjusts the position of the character rect if the player 
     is not on a platform
     '''
-    def gravity(self, cl, platform):
+    def gravity(self, cl):
         timothy: float = time.time()
         if not self.collided:
             self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime), cl)
@@ -772,8 +772,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             timeUpd = time.time()
 
         clientPlayer.update()
-        clientPlayer.gravity(c, plat)
-        clientPlayer.move(c, plat)
+        clientPlayer.gravity(c)
+        clientPlayer.move(c)
         clientPlayer.fire(c)
 
         platforms.draw(screen)
