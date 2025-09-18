@@ -368,6 +368,7 @@ class Character(pygame.sprite.Sprite):
                 self.__OnFire = False
             elif updTime % 1 == 0:
                 self.__HP -= 5
+    
     '''
     Name: takeDamage
     Parameters: damage: int, fireEl: bool
