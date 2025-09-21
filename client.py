@@ -89,67 +89,74 @@ class Client:
                     
                     if messageList is not None:
                         while not messageQueue.is_empty():
-                            msg = messageQueue.dequeue()
+                            self.__messageHandling(msg=messageQueue.dequeue())
                             
-                            if msg["type"] == "leaderGet":
-                                self.setLeaderBoard(msg["data"])
-
-                            if msg["type"] == "playerID":
-                                print("client player created")
-                                self.playerID = msg["data"]["playerID"]
-                                addCharacter(msg["data"])
-
-                            if msg["type"] == "playerJoin":
-                                print("external player added")
-                                addCharacter(msg["data"])
-
-                            if msg["type"] == "fire":
-                                self.__projectileFired(msg["data"])
-                                
-                            if msg["type"] == "movement":
-                                self.__playerMoved(msg["data"])
-
-                            if msg["type"] == "createPlat":
-                                print("Created platform")
-                                platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
-                                self.__noOfPlatforms += 1
-
-                            if msg["type"] == "disconn":
-                                players.remove(players.sprites()[msg["data"]["playerID"]])
-                                print("Player Disconnected")
-
-                            if msg["type"] == "beginGame":
-                                self.__waiting = False
-                                print(msg['data'])
-                                # addCharacter(msg["data"])
-                                clPlData = {
-                                    "playerID": msg["data"]["playerID"],
-                                    "positionList": msg['data']['positionList'],
-                                    'colourTuple': msg['data']['colourTuple']
-                                }
-                                addCharacter(clPlData)
-                                for player in list(msg["data"]["otherPlayersInfo"].keys()):
-                                    playerData = msg["data"]["otherPlayersInfo"][player]
-                                    playerData["playerID"] = player
-                                    addCharacter(playerData)
-
-                                iterator = 0
-                                for platform in msg['data']['platformsPos']:
-                                    createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
-                                    iterator += 1
-
-                            if msg["type"] == "endGame":
-                                self.__playing = False
-                                self.__endGameData = msg["data"]
-
-                            if msg["type"] == "MOVELEGAL":
-                                self.__clientPlayer.legalMove()
-                            if msg["type"] == "MOVENOTLEGAL":
-                                self.__clientPlayer.illegalMove()
-
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
+
+    '''
+    Name: __messageHandling
+    Parameters: msg: dict
+    Returns: None
+    Purpose: Handles each indiviual message
+    '''
+    def __messageHandling(self, msg: dict) -> None:
+        if msg["type"] == "leaderGet":
+            self.setLeaderBoard(msg["data"])
+
+        if msg["type"] == "playerID":
+            print("client player created")
+            self.playerID = msg["data"]["playerID"]
+            addCharacter(msg["data"])
+
+        if msg["type"] == "playerJoin":
+            print("external player added")
+            addCharacter(msg["data"])
+
+        if msg["type"] == "fire":
+            self.__projectileFired(msg["data"])
+            
+        if msg["type"] == "movement":
+            self.__playerMoved(msg["data"])
+
+        if msg["type"] == "createPlat":
+            print("Created platform")
+            platforms.add(Platform([msg["data"]["positionX"], msg["data"]["positionY"]],[msg["data"]["sizeHeight"], msg["data"]["sizeWidth"]],self.__noOfPlatforms))
+            self.__noOfPlatforms += 1
+
+        if msg["type"] == "disconn":
+            players.remove(players.sprites()[msg["data"]["playerID"]])
+            print("Player Disconnected")
+
+        if msg["type"] == "beginGame":
+            self.__waiting = False
+            print(msg['data'])
+            # addCharacter(msg["data"])
+            clPlData = {
+                "playerID": msg["data"]["playerID"],
+                "positionList": msg['data']['positionList'],
+                'colourTuple': msg['data']['colourTuple']
+            }
+            addCharacter(clPlData)
+            for player in list(msg["data"]["otherPlayersInfo"].keys()):
+                playerData = msg["data"]["otherPlayersInfo"][player]
+                playerData["playerID"] = player
+                addCharacter(playerData)
+
+            iterator = 0
+            for platform in msg['data']['platformsPos']:
+                createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
+                iterator += 1
+
+        if msg["type"] == "endGame":
+            self.__playing = False
+            self.__endGameData = msg["data"]
+
+        if msg["type"] == "MOVELEGAL":
+            self.__clientPlayer.legalMove()
+        if msg["type"] == "MOVENOTLEGAL":
+            self.__clientPlayer.illegalMove()
 
     '''
     Name: __projectileFired
@@ -324,7 +331,7 @@ class Character(pygame.sprite.Sprite):
         self.width = 40
         self.X = position[0]
         self.Y = position[1]
-        self.HP = 100
+        self.__HP = 100
         self.colour = colour
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
@@ -352,22 +359,22 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates certain variables each tick
     '''
-    def update(self) -> None:
+    def update(self, cl) -> None:
         tim = time.time()
         updTime = tim - self.__timeOfLastHit
         
-        if self.HP != 100 and self.HP < 100 and not self.__OnFire:
-            self.HP += self.__regeneration(updTime)
-        if self.HP > 100:
-            self.HP = 100
+        if self.__HP != 100 and self.__HP < 100 and not self.__OnFire:
+            self.__HP += self.__regeneration(updTime)
+        if self.__HP > 100:
+            self.__HP = 100
         
         if self.__OnFire:
+            self.takeDamage(5, cl)
+            
             if updTime >= 5:
-                self.__HP -= 5
                 self.__timeOfLastHit = tim
                 self.__OnFire = False
-            elif updTime % 1 == 0:
-                self.__HP -= 5
+
     
     '''
     Name: takeDamage
@@ -377,7 +384,7 @@ class Character(pygame.sprite.Sprite):
     '''
     def takeDamage(self, damage: int, cl, fireEl: bool = False) -> None:
         self.__HP -= damage
-        self.__onFire = fireEl
+        self.__OnFire = fireEl
 
         if self.__HP <= 0:
             self.__charDeath(cl)
@@ -394,6 +401,7 @@ class Character(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
         self.__HP = 100
+        self.__OnFire = False
         requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
         
         for letter in [["y", self.rect.y], ["x", self.rect.x]]:
@@ -772,7 +780,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             leaderboard.update(getLeaderboard(serverType))
             timeUpd = time.time()
 
-        clientPlayer.update()
+        clientPlayer.update(c)
         clientPlayer.gravity(c)
         clientPlayer.move(c)
         clientPlayer.fire(c)
