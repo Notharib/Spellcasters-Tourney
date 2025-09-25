@@ -5,6 +5,8 @@ import random
 import json
 import pygame
 
+from dataStructures import Queue
+
 '''
 Name: merge_sort
 Parameters: myList:list
@@ -69,17 +71,17 @@ Returns: list[dict]
 Purpose: Handles what should initially happen with JSON data, 
 to avoid extra data errors
 '''
-def data_handling(data: str) -> list[dict]:
+def data_handling(data: str) -> Queue:
     try: 
         
         decoder = json.JSONDecoder()
         iterator: int = 0
-        retVal: list[dict] = []
+        retVal: Queue = Queue()
 
         while iterator < len(data):
             data = data.lstrip()
             msg, offset = decoder.raw_decode(data[iterator:])
-            retVal.append(msg)
+            retVal.enqueue(msg)
             iterator += offset
 
         return retVal
