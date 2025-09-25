@@ -92,7 +92,7 @@ class Queue:
             for item in self.__data:
                 if item is None:
                     noneValues += 1
-            if noneValues == 20:
+            if noneValues == 10:
                 self.__back = -1
 
             return org
@@ -106,7 +106,7 @@ class Queue:
         Returns: Boolean
         Description: Returns True if the Queue is full and False if not
         '''
-        return self.__back == 19
+        return self.__back == 9
 
     def is_empty(self) -> bool:
         '''
