@@ -111,7 +111,9 @@ class Client:
 
                     if messageQueue is not None:
                         while not messageQueue.is_empty():
-                            self.__messageHandling(msg=messageQueue.dequeue())
+                            msg = messageQueue.dequeue()
+                            if msg is not None:
+                                self.__messageHandling(msg)
                             
                 except json.JSONDecodeError as err:
                     print(data.decode())
