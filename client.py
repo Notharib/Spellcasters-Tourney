@@ -429,6 +429,9 @@ class Character(pygame.sprite.Sprite):
         self.__Caster = None
         self.__OnFire: bool = False
         self.__attackCooldown: int|None = None
+        self.__falling = True
+        self.__timeFalling = time.time()
+        self.__gravitySet: float = lambda t:  0.5 * 9,81 * t
 
     '''
     Name: update

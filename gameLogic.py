@@ -51,17 +51,27 @@ Parameters: player:object
 Returns: MPVector:list
 Purpose: Gets the direction vector that the projectile needs to move in
 '''
-def getDirection(player):
-    mousePos = pygame.mouse.get_pos()
+def getDirection(player, mousePos: None|list[int] = None):
     MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
-    print(MPVector)
-    hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
-    divider = hyppotenuse // 10
-    for i in range(2):
-        MPVector[i] //= divider
+    try:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
+    except ValueError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = hyppotenuse // 10
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
 
-    print(MPVector)
-    return MPVector
+    except ZeroDivisionError:
+        hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2) + 1)
+        divider = (hyppotenuse // 10) + 2
+        for i in range(2):
+            MPVector[i] //= divider
+        return MPVector
 
 
 '''
