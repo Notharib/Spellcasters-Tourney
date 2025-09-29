@@ -72,14 +72,14 @@ class Server:
     Purpose: Constructor to set the initial values
     of the Server object
     '''
-    def __init__(self):
-        self.__HOST = '127.0.0.1'
-        self.__PORT = 50000
+    def __init__(self) -> None:
+        self.__HOST: str = '127.0.0.1'
+        self.__PORT: int = 50000
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__clientList = []
-        self.__spawnPoints = [[250,250], [350,350],[450,450]]
-        self.__platforms = [Platform([300,200],0),Platform([200,300],1)]
-        self.__leaderboard = {}
+        self.__clientList: list = []
+        self.__spawnPoints: list = [[250,250], [350,350],[450,450]]
+        self.__platforms: list = [Platform([300,200],0),Platform([200,300],1)]
+        self.__leaderboard: dict = {}
         self.__recvMsg: bool = False
         self.__online: bool = False
         self.__sentMsg: bool = False
@@ -133,7 +133,7 @@ class Server:
         '''
         return self.__sentMsg
 
-    def start(self):
+    def start(self) -> None:
         '''
         Name: start
         Parameters: None
@@ -177,7 +177,7 @@ class Server:
     Purpose: Lets all clients in the self.__clientList variable know that a new client has joined, 
     as well as sending them the character data required for the character to be created
     '''
-    def notifyClientsOfConn(self,connection,colour,position):
+    def notifyClientsOfConn(self,connection,colour: tuple[int,int,int],position: list) -> None:
         for client in self.__clientList:
             if client.client != connection:
                 message = json.dumps({"type":"playerJoin","data":{"playerID":len(self.__clientList)+1, "colourTuple": colour, "positionList":position}})
@@ -200,7 +200,7 @@ class Server:
     Purpose: Checks if the server is at max capacity (10 active connections), and then if it is, letting the API know
     that it is full so it shouldn't let any more players join
     '''
-    def checkIfFull(self):
+    def checkIfFull(self) -> None:
         if len(self.__clientList) == 10:
             msg = requests.post(url="http://127.0.0.1:5000/serverFull", json={"fullValue":"1"})
 
@@ -210,7 +210,7 @@ class Server:
     Returns: None
     Purpose: Sends the newly joined player all the clients' information to ensure that they are not out of sync
     '''
-    def createAlreadyJoinedPlayers(self,connection):
+    def createAlreadyJoinedPlayers(self,connection) -> None:
         for client in self.__clientList:
             message = json.dumps({"type": "playerJoin","data": {"playerID": client.playerID, "colourTuple": client.colour,"positionList": client.position}})
             connection.send(message.encode())
@@ -222,7 +222,7 @@ class Server:
     Returns: None
     Purpose: Sends all the platform information to the newly joined client
     '''
-    def createStage(self,connection):
+    def createStage(self,connection) -> None:
         platformSize = [20,500]
         platformPositions =[[300,200],[200,300]]
         iterator = 0
@@ -242,7 +242,7 @@ class Server:
     they need to remove that client from their sprite group in order to stay in sync. Also lets the API know that the
     server isn't full
     '''
-    def tellClientsOfDisconn(self,clientToDisconn):
+    def tellClientsOfDisconn(self,clientToDisconn: int) -> None:
         msg = requests.post(url="http://127.0.0.1:5000/serverFull", json={"fullValue":"0"})
         for client in self.__clientList:
             if client != self.__clientList[clientToDisconn] and client is not None:
@@ -280,7 +280,7 @@ class Server:
     Returns: None
     Purpose: Sends a POST request to the API to update the information on the public leaderboard
     '''
-    def leaderUpd(self, playerID):
+    def leaderUpd(self, playerID: int) -> None:
         requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":playerID})
 
     '''
@@ -290,7 +290,7 @@ class Server:
     Purpose: Listens for data being sent by the connection, and then if data is sent, handles what
     to do with it
     '''
-    def recv_from_client(self, conn):
+    def recv_from_client(self, conn) -> None:
         while True:
             data = conn.recv(1024)
             if not data:

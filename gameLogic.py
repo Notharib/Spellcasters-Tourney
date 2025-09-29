@@ -13,13 +13,13 @@ Parameters: myList:list
 Returns: list
 Purpose: Sorts an unordered list into an ordered one
 '''
-def merge_sort(myList):
-    list_length = len(myList)
+def merge_sort(myList: list) -> list:
+    list_length: int = len(myList)
     if list_length == 1:
         return myList
-    mid_point = list_length // 2
-    left = merge_sort(myList[:mid_point])
-    right = merge_sort(myList[mid_point:])
+    mid_point: int = list_length // 2
+    left: list = merge_sort(myList[:mid_point])
+    right: list = merge_sort(myList[mid_point:])
     return merge(left, right)
 
 '''
@@ -28,9 +28,9 @@ Parameters: left:list, right:list
 Returns: output:list
 Purpose: Sorts and merges two separate lists
 '''
-def merge(left, right):
-    output = []
-    i,  j = 0, 0
+def merge(left: list, right: list) -> list:
+    output: list = []
+    i, j= 0, 0
     while i < len(left) and j < len(right):
         if left[i] < right[j]:
             output.append(left[i])
@@ -41,8 +41,6 @@ def merge(left, right):
     output.extend(left[i:])
     output.extend(right[j:])
     return output
-
-
 
 
 '''

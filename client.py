@@ -31,18 +31,15 @@ class Client:
     Purpose: Constructor to set the initial values
     of the client object
     '''
-    def __init__(self,IPToConnectTo, socket=50000):
-        self.__HOST = IPToConnectTo #String
-        self.__PORT = socket #Integer
-        self.playerID = None #Integer
+    def __init__(self,IPToConnectTo: str, socket: int =50000) -> None:
+        self.__HOST: str = IPToConnectTo #String
+        self.__PORT: int = socket #Integer
+        self.playerID: None|int = None #Integer
         self.__socket = None #Object?
-        self.__noOfPlatforms = 0 #Integer
-        self.__waiting = None #Bool
-        self.__playing = None #Bool
-        self.__endGameData = None #Dict
+        self.__noOfPlatforms: int = 0 #Integer
         self.__clientPlayer = None #String?
-        self.__leaderBoard = None #Object
-        self.__lastMessageSent = time.time() #Float
+        self.__leaderBoard: None|Leaderboard = None #Object
+        self.__lastMessageSent: float = time.time() #Float
         self.__recvMsg: bool = False
         self.__online: bool = False
         self.__sentMsg: bool = False
@@ -55,7 +52,7 @@ class Client:
     Purpose: Connects the client object to the server, and then creates a Thread obejct that
     ensures that the server continuously listens for data from the server
     '''
-    def connect(self):
+    def connect(self) -> None:
         print(self.__HOST, self.__PORT)
 
         try:
@@ -158,26 +155,6 @@ class Client:
             players.remove(players.sprites()[msg["data"]["playerID"]])
             print("Player Disconnected")
 
-        if msg["type"] == "beginGame":
-            self.__waiting = False
-            print(msg['data'])
-            # addCharacter(msg["data"])
-            clPlData = {
-                "playerID": msg["data"]["playerID"],
-                "positionList": msg['data']['positionList'],
-                'colourTuple': msg['data']['colourTuple']
-            }
-            addCharacter(clPlData)
-            for player in list(msg["data"]["otherPlayersInfo"].keys()):
-                playerData = msg["data"]["otherPlayersInfo"][player]
-                playerData["playerID"] = player
-                addCharacter(playerData)
-
-            iterator = 0
-            for platform in msg['data']['platformsPos']:
-                createPlatform({'position':platform,'size':[20,500],'platformNo':iterator})
-                iterator += 1
-
         if msg["type"] == "endGame":
             self.__playing = False
             self.__endGameData = msg["data"]
@@ -189,7 +166,6 @@ class Client:
             self.__clientPlayer.legalMove()
         if msg["type"] == "MOVENOTLEGAL":
             self.__clientPlayer.illegalMove()
-
 
     def __kickBrokenPlayer(msgData: int) -> None:
         '''
@@ -205,9 +181,6 @@ class Client:
                 brokenPlayer = playerSprites[i]
         
         players.remove(brokenPlayer)
-            
-        
-
 
     '''
     Name: __projectileFired
@@ -249,7 +222,7 @@ class Client:
     Returns: None
     Purpose: Tells the server that this client wants to disconnect
     '''
-    def tellServerDisconn(self):
+    def tellServerDisconn(self) -> None:
         msgDict = {"type":"disconn", "data":{"playerID":self.playerID}}
         self.sendData(msgDict)
 
@@ -289,17 +262,8 @@ class Client:
     Returns: None
     Purpose: Setter for the leaderboard variable
     '''
-    def setLeaderBoard(self,leaderboard):
+    def setLeaderBoard(self,leaderboard: dict) -> None:
         self.__leaderBoard = leaderboard
-
-    '''
-    Name: enableWaiting
-    Parameters: None
-    Returns: None
-    Purpose: Setter for the waiting variable
-    '''
-    def enableWaiting(self):
-        self.__waiting = True
 
     '''
     Name: setClientPlayer
@@ -309,60 +273,6 @@ class Client:
     '''
     def setClientPlayer(self, clPl):
         self.__clientPlayer = clPl
-
-    '''
-    Name: waitingOver
-    Parameters: None
-    Returns: None
-    Purpose: Setter for the waiting variable 
-    '''
-    def waitingOver(self):
-        self.__waiting = False
-
-    '''
-    Name: checkWaiting
-    Parameters: None
-    Returns: self.__waiting
-    Purpose: Getter for the waiting variable
-    '''
-    def checkWaiting(self):
-        return self.__waiting
-
-    '''
-    Name: enablePlaying
-    Parameters: None
-    Returns: None
-    Purpose: Setter for the playing variable
-    '''
-    def enablePlaying(self):
-        self.__playing = True
-
-    '''
-    Name: playingOver
-    Parameters: None
-    Returns: None
-    Purpose: Setter for the playing variable
-    '''
-    def playingOver(self):
-        self.__playing = False
-
-    '''
-    Name: checkPlaying
-    Parameters: None
-    Returns: self.__playing
-    Purpose: Getter for the playing variable
-    '''
-    def checkPlaying(self):
-        return self.__playing
-
-    '''
-    Name: getEndGameData
-    Parameters: None
-    Returns: self.__endGameData
-    Purpose: Getter for the endGameData variable
-    '''
-    def getEndGameData(self):
-        return self.__endGameData
 
 '''
 Name: addCharacter
@@ -410,7 +320,7 @@ class Character(pygame.sprite.Sprite):
         self.width = 40
         self.X = position[0]
         self.Y = position[1]
-        self.HP = 100
+        self.__HP = 100
         self.colour = colour
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
@@ -424,14 +334,23 @@ class Character(pygame.sprite.Sprite):
         self.collided = False
         self.__lastAttackTime = time.time()
         self.__regeneration: int = lambda t: round(math.exp(t // 4))
-        self.__timeOfLastHit: float = time.time()
+        self.__timeOfLastHit: float = self.__lastAttackTime
         self.__Element = None
         self.__Caster = None
         self.__OnFire: bool = False
+        self.__grounded: bool = False
         self.__attackCooldown: int|None = None
-        self.__falling = True
-        self.__timeFalling = time.time()
-        self.__gravitySet: float = lambda t:  0.5 * 9,81 * t
+        self.__gravityEq: int = lambda t: 0.5 * 9.81 * t
+        self.__fallTime: float = self.__lastAttackTime
+
+    '''
+    Name: getPos
+    Parameters: None
+    Returns: list[int]
+    Purpose: Getter for the character's position
+    '''
+    def getPos(self) -> list[int]:
+        return [self.rect.x, self.rect.y]
 
     '''
     Name: update
@@ -439,39 +358,68 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates certain variables each tick
     '''
-    def update(self) -> None:
+    def update(self, cl) -> None:
         tim = time.time()
         updTime = tim - self.__timeOfLastHit
         
-        if self.HP != 100 and self.HP < 100 and not self.__OnFire:
-            self.HP += self.__regeneration(updTime)
-        if self.HP > 100:
-            self.HP = 100
+        if self.__HP != 100 and self.__HP < 100 and not self.__OnFire:
+            self.__HP += self.__regeneration(updTime)
+        if self.__HP > 100:
+            self.__HP = 100
         
         if self.__OnFire:
+            self.takeDamage(5, cl)
+            
             if updTime >= 5:
-                self.__HP -= 5
                 self.__timeOfLastHit = tim
                 self.__OnFire = False
-            elif updTime % 1 == 0:
-                self.__HP -= 5
+        
+        if self.__grounded:
+            if updTime >= 3:
+                self.__grounded = False
+
+    
     '''
     Name: takeDamage
     Parameters: damage: int, fireEl: bool
     Returns: None
     Purpose: Setter for the client's health
     '''
-    def takeDamage(self, damage: int, fireEl: bool = False) -> None:
+    def takeDamage(self, damage: int, cl, fireEl: bool = False, earthEl: bool = False) -> None:
         self.__HP -= damage
-        self.__onFire = fireEl
+        self.__OnFire = fireEl
+        self.__grounded = earthEl
 
         if self.__HP <= 0:
-            self.rect.x = self.X
-            self.rect.y = self.Y
-            self.__HP = 100
-            requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
+            self.__charDeath(cl)
         else:
             self.__timeOfLastHit = time.time()
+
+    '''
+    Name: __charDeath
+    Parameters: cl: Client
+    Returns: None
+    Purpose: Handles what to do when a character dies
+    '''
+    def __charDeath(self, cl) -> None:
+        self.rect.x = self.X
+        self.rect.y = self.Y
+        self.__HP = 100
+        self.__OnFire = False
+        requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
+        
+        for letter in [["y", self.rect.y], ["x", self.rect.x]]:
+            moveMsg: dict = {
+                "type": "movement",
+                "data": {
+                    "playerID", self.__playerID,
+                    "direction", letter[0],
+                    "movedTo", letter[1],
+                    "collided", self.collided
+                }
+            }
+            cl.sendData(moveMsg)
+            time.sleep(0.01)
 
     '''
     Name: setCaster
@@ -583,89 +531,107 @@ class Character(pygame.sprite.Sprite):
 
     '''
     Name: move
-    Parameters: cl:object, platform:object
+    Parameters: cl:object, keys:list[bool]|None
     Returns: None
     Purpose: Changes the position of the sprite position based upon what key is being pressed
     by a pre-determined amount
     '''
-    def move(self, cl, platform):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
-            legalMove = self.checkIfLegal("y",4, cl)
-            if legalMove:
-                self.rect.y -= 4
-                legalMove = self.checkIfLegal("x",2, cl)
+    def move(self, cl, keys: list[bool]|None = None):
+        if not self.__grounded:
+            if keys is None:
+                keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
+                legalMove = self.checkIfLegal("y",4, cl)
                 if legalMove:
-                    self.rect.x -= 2
-                    if self.rect.y < 0:
-                        self.rect.y = 0
-                    elif self.rect.x < 0:
-                        self.rect.x = 0
-                    else:
-                        self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
-        elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
-            legalMove = self.checkIfLegal("y", 4, cl)
-            if legalMove:
-                self.rect.y -= 4
+                    self.__changeRect("y", 4, cl)
+                    legalMove = self.checkIfLegal("x",2, cl)
+                    
+                    if legalMove:
+                        self.__changeRect("x", 2, cl)
+
+            elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
+                legalMove = self.checkIfLegal("y", 4, cl)
+                if legalMove:
+                    self.__changeRect("y", 4, cl)
+
+                    legalMove = self.checkIfLegal("x", -2, cl)
+                    if legalMove:
+                        self.__changeRect("x", -2, cl)
+
+            elif keys[pygame.K_UP] == True:
+                legalMove = self.checkIfLegal("y", 4, cl)
+                if legalMove:
+                    self.__changeRect("y", 4, cl)
+
+            elif keys[pygame.K_RIGHT] == True:
+                legalMove = self.checkIfLegal("x", 2, cl)
+                if legalMove:
+                    self.__changeRect("x", 2, cl)
+            
+            elif keys[pygame.K_LEFT] == True:
                 legalMove = self.checkIfLegal("x", -2, cl)
                 if legalMove:
-                    self.rect.x += 2
-                    if self.rect.y < 0:
-                        self.rect.y = 0
-                    elif self.rect.x > 800:
-                        self.rect.x = 800 - self.rect.x
-                    else:
-                        self.lastMoveMade = ["y", -4]
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        time.sleep(0.01)
-                        moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                        cl.sendData(moveMessage)
-                        self.lastPos = [self.rect.x, self.rect.y]
-
-        elif keys[pygame.K_UP] == True:
-            legalMove = self.checkIfLegal("y", 4, cl)
-            if legalMove:
-                self.rect.y -= 4
-                if self.rect.y < 0:
-                    self.rect.y = 0
-                else:
-                    self.lastMoveMade = ["y",-4]
-                    moveMessage = {"type":"movement", "data":{"playerID": self.__playerID, "direction":"y", "movedTo":self.rect.y, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
-        elif keys[pygame.K_RIGHT] == True:
-            legalMove = self.checkIfLegal("x", -2, cl)
-            if legalMove:
-                self.rect.x += 2
-                if self.rect.x > 800:
-                    self.rect.x = 800 - self.rect.x
-                else:
-                    self.lastMoveMade = ["x", 2]
-                    moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
-        elif keys[pygame.K_LEFT] == True:
-            legalMove = self.checkIfLegal("x", 2, cl)
-            if legalMove:
-                self.rect.x -= 2
-                if self.rect.x < 0:
-                    self.rect.x = 0
-                else:
-                    self.lastMoveMade = ["x", -2]
-                    moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "x", "movedTo": self.rect.x, "collided":self.collided}}
-                    cl.sendData(moveMessage)
-                    self.lastPos = [self.rect.x, self.rect.y]
-                    time.sleep(0.01)
+                    self.__changeRect("x", -2, cl)
     
+    '''
+    Name: __changeRect
+    Parameters: direction: str, amount: int, cl: Client
+    Returns: None
+    Purpose: Changes the character's internal rect
+    '''
+    def __changeRect(self, direction: str, amount: int, cl) -> None:
+        if direction == "y" or direction == "x":
+            if direction == "y":
+                self.rect.y += amount
+                movedTo: int = self.rect.y
+            elif direction == "x":
+                self.rect.x += amount
+                movedTo: int = self.rect.x
+            
+            moveMessage: dict = {
+                "type": "movement",
+                "data": {
+                    "playerID": self.__playerID,
+                    "direction": direction, 
+                    "movedTo": movedTo,
+                    "collided": self.collided
+                }
+            }
+            cl.sendData(moveMessage)
+            self.lastPos = [self.rect.x, self.rect.y]
+            time.sleep(0.01)
+            self.__outOfBoundsCheck(cl)
+        else:
+            raise ValueError(f"Internal Rect Change Value, Expecgted direction to be 'x' or 'y', got {direction}")
+
+    '''
+    Name: __outOfBoundsCheck
+    Parameters: cNone
+    Returns: None
+    Purpose: Checks if the character has moved out of bounds, and handles what to do if they have
+    '''
+    def __outOfBoundsCheck(self, cl) -> None:
+        if self.rect.y >= 800:
+            self.__charDeath(cl)
+        elif self.rect.x + self.width < 0:
+            self.__charDeath(cl)
+        elif self.rect.x >= 800:
+            self.__charDeath(cl)
+
+    '''
+    Name: gravity
+    Parameters: cl:object
+    Returns: None
+    Purpose: Adjusts the position of the character rect if the player 
+    is not on a platform
+    '''
+    def gravity(self, cl):
+        timothy: float = time.time()
+        if not self.collided:
+            self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime), cl)
+        else:
+            self.__fallTime = timothy
 
     '''
     Name: fire
@@ -697,7 +663,7 @@ class Character(pygame.sprite.Sprite):
     
     '''
     Name: __tellServerFire
-    Parameters: spawnPoint:list[int], client:object, direction: list[int]|None
+    Parameters: spawnPoint:list[int], client:object, direction: list[int]|int
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
     '''
@@ -714,24 +680,6 @@ class Character(pygame.sprite.Sprite):
                 }
 
         client.sendData(msgDict)
-        
-    '''
-    Name: gravity
-    Parameters: cl:object, platform:object
-    Returns: None
-    Purpose: Adjusts the position of the character rect if the player 
-    is not on a platform
-    '''
-    def gravity(self, cl, platform):
-        if not self.collided:
-            self.rect.y += 1
-            if self.rect.y > 800 - self.height:
-                self.rect.y = 800 - self.height
-            else:
-                #self.lastMoveMade = ["y", 1]
-                moveMessage = {"type": "movement","data": {"playerID": self.__playerID, "direction": "y", "movedTo": self.rect.y}}
-                cl.sendData(moveMessage)
-                self.lastPos = [self.rect.x, self.rect.y]
 
 '''
 Name: publicGame
@@ -828,9 +776,9 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                 if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
                     
                     if b.getElement() == "Fire":
-                        clientPlayer.takeDamage(b.getDamage(), True)
-                    else:
-                        clientPlayer.takeDamage(b.getDamage())
+                        clientPlayer.takeDamage(b.getDamage(), fireEl=True)
+                    elif b.getElement() == "Earth":
+                        clientPlayer.takeDamage(b.getDamage(), earthEl=True)
                     
                     bullets.remove(b)
 
