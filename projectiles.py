@@ -33,10 +33,11 @@ class ProjectileGroup(pygame.sprite.Group):
             proType: int = sprite.getProType()
             
             if proType == 1:
-                sprite.update()
+                if sprite.outOfBoundsCheck():
+                    self.remove(sprite)
+                else: 
+                    sprite.update()
             elif proType == 2:
-                # The ConeAttack projectile is only supposed to last ~2 seconds,
-                # so after that time the projectile needs to delete itself
                 if not sprite.getDelTime():
                     sprite.update()
                 else:
@@ -172,6 +173,18 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         self.rect.x = self._X
         self.rect.y = self._Y
         self._ProType: int = 1
+
+    def outOfBoundsCheck(self) -> bool:
+        '''
+        Name: outOfBoundsCheck
+        Parameters: None
+        Returns: bool
+        Purpose: Checks whether the bullet is out of bounds
+        '''
+        if (self.rect.x > 800) or (self.rect.x < 0) or (self.rect.y > 800) or (self.rect.y < 0):
+            return True
+        else:
+            return False
 
     '''
     Name: update

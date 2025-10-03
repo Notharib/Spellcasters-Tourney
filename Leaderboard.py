@@ -114,25 +114,14 @@ class Leaderboard(pygame.sprite.Sprite):
 
 '''
 Name: getLeaderboard
-Parameters: serverType:string, playerID:integer|None, serverKey:string|None, client=Client|None
+Parameters: serverType:string
 Returns: leaderboard:dictionary|None
 Purpose: Gets the current updated version of the leaderboard for the player to see
 '''
-def getLeaderboard(serverType, playerID=None, serverKey=None, client=None):
+def getLeaderboard(serverType: str = "public"):
     leaderboard = None
     if serverType == "public":
       leaderboard = requests.get(url="http://127.0.0.1:5000/publicLeaderCheck").json()
       return leaderboard["data"]
-    elif serverType == "private":
-        if serverKey is None:
-            raise Exception("None Type Error: severKey should be string type value, not NoneType")
-        else:
-            jsonInfo = {
-                "serverKey":serverKey,
-                "playerID":playerID
-            }
-            leaderboard = requests.get("http://127.0.0.1:5000/privateLeaderCheck", json={jsonInfo}).json()
-
-            return leaderboard["data"]
     else:
-        raise ValueError("Server type must be either public or private")
+        raise ValueError("Server type must be public")

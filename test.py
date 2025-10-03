@@ -1,8 +1,6 @@
 import math
 import random
 import unittest
-import threading
-import pygame
 
 from time import sleep
 
@@ -10,8 +8,6 @@ import Leaderboard
 import gameLogic
 import dataStructures
 import client
-
-from server import Server
 
 
 '''

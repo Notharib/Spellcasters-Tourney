@@ -681,6 +681,44 @@ class Character(pygame.sprite.Sprite):
 
         client.sendData(msgDict)
 
+
+'''
+Name: platformCollide
+Parameters: platforms|object, players:object, clientPlayer:object
+Returns: bool
+Purpose: Platoform + player collision handling
+'''
+def platformCollide(platforms, players, clientPlayer) -> bool:
+    # Sprite group collision handling; handles collisions between platforms and players
+    collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+    for platform, player_list in collisions.items():
+        for player in player_list:
+            if player == clientPlayer:
+                return True
+    return False
+
+'''
+Name: platformCollide
+Parameters: platforms|object, players:object, clientPlayer:object
+Returns: bool
+Purpose: Platoform + player collision handling
+'''
+def projectileCollide(bullets, players, clientPlayer):
+    pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+    for b, p_list in pHit.items():
+        for pl in p_list:
+            if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
+                
+                if b.getElement() == "Fire":
+                    clientPlayer.takeDamage(b.getDamage(), fireEl=True)
+                elif b.getElement() == "Earth":
+                    clientPlayer.takeDamage(b.getDamage(), earthEl=True)
+                
+                bullets.remove(b)
+    
+    return bullets, clientPlayer
+
+
 '''
 Name: publicGame
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary
@@ -762,34 +800,18 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
-        # Sprite group collision handling; handles collisions between platforms and players
-        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-        for platform, player_list in collisions.items():
-            for player in player_list:
-                if player == clientPlayer:
-                    clientPlayer.collided = True
+        clientPlayer.collided = platformCollide(platforms, players, clientPlayer)
 
-        # Sprite group collision handling; handles collisions between projectiles and players
-        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-        for b, p_list in pHit.items():
-            for pl in p_list:
-                if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
-                    
-                    if b.getElement() == "Fire":
-                        clientPlayer.takeDamage(b.getDamage(), fireEl=True)
-                    elif b.getElement() == "Earth":
-                        clientPlayer.takeDamage(b.getDamage(), earthEl=True)
-                    
-                    bullets.remove(b)
+        bullets, clientPlayer = projectileCollide(bullets, players, clientPlayer)
 
         bullets.update()
         if (time.time()-leaderUpd) >= 30:
             leaderboard.update(getLeaderboard(serverType))
             timeUpd = time.time()
 
-        clientPlayer.update()
-        clientPlayer.gravity(c, plat)
-        clientPlayer.move(c, plat)
+        clientPlayer.update(c)
+        clientPlayer.gravity(c)
+        clientPlayer.move(c)
         clientPlayer.fire(c)
 
         platforms.draw(screen)
