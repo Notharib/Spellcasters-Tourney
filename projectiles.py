@@ -52,7 +52,7 @@ Purpose: Parent Class for all Projectiles
 class Projectile:
     '''
     Name: __init__
-    Parameters: size: list[int], playerOrg: int, damage: int, spawnPoint: list[int]
+    Parameters: size: list[int], playerOrg: int, damage: int, spawnPoint: list[int], element: str
     Returns: None
     Purpose: Constructor to set the initial values
     of the Projectile object

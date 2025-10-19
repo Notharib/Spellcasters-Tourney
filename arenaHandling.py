@@ -1,5 +1,7 @@
 import pygame
 
+from random import randint
+
 '''
 Name: Platform
 Inherits: pygame.sprite.Sprite
@@ -37,7 +39,9 @@ shouldn't be affected by gravity
 '''
 def onPlat(player, platforms):
     for platform in platforms.sprites():
-        if platform.rect.top == player.rect.bottom or platform.rect.top == player.rect.bottom + 1 or platform.rect.top == player.rect.bottom - 1:
+        if (platform.rect.top == player.rect.bottom 
+            or platform.rect.top == player.rect.bottom + 1 
+            or platform.rect.top == player.rect.bottom - 1):
             print("on platform")
             return True
     return False
@@ -51,8 +55,15 @@ Purpose: Creates a list of all the information about all the platforms
 def sendPlatformInfo(platforms):
     data = []
     for platform in platforms.sprites():
-        dictionary = {"platformNo": platform.platformNo,"platformTop":platform.rect.top, "platformLeft":platform.rect.left, "platformRight":platform.rect.right, "platformBottom":platform.rect.bottom}
+        dictionary = {
+            "platformNo": platform.platformNo,
+            "platformTop":platform.rect.top, 
+            "platformLeft":platform.rect.left, 
+            "platformRight":platform.rect.right, 
+            "platformBottom":platform.rect.bottom}
+        
         data.append(dictionary)
+    
     return data
 
 '''
@@ -68,3 +79,43 @@ def platformInfo(platforms, client, clientPlayer):
         print(platformInfoDict)
         client.sendData(platformInfoDict)
 
+'''
+Name: platformGenerate
+Parameters: amount: int, size: list[int], screenBounds: list[int],  playerSize: int
+Returns: platforms: list[list[int]]
+Purpose: Generates platform positions
+'''
+def platformGenerate(amount: int, size: list[int], screenBounds: list[int] = [800,800], playerSize: int = 40) -> list[list[int]]:
+    platforms: list = []
+    i: int = 0
+
+    while i != amount:
+        platform: list = [generateX(size[1], screenBounds[0]), generateY(size[0], screenBounds[1], playerSize)]
+        platforms.append(platform)
+        i += 1
+
+    return platforms
+
+'''
+Name: generateX
+Parameters: length: int, x_bound: int
+Returns: int
+Purpose: Generates a random X coordinate for the platforms
+'''
+def generateX(length: int, x_bound: int) -> int:
+    lowerBound: int = int(x_bound * 0.025)
+    upperBound: int = x_bound - length
+
+    return randint(lowerBound, upperBound)
+
+'''
+Name: generateY
+Parameters: width: int, y_bound: int, playerSize: int
+Returns: int
+Purpose: Generates a random Y coordinate for the platforms
+'''
+def generateY(width: int, y_bound: int, playerSize: int) -> int:
+    lowerBound: int = playerSize + width + int(y_bound * 0.1)
+    upperBound: int = y_bound - width - int(y_bound * 0.1)
+    
+    return randint(lowerBound, upperBound)

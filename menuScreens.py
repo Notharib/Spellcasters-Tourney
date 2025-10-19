@@ -1,10 +1,10 @@
-import socket
-
-from time import sleep
 import pygame
 import pygame.freetype
 import requests
-from menuClasses import Pointer, TextBox
+
+from time import sleep
+
+# from menuClasses import Pointer, TextBox
 
 '''
 Name: gameStart
@@ -73,7 +73,7 @@ def characterBuilder(screen):
     running = True
     while running:
         screen.fill((255, 255, 255))
-        currSelected = 'Selected Class: {selectedClass}   Selected Element: {selectedElement}'.format(selectedClass=currSelectedClass, selectedElement=currSelectedElement)
+        currSelected = f'Selected Class: {currSelectedClass}   Selected Element: {currSelectedElement}'
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -108,7 +108,3 @@ def characterBuilder(screen):
         "element": currSelectedElement,
     }
     return character
-
-
-if __name__ == '__main__':
-    pass

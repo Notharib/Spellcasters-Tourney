@@ -95,7 +95,6 @@ class Client:
     and then handles what to do with it
     '''
     def listen(self) -> None:
-        global clientPlayer
         while True:
             data = self.__socket.recv(1024)
             if not data:
@@ -343,24 +342,30 @@ class Character(pygame.sprite.Sprite):
     of the character object
     '''
     def __init__(self, position: list, colour: tuple[int,int,int], playerID: int, logPath: str) -> None:
+        # Pygame Setup
         super().__init__()
-        self.height = 40
-        self.width = 40
-        self.X = position[0]
-        self.Y = position[1]
-        self.__HP = 100
-        self.colour = colour
+        self.height: int = 40
+        self.width: int = 40
+        self.X: int = position[0]
+        self.Y: int = position[1]
+        self.colour: tuple[int,int,int] = colour
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
         pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.width, self.height])
+        
+        # Movement
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
-        self.__playerID = playerID
         self.lastPos = [self.X,self.Y]
         self.lastLegalPos = self.lastPos
         self.collided = False
-        self.__lastAttackTime = time.time()
+        self.__gravityEq: int = lambda t: 0.5 * 9.81 * t
+        self.__fallTime: float = self.__lastAttackTime
+
+        # Combat
+        self.__HP: int = 100
+        self.__lastAttackTime: float = time.time()
         self.__regeneration: int = lambda t: round(math.exp(t // 4))
         self.__timeOfLastHit: float = self.__lastAttackTime
         self.__Element = None
@@ -368,8 +373,9 @@ class Character(pygame.sprite.Sprite):
         self.__OnFire: bool = False
         self.__grounded: bool = False
         self.__attackCooldown: int|None = None
-        self.__gravityEq: int = lambda t: 0.5 * 9.81 * t
-        self.__fallTime: float = self.__lastAttackTime
+
+        # Other Important Variables
+        self.__playerID: int = playerID
         self.__clientPlayer: bool = False
         self.__logPath: str = logPath
 
@@ -467,41 +473,71 @@ class Character(pygame.sprite.Sprite):
                 if keys is None:
                     keys = pygame.key.get_pressed()
 
-                if keys[pygame.K_UP] == True and keys[pygame.K_LEFT] == True:
-                    legalMove = self.checkIfLegal("y",4, cl)
-                    if legalMove:
-                        self.__changeRect("y", 4, cl)
-                        legalMove = self.checkIfLegal("x",2, cl)
-                        
-                        if legalMove:
-                            self.__changeRect("x", 2, cl)
+                moves: list = self.__keyCheck(keys)
 
-                elif keys[pygame.K_UP] == True and keys[pygame.K_RIGHT] == True:
-                    legalMove = self.checkIfLegal("y", 4, cl)
-                    if legalMove:
-                        self.__changeRect("y", 4, cl)
+                i: int = 0
 
-                        legalMove = self.checkIfLegal("x", -2, cl)
-                        if legalMove:
-                            self.__changeRect("x", -2, cl)
+                while i != len(moves):
+                    cart: str = self.__dirToCart(moves[i])
+                    amount: int = self.__dirToAmount(moves[i])
 
-                elif keys[pygame.K_UP] == True:
-                    legalMove = self.checkIfLegal("y", 4, cl)
-                    if legalMove:
-                        self.__changeRect("y", 4, cl)
+                    self.checkIfLegal(cart, amonut, cl)
+                    self.__changeRect(cart, amount, cl)
 
-                elif keys[pygame.K_RIGHT] == True:
-                    legalMove = self.checkIfLegal("x", 2, cl)
-                    if legalMove:
-                        self.__changeRect("x", 2, cl)
+                    i += 1
                 
-                elif keys[pygame.K_LEFT] == True:
-                    legalMove = self.checkIfLegal("x", -2, cl)
-                    if legalMove:
-                        self.__changeRect("x", -2, cl)
         except Exception as e:
             self.__charError("move", e)
     
+    '''
+    Name: dirToCart
+    Parameters: direction: str
+    Returns: str
+    Purpose: Converts the direction (left, right, or up)
+    to the cartesian direction (x or y)
+    '''
+    def __dirToCart(direction: str) -> str:
+        if direction == "up":
+            return "y"
+        else:
+            return "x"
+
+    '''
+    Name: dirToAmount
+    Parameters: direction: str
+    Returns: int
+    Purpose: Converts the direction (left, right or up)
+    '''
+    def __dirToAmount(direction: str) -> int:
+        if direction == "left":
+            return -2
+        elif direction == "right":
+            return 2
+        else:
+            return 4
+
+    '''
+    Name: keyCheck
+    Parameters: keys: list[bool]
+    Returns: list[str]
+    Purpose: Returns a list of the movement keys that are
+    currently being pressed
+    '''
+    def __keyCheck(self, keys: list[bool]) -> list[str]|None:
+        keyCheck: list[str] = []
+        
+        if keys[pygame.K_UP]:
+            keyCheck.append("up")
+        if keys[pygame.K_LEFT]:
+            keyCheck.append("left")
+        if keys[pygame.K_RIGHT]:
+            keycheck.append("right")
+        
+        if keyCheck[0] is None:
+            return None
+        
+        return keyCheck
+
     '''
     Name: __changeRect
     Parameters: direction: str, amount: int, cl: Client
@@ -609,22 +645,26 @@ class Character(pygame.sprite.Sprite):
         currTime: float = time.time()
         
         if mouseKeys[0] and (currTime - self.__lastAttackTime >= self.__attackCooldown):
-            #main attack
-            elementType: str = self.__Element.getType()
-            casterType: str = self.__Caster.getType()
-
-            if casterType == "Wizard":
-                spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
-                direction: int = 0
-                Client.createCone(spawnPoint, self.__playerID, elementType)
-            elif casterType == "Druid":
-                spawnPoint: list[int] = [self.rect.x, self.rect.y]
-                direction: list[int] = getDirection(self)
-                Client.createBullet(spawnPoint, self.__playerID, direction, elementType)
-             
-            self.__lastAttackTime = currTime
-            self.__tellServerFire(spawnPoint, client, direction)
+            self.__createProj(client)
     
+    
+    def __createProj(self, client) -> None:
+        #main attack
+        elementType: str = self.__Element.getType()
+        casterType: str = self.__Caster.getType()
+
+        if casterType == "Wizard":
+            spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
+            direction: int = 0
+            Client.createCone(spawnPoint, self.__playerID, elementType)
+        elif casterType == "Druid":
+            spawnPoint: list[int] = [self.rect.x, self.rect.y]
+            direction: list[int] = getDirection(self)
+            Client.createBullet(spawnPoint, self.__playerID, direction, elementType)
+            
+        self.__lastAttackTime = currTime
+        self.__tellServerFire(spawnPoint, client, direction)
+
     '''
     Name: __tellServerFire
     Parameters: spawnPoint:list[int], client:object, direction: list[int]|int
@@ -776,11 +816,17 @@ def publicGame(screen, clock, players, platforms, bullets, char: dict, serverTyp
     time.sleep(2)
 
     print(char)
+    
+    '''
+    After a certain amount of time has passed, the server will have sent 
+    all the neccessary information required
+    for the player to be able to join the server. And the first message 
+    that the server will send is the informaiton
+    that the client will need to create its own player, 
+    so this then sets the clientPlayer variable to the first object
+    in the players sprite group
+    '''
 
-    # After a certain amount of time has passed, the server will have sent all the neccessary information required
-    # for the player to be able to join the server. And the first message that the server will send is the informaiton
-    # that the client will need to create its own player, so this then sets the clientPlayer variable to the first object
-    # in the players sprite group
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
 
@@ -788,8 +834,8 @@ def publicGame(screen, clock, players, platforms, bullets, char: dict, serverTyp
 
     time.sleep(1)
 
-    # Runs the platformInfo functio, which will send data to the server with information about the platforms if
-    # the player's playerID is 1
+    # Runs the platformInfo functio, which will send data to the server 
+    # with information about the platforms if the player's playerID is 1
     platformInfo(platforms, c, clientPlayer)
 
     mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
