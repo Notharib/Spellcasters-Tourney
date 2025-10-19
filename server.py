@@ -6,6 +6,7 @@ import time
 import requests
 
 from gameLogic import data_handling
+from logger import addToLog, generateLogFile
 
 '''
 Name: Client
@@ -72,7 +73,7 @@ class Server:
     Purpose: Constructor to set the initial values
     of the Server object
     '''
-    def __init__(self) -> None:
+    def __init__(self, logPath: str) -> None:
         self.__HOST: str = '127.0.0.1'
         self.__PORT: int = 50000
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -83,6 +84,7 @@ class Server:
         self.__recvMsg: bool = False
         self.__online: bool = False
         self.__sentMsg: bool = False
+        self.__logPath: str = logPath
 
     def getClientList(self) -> list:
         '''
@@ -303,18 +305,17 @@ class Server:
                         if message is not None:
                             self.__messageHandling(message)
                             
-                            for client in self.__clientList:
-                                if (client is not None and client.client != conn and
-                                        (message["type"] != "platformInfo" or message["type"] != "legalCheck" or message["type"] != "leaderUpd" or
-                                        message["type"] != "leaderGet")):
-                                    client.client.send(data)
-                                self.__sentMsg = True
+                            self.__updClients(conn, messge["type"], data)
+                
                 except json.JSONDecodeError as err:
                     print(data.decode())
                     print("JSON Syntax Error:", err)
+                    addToLog(self.__logPath, "serverRecv", e)
+                
                 except ConnectionError as e:
                     print("Server Conn Error",e)
                     self.__kickBrokenPlayer(conn)
+                    addToLog(self.__logPath, "serverRecv", e)
                     break
 
 
@@ -325,31 +326,35 @@ class Server:
         Returns:None
         Purpose: Handles messages
         '''
-        if message["type"] == "leaderUpd":
-            #self.__leaderboard[message["data"]["playerID"]] += 1
-            self.leaderUpd(message["data"]["playerID"])
-            print("Leader Upd Called")
-        if message["type"] == "leaderGet":
-            leaderMsg = {
-                "type":"leaderGet",
-                "data": self.__leaderboard
-            }
-            conn.send(json.dumps(leaderMsg).encode())
+        try:
+            if message["type"] == "leaderUpd":
+                #self.__leaderboard[message["data"]["playerID"]] += 1
+                self.leaderUpd(message["data"]["playerID"])
+                print("Leader Upd Called")
+            if message["type"] == "leaderGet":
+                leaderMsg = {
+                    "type":"leaderGet",
+                    "data": self.__leaderboard
+                }
+                conn.send(json.dumps(leaderMsg).encode())
 
-        if message["type"] == "movement":
-            self.__playerMoved()
+            if message["type"] == "movement":
+                self.__playerMoved()
 
-        if message["type"] == "disconn":
-            self.tellClientsOfDisconn(message["data"]["playerID"]-1)
-            self.__clientList[message["data"]["playerID"]-1].client.close()
-            self.__clientList.pop(message["data"]["playerID"] - 1)
-            print("player disconnected")
+            if message["type"] == "disconn":
+                self.tellClientsOfDisconn(message["data"]["playerID"]-1)
+                self.__clientList[message["data"]["playerID"]-1].client.close()
+                self.__clientList.pop(message["data"]["playerID"] - 1)
+                print("player disconnected")
 
-        if message["type"] == "platformInfo":
-            self.__platformCreate(message["data"])
+            if message["type"] == "platformInfo":
+                self.__platformCreate(message["data"])
 
-        if message["type"] == "legalCheck":
-            self.__legalCheck(message["data"])
+            if message["type"] == "legalCheck":
+                self.__legalCheck(message["data"])
+        
+        except Exception as e:
+            addToLog(self.__logPath, "servermsghandling", e)
 
     def __platformCreate(self, msgData:list) -> None:
         '''
@@ -417,7 +422,25 @@ class Server:
             self.__clientList[clPos].position[0] = msgData["movedTo"]
             # print("player position changed")
 
+    '''
+    Name: updClients
+    Parameters: conn: object, msgType: str, data: any
+    Returns: None
+    Purpose: Updates all other connections on the message the server has just recieved
+    '''
+    def __updClients(self, conn, msgType: str, data) -> None:
+        for client in self.__clientList:
+            if (client is not None and client.client != conn and 
+            (msgType != "platformInfo" or msgType != "legalCheck" 
+            or msgType != "leaderUpd" or msgType != "leaderGet")):
+                
+                client.client.send(data)
+            
+            self.__sentMsg = True
+
 
 if __name__ == '__main__':
-    server = Server()
+    logPath: str = generateLogFile("server")
+
+    server = Server(logPath)
     server.start()

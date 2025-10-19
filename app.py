@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 
+from logger import addToLog, generateLogFile
+
 app = Flask(__name__)
 
 
@@ -19,7 +21,7 @@ it changes whether the public server is recognised as full or as not full
 '''
 @app.route('/serverFull', methods=["POST"])
 def serverFull():
-    global serverFull
+    global serverFull, logPath
     data = request.get_json()
     fullValue = data.get("fullValue")
 
@@ -34,6 +36,7 @@ def serverFull():
         return jsonify(confirmMesage), 200
 
     except Exception as e:
+        addToLog(logPath, "serverFull", e)
         return jsonify({"error":str(e)}), 500
 
 '''
@@ -45,14 +48,15 @@ and depending on what that value is, it tells the initial sender whether the pub
 '''
 @app.route('/serverFullCheck', methods=["GET"])
 def serverFullCheck():
-    global serverFullValue
-    print(serverFullValue)
+    global serverFullValue, logPath
+
     try:
         if serverFullValue:
             return jsonify({"msg":"Server Full","quickMsg":1}), 200
         else:
             return jsonify({"msg":"Server Not Full","quickMsg":0}), 200
     except Exception as e:
+        addToLog(logPath, "serverfullcheck", e)
         return jsonify({"error":str(e)}), 500
 
 '''
@@ -64,11 +68,12 @@ public server
 '''
 @app.route('/publicLeaderCheck',methods=['GET'])
 def publicLeaderCheck():
-    global pubLeader
+    global pubLeader, logPath
 
     try:
         return jsonify({"msg":"leaderboard", "data":pubLeader}), 200
     except Exception as e:
+        addToLog(logPath, "publeadcheck", e)
         return jsonify({"error":str(e)}), 500
 
 '''
@@ -79,7 +84,8 @@ Purpose: Recieves JSON data, and then updates the amount of deaths stored for th
 '''
 @app.route('/publicLeaderUpd',methods=['POST'])
 def publicLeaderUpd():
-    global pubLeader
+    global pubLeader, logPath
+
     data = request.get_json()
     playerID = data.get("playerID")
     
@@ -98,6 +104,7 @@ def publicLeaderUpd():
             return jsonify({"msg":"leaderboard updated"}), 200
     except Exception as e:
         print("Error",e)
+        addToLog(logPath, "publeadupd", e)
         return jsonify({"error":str(e)}), 500
 
 '''
@@ -109,7 +116,8 @@ it converts the position in the leaderboard to None
 '''
 @app.route('/removePlayer', methods=['POST'])
 def removePlayer():
-    global pubLeader
+    global pubLeader, logPath
+
     data = request.get_json()
     playerID = data.get("playerID")
 
@@ -120,7 +128,10 @@ def removePlayer():
         pubLeader[playerID] = None
         return jsonify({"msg":"player removed successfully"}), 200
     except Exception as e:
+        addToLog(logPath, "removePlayer", e)
         return jsonify({"error":str(e)}), 500
 
 if __name__ == '__main__':
+    logPath: str = generateLogFile("API")
+    
     app.run(debug=True)

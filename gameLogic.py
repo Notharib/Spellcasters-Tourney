@@ -6,6 +6,7 @@ import json
 import pygame
 
 from dataStructures import Queue
+from logger import addToLog
 
 '''
 Name: merge_sort
@@ -79,7 +80,7 @@ Returns: list[dict]
 Purpose: Handles what should initially happen with JSON data, 
 to avoid extra data errors
 '''
-def data_handling(data: str) -> Queue:
+def data_handling(data: str, logPath: str) -> Queue:
     try: 
         
         decoder = json.JSONDecoder()
@@ -96,10 +97,13 @@ def data_handling(data: str) -> Queue:
 
     except SyntaxError as e:
         print("Data Handling Syntax Error:",e)
+        addToLog(logPath, "dataHandling", e, extraInfo=f" EXTRA INFO: {data} ")
 
     except json.JSONDecodeError as e:
         print("Data Handling JSON Error:",e)
+        addToLog(logPath, "dataHandling", e, extraInfo=f" EXTRA INFO: {data} ")
 
     except Exception as e:
         print("Data Handling Error:", e)
         print("Origin Message:", data)
+        addToLog(logPath, "dataHandling", e, extraInfo=f" EXTRA INFO: {data} ")
