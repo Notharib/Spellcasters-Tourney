@@ -308,8 +308,9 @@ class Server:
     Name: checkIfFull
     Parameters: None
     Returns: None
-    Purpose: Checks if the server is at max capacity (10 active connections), and then if it is, letting the API know
-    that it is full so it shouldn't let any more players join
+    Purpose: Checks if the server is at max capacity (10 active connections), 
+    and then if it is, letting the API know that it is full so it 
+    shouldn't let any more players join
     '''
     def checkIfFull(self) -> None:
         if len(self.__clientList) == 10:
@@ -329,8 +330,8 @@ class Server:
     Name: recv_from_client
     Parameters: conn:object
     Returns: None
-    Purpose: Listens for data being sent by the connection, and then if data is sent, handles what
-    to do with it
+    Purpose: Listens for data being sent by the connection, 
+    and then if data is sent, handles what to do with it
     '''
     def recv_from_client(self, conn) -> None:
         while True:

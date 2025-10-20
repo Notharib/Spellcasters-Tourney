@@ -8,6 +8,8 @@ import random
 import requests
 import math
 
+from overrides import override
+
 from menuScreens import gameStart, characterBuilder
 from gameLogic import getDirection, data_handling
 from arenaHandling import Platform, onPlat, platformInfo
@@ -16,6 +18,7 @@ from Leaderboard import *
 from Elements import *
 from Casters import *
 from projectiles import ProjectileGroup, Bullet, ConeAttack, generateCooldown
+from physics import averageVelocity
 
 
 '''
@@ -289,8 +292,7 @@ class Client:
         players.add(Character(data["positionList"],data["colourTuple"],data["playerID"], self.__logPath))
         print("Player created!")
 
-    # Static Methods (Functions mainly used by the client class, but technically
-    # have nothing to do with it beyond that)
+    # Static Methods
 
     '''
     Name: createBullet
@@ -353,16 +355,6 @@ class Character(pygame.sprite.Sprite):
         self.image.fill(colour)
         pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.width, self.height])
         
-        # Movement
-        self.rect = self.image.get_rect()
-        self.rect.x = self.X
-        self.rect.y = self.Y
-        self.lastPos = [self.X,self.Y]
-        self.lastLegalPos = self.lastPos
-        self.collided = False
-        self.__gravityEq: int = lambda t: 0.5 * 9.81 * t
-        self.__fallTime: float = self.__lastAttackTime
-
         # Combat
         self.__HP: int = 100
         self.__lastAttackTime: float = time.time()
@@ -374,10 +366,23 @@ class Character(pygame.sprite.Sprite):
         self.__grounded: bool = False
         self.__attackCooldown: int|None = None
 
+        # Movement
+        self.rect = self.image.get_rect()
+        self.rect.x = self.X
+        self.rect.y = self.Y
+        self.__mass: int = random.randint(60, 90)
+        self.lastPos = [self.X,self.Y]
+        self.lastLegalPos = self.lastPos
+        self.collided = False
+        self.__gravityEq: float = averageVelocity(self.__mass, 1.0, 0.7)
+        self.__fallTime: float = self.__lastAttackTime
+
         # Other Important Variables
         self.__playerID: int = playerID
         self.__clientPlayer: bool = False
         self.__logPath: str = logPath
+
+    # Update Functions
 
     '''
     Name: update
@@ -385,6 +390,7 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates certain variables each tick
     '''
+    @override
     def update(self, cl) -> None:
         tim = time.time()
         updTime = tim - self.__timeOfLastHit
@@ -404,19 +410,6 @@ class Character(pygame.sprite.Sprite):
         if self.__grounded:
             if updTime >= 3:
                 self.__grounded = False
-
-    '''
-    Name: charError
-    Parameters: errorFunc: str, error: str
-    Returns: None
-    Purpose: Allows the log file to specify whether it was the client
-    player that errored or an external player
-    '''
-    def __charError(self, errorFunc: str, error: str) -> None:
-        if self.__clientPlayer:
-            addToLog(self.__logPath, f"clpl{errorFunc}", error)
-        else:
-            addToLog(self.__logPath, f"extpl{errorFunc}", error)
     
     '''
     Name: takeDamage
@@ -461,6 +454,21 @@ class Character(pygame.sprite.Sprite):
             time.sleep(0.01)
 
     '''
+    Name: charError
+    Parameters: errorFunc: str, error: str
+    Returns: None
+    Purpose: Allows the log file to specify whether it was the client
+    player that errored or an external player
+    '''
+    def __charError(self, errorFunc: str, error: str) -> None:
+        if self.__clientPlayer:
+            addToLog(self.__logPath, f"clpl{errorFunc}", error)
+        else:
+            addToLog(self.__logPath, f"extpl{errorFunc}", error)
+
+    # Movement Functions
+
+    '''
     Name: move
     Parameters: cl:object, keys:list[bool]|None
     Returns: None
@@ -496,7 +504,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Converts the direction (left, right, or up)
     to the cartesian direction (x or y)
     '''
-    def __dirToCart(direction: str) -> str:
+    def __dirToCart(self, direction: str) -> str:
         if direction == "up":
             return "y"
         else:
@@ -508,7 +516,7 @@ class Character(pygame.sprite.Sprite):
     Returns: int
     Purpose: Converts the direction (left, right or up)
     '''
-    def __dirToAmount(direction: str) -> int:
+    def __dirToAmount(self, direction: str) -> int:
         if direction == "left":
             return -2
         elif direction == "right":
@@ -523,7 +531,7 @@ class Character(pygame.sprite.Sprite):
     Purpose: Returns a list of the movement keys that are
     currently being pressed
     '''
-    def __keyCheck(self, keys: list[bool]) -> list[str]|None:
+    def __keyCheck(self, keys: list[bool]) -> list[str]:
         keyCheck: list[str] = []
         
         if keys[pygame.K_UP]:
@@ -532,9 +540,6 @@ class Character(pygame.sprite.Sprite):
             keyCheck.append("left")
         if keys[pygame.K_RIGHT]:
             keycheck.append("right")
-        
-        if keyCheck[0] is None:
-            return None
         
         return keyCheck
 
@@ -633,6 +638,8 @@ class Character(pygame.sprite.Sprite):
         time.sleep(0.01)
         return True
 
+    # Combat Functions
+
     '''
     Name: fire
     Parameters: client:object
@@ -648,8 +655,13 @@ class Character(pygame.sprite.Sprite):
             self.__createProj(client)
     
     
+    '''
+    Name: createProj
+    Parameters: client: object
+    Returns: None
+    Purpose: Creates a projectile based off of the client's 
+    '''
     def __createProj(self, client) -> None:
-        #main attack
         elementType: str = self.__Element.getType()
         casterType: str = self.__Caster.getType()
 
@@ -698,15 +710,6 @@ class Character(pygame.sprite.Sprite):
         self.__clientPlayer = True
 
     '''
-    Name: getPos
-    Parameters: None
-    Returns: list[int]
-    Purpose: Getter for the character's position
-    '''
-    def getPos(self) -> list[int]:
-        return [self.rect.x, self.rect.y]
-
-    '''
     Name: setCaster
     Parameters: caster:str
     Returns: None
@@ -735,15 +738,6 @@ class Character(pygame.sprite.Sprite):
             self.__Element = Earth()
         else:
             raise ValueError(f"Internal Value Error: Incorrect Element Type ({element})")
-    
-    '''
-    Name: getPlayerID
-    Parameters: None
-    Returns: self.__playerID
-    Purpose: Getter for the playerID variable
-    '''
-    def getPlayerID(self) -> int:
-        return self.__playerID
 
     '''
     Name: UpdateCharacteristics
@@ -763,42 +757,63 @@ class Character(pygame.sprite.Sprite):
         except Exception as e:
             self.__charError("updchar", e)
 
+    '''
+    Name: getPos
+    Parameters: None
+    Returns: list[int]
+    Purpose: Getter for the character's position
+    '''
+    def getPos(self) -> list[int]:
+        return [self.rect.x, self.rect.y]
 
-'''
-Name: platformCollide
-Parameters: platforms|object, players:object, clientPlayer:object
-Returns: bool
-Purpose: Platoform + player collision handling
-'''
-def platformCollide(platforms, players, clientPlayer) -> bool:
-    # Sprite group collision handling; handles collisions between platforms and players
-    collisions = pygame.sprite.groupcollide(platforms, players, False, False)
-    for platform, player_list in collisions.items():
-        for player in player_list:
-            if player == clientPlayer:
-                return True
-    return False
+    '''
+    Name: getPlayerID
+    Parameters: None
+    Returns: self.__playerID
+    Purpose: Getter for the playerID variable
+    '''
+    def getPlayerID(self) -> int:
+        return self.__playerID
 
-'''
-Name: platformCollide
-Parameters: platforms|object, players:object, clientPlayer:object
-Returns: bool
-Purpose: Platoform + player collision handling
-'''
-def projectileCollide(bullets, players, clientPlayer):
-    pHit = pygame.sprite.groupcollide(bullets, players, False, False)
-    for b, p_list in pHit.items():
-        for pl in p_list:
-            if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
-                
-                if b.getElement() == "Fire":
-                    clientPlayer.takeDamage(b.getDamage(), fireEl=True)
-                elif b.getElement() == "Earth":
-                    clientPlayer.takeDamage(b.getDamage(), earthEl=True)
-                
-                bullets.remove(b)
-    
-    return bullets, clientPlayer
+    # Static Methods
+
+    '''
+    Name: platformCollide
+    Parameters: platforms|object, players:object, clientPlayer:object
+    Returns: bool
+    Purpose: Platoform + player collision handling
+    '''
+    @staticmethod
+    def platformCollide(platforms, players, clientPlayer) -> bool:
+        # Sprite group collision handling; handles collisions between platforms and players
+        collisions = pygame.sprite.groupcollide(platforms, players, False, False)
+        for platform, player_list in collisions.items():
+            for player in player_list:
+                if player == clientPlayer:
+                    return True
+        return False
+
+    '''
+    Name: platformCollide
+    Parameters: platforms|object, players:object, clientPlayer:object
+    Returns: bool
+    Purpose: Platoform + player collision handling
+    '''
+    @staticmethod
+    def projectileCollide(bullets, players, clientPlayer):
+        pHit = pygame.sprite.groupcollide(bullets, players, False, False)
+        for b, p_list in pHit.items():
+            for pl in p_list:
+                if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
+                    
+                    if b.getElement() == "Fire":
+                        clientPlayer.takeDamage(b.getDamage(), fireEl=True)
+                    elif b.getElement() == "Earth":
+                        clientPlayer.takeDamage(b.getDamage(), earthEl=True)
+                    
+                    bullets.remove(b)
+        
+        return bullets, clientPlayer
 
 
 '''
@@ -884,15 +899,15 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                 exit()
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
-                # mods = pygame.key.get_mods()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
-        clientPlayer.collided = platformCollide(platforms, players, clientPlayer)
+        clientPlayer.collided = Character.platformCollide(platforms, players, clientPlayer)
 
-        bullets, clientPlayer = projectileCollide(bullets, players, clientPlayer)
+        bullets, clientPlayer = Character.projectileCollide(bullets, players, clientPlayer)
 
         bullets.update()
+        
         if (time.time()-leaderUpd) >= 30:
             leaderboard.update(getLeaderboard(serverType))
             timeUpd = time.time()
@@ -921,13 +936,13 @@ if __name__ == '__main__':
         pygame.display.init()
         pygame.font.init()
         pygame.freetype.init()
-        WINDOW_SIZE = (800, 800)
+        WINDOW_SIZE: tuple[int,int] = (800, 800)
 
-        RED = (250, 9, 1)
-        GREEN = (2, 249, 0)
-        BLUE = (0, 0, 240)
-        PURPLE = (160, 32, 240)
-        WHITE = (255,255,255)
+        RED: tuple[int,int,int] = (250, 9, 1)
+        GREEN: tuple[int,int,int] = (2, 249, 0)
+        BLUE: tuple[int,int,int] = (0, 0, 240)
+        PURPLE: tuple[int,int,int] = (160, 32, 240)
+        WHITE: tuple[int,int,int] = (255,255,255)
 
         screen = pygame.display.set_mode(WINDOW_SIZE)
         clock = pygame.time.Clock()
@@ -942,7 +957,7 @@ if __name__ == '__main__':
         beginInfo = gameStart(screen)
 
         if beginInfo["type"] == "publicGame":
-            publicGame(screen, clock, players, platforms, bullets, char, "public")
+            publicGame(screen, clock, players, platforms, bullets, char, "public", logPath)
 
     except Exception as e:
         addToLog(logPath, "generalclient", e)
