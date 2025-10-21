@@ -1,0 +1,6 @@
+*.docx
+__pycache__/*
+APILogs/*
+clientLogs/*
+serverLogs/*
+function_lister.py

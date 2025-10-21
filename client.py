@@ -8,8 +8,6 @@ import random
 import requests
 import math
 
-from overrides import override
-
 from menuScreens import gameStart, characterBuilder
 from gameLogic import getDirection, data_handling
 from arenaHandling import Platform, onPlat, platformInfo
@@ -137,11 +135,11 @@ class Client:
             if msg["type"] == "playerID":
                 print("client player created")
                 self.playerID = msg["data"]["playerID"]
-                Client.addCharacter(msg["data"], self.__logPath)
+                self.__addCharacter(msg["data"])
 
             if msg["type"] == "playerJoin":
                 print("external player added")
-                Client.addCharacter(msg["data"], self.__logPath)
+                self.__addCharacter(msg["data"])
 
             if msg["type"] == "fire":
                 self.__projectileFired(msg["data"])
@@ -204,16 +202,19 @@ class Client:
     Returns: None
     Purpose: Handles an external player moving
     '''
-    def __playerMoved(self, msgData) -> None:
-        if len(players.sprites()) == 2:
-            movedPlayer = players.sprites()[1]
-        else:
-            movedPlayer = Client.getPlayerPosfromID(msgData["playerID"])
+    def __playerMoved(self, msgData: dict) -> None:
+        try:
+            if len(players.sprites()) == 2:
+                movedPlayer = players.sprites()[1]
+            else:
+                movedPlayer = Client.getPlayerPosfromID(msgData["playerID"])
 
-        if msgData["direction"] == "y":
-            movedPlayer.rect.y = msgData["movedTo"]
-        elif msgData["direction"] == "x":
-            movedPlayer.rect.x = msgData["movedTo"]
+            if msgData["direction"] == "y":
+                movedPlayer.rect.y = msgData["movedTo"]
+            elif msgData["direction"] == "x":
+                movedPlayer.rect.x = msgData["movedTo"]
+        except Exception as e:
+            addToLog(self.__logPath, "netclplayermoved", e)
 
     '''
     Name: tellServerDisconn
@@ -288,9 +289,12 @@ class Client:
     Returns: None
     Purpose: Adds a Character object to the players pygame sprite group
     '''
-    def addCharacter(self, data: dict) -> None:
-        players.add(Character(data["positionList"],data["colourTuple"],data["playerID"], self.__logPath))
-        print("Player created!")
+    def __addCharacter(self, data: dict) -> None:
+        try:
+            players.add(Character(data["positionList"],data["colourTuple"],data["playerID"], self.__logPath))
+            print("Player created!")
+        except Exception as e:
+            addToLog(self.__logPath, "claddchar", e)
 
     # Static Methods
 
@@ -390,7 +394,6 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Updates certain variables each tick
     '''
-    @override
     def update(self, cl) -> None:
         tim = time.time()
         updTime = tim - self.__timeOfLastHit

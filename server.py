@@ -100,6 +100,7 @@ class Server:
     of the Server object
     '''
     def __init__(self, logPath: str) -> None:
+        self.__logPath: str = logPath
         self.__HOST: str = '127.0.0.1'
         self.__PORT: int = 50000
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -110,7 +111,6 @@ class Server:
         # self.__platforms: list = [Platform([300,200],0),Platform([200,300],1)]
         # self.__spawnPoints: list = [[250,250], [350,350],[450,450]]
         self.__leaderboard: dict = {}
-        self.__logPath: str = logPath
 
     '''
     Name: generateArena
@@ -125,6 +125,7 @@ class Server:
         for platform in platforms:
             self.__platforms.append(Platform(platform, i))
             i += 1
+        addToLog(self.__logPath, "sergeneratearena", extraInfo="GENERATED PLATFORMS")
 
     def start(self) -> None:
         '''
@@ -139,20 +140,33 @@ class Server:
             print("Server Setup and listening on port", self.__PORT)
             self.__online = True
             while True:
-                conn, addr = s.accept()
-                print("New Connection from ", addr)
+                self.__acceptConnections(s)
 
-                # Sends the client the information they will initially need so that they can join the server properly
-                self.__sendConnInitialInfo(conn)
+    '''
+    Name: acceptConnections
+    Parameters: None
+    Returns: None
+    Purpose: Accepts new connections to the server
+    '''
+    def __acceptConnections(self, s) -> None:
+        conn, addr = s.accept()
+        print("New Connection from ", addr)
 
-                # Checks if the server is now full (aka reached 10 active players)
-                self.checkIfFull()
+        #Genreates the information that the client initially needs
+        colour: tuple[int,int,int] = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        position: list[int] = random.choice(self.__platforms).getSpawnPoint()
 
-                self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
-                self.__leaderboard[len(self.__clientList)+1] = 0
-                time.sleep(0.1)
-                self.notifyClientsOfConn(conn,colour,position)
-                threading.Thread(target=self.recv_from_client, args=(conn,)).start()
+        # Sends the client the information they will initially need so that they can join the server properly
+        self.__sendConnInitialInfo(conn, colour, position)
+
+        # Checks if the server is now full (aka reached 10 active players)
+        self.checkIfFull()
+
+        self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
+        self.__leaderboard[len(self.__clientList)+1] = 0
+        time.sleep(0.1)
+        self.notifyClientsOfConn(conn,colour,position)
+        threading.Thread(target=self.recv_from_client, args=(conn,)).start()
 
     def closeConn(self) -> None:
         '''
@@ -165,15 +179,12 @@ class Server:
 
     '''
     Name: sendConnInitialInfo
-    Parameters: conn: socket
+    Parameters: conn: socket, colour: tuple
     Returns: None
     Purpose: Sends the connection the initial info that
     it needs to join the server
     '''
-    def __sendConnInitialInfo(self, conn) -> None:
-        colour: tuple[int,int,int] = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-        position: list[int] = random.choice(self.__platforms).getSpawnPoint()
-
+    def __sendConnInitialInfo(self, conn, colour: tuple[int,int,int], position:list[int]) -> None:
         initialInfoDict: dict = {
             "type":"playerID",
             "data": {
@@ -242,26 +253,17 @@ class Server:
     Purpose: Sends all the platform information to the newly joined client
     '''
     def createStage(self,connection) -> None:
-        platformPositions =[[300,200],[200,300]]
-        iterator = 0
-        for position in platformPositions:
-            positionX = position[0]
-            positionY = position[1]
-
-            posMsgDict: dict = {
-                "type":"createPlat", 
+        for platform in self.__platforms:
+            posMsgDic: dict = {
+                "type": "createPlat",
                 "data": {
-                    "positionX": positionX,
-                    "positionY": positionY, 
-                    "sizeHeight": self.__platformSize[0],
-                    "sizeWidth": self.__platformSize[1], 
-                    "platformNo": iterator
-                    }
+                    "position": platform.position,
+                    "size": platform.platformSize,
+                    "platformNo": platform.platformId
                 }
-
-            positionMessage = json.dumps(posMsgDict)
+            }
+            positionMessage = json.dumps(posMsgDic)
             connection.send(positionMessage.encode())
-            iterator += 1
             time.sleep(0.2)
 
     '''
@@ -340,13 +342,13 @@ class Server:
                 break
             else:
                 try:
-                    messages = data_handling(data.decode())
+                    messages = data_handling(data.decode(), self.__logPath)
                     while not messages.is_empty():
                         message = messages.dequeue()
                         if message is not None:
                             self.__messageHandling(message)
                             
-                            self.__updClients(conn, messge["type"], data)
+                            self.__updClients(conn, message["type"], data)
                 
                 except json.JSONDecodeError as err:
                     print(data.decode())
@@ -370,7 +372,6 @@ class Server:
         try:
             if message["type"] == "leaderUpd":
                 self.leaderUpd(message["data"]["playerID"])
-                print("Leader Upd Called")
             if message["type"] == "leaderGet":
                 leaderMsg = {
                     "type":"leaderGet",
@@ -385,7 +386,6 @@ class Server:
                 self.tellClientsOfDisconn(message["data"]["playerID"]-1)
                 self.__clientList[message["data"]["playerID"]-1].client.close()
                 self.__clientList.pop(message["data"]["playerID"] - 1)
-                print("player disconnected")
 
             if message["type"] == "platformInfo":
                 self.__platformCreate(message["data"])

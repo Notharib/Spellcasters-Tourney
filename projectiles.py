@@ -1,7 +1,6 @@
 import pygame
 import math
 
-from overrides import override
 from time import time
 
 '''
@@ -27,7 +26,6 @@ class ProjectileGroup(pygame.sprite.Group):
     Purpose: Function to update each of the sprites within
     the sprite group
     '''
-    @override
     def update(self) -> None:
         sprites = self.sprites()
         
@@ -195,7 +193,6 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     Purpose: Update function that will update the object's rect position, depending on
     what the direction is
     '''
-    @override
     def update(self) -> None:
 
         tempTime: float = time()
@@ -244,7 +241,6 @@ class ConeAttack(pygame.sprite.Sprite, Projectile):
     Returns: None
     Purpose: Updates internal variables of the ConeAttack object 
     '''
-    @override
     def update(self) -> None:
         self.__ticksExisted += 1
         if self.__ticksExisted > 120:

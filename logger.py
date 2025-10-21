@@ -26,7 +26,7 @@ def generateLogFile(origin: str) -> str:
         except Exception as e:
             # On the rare occasion that the logID is already in use, it will simply just generate a new ID
             generated = False
-
+    print(f"Run Log Generated at {origin}Logs/, filename {fileName}")
     return fileName
 
 '''
@@ -52,8 +52,8 @@ Returns: None
 Purpose: Adds an error message, and the function/object that it happened
 in, to a log file
 '''
-def addToLog(logFile: str, errOrg: str, errMsg: str, extraInfo: str = "") -> None:
-    fullMsg: str = errOrg.upper() + extraInfo + ": " + errMsg
+def addToLog(logFile: str, errOrg: str, errMsg: str = "", extraInfo: str = "") -> None:
+    fullMsg: str = errOrg.upper() + extraInfo + ": " + str(errMsg)
     try:
         with open(logFile, 'a') as file:
             file.write(f"\n{fullMsg}")
