@@ -3,4 +3,5 @@ __pycache__/*
 APILogs/*
 clientLogs/*
 serverLogs/*
+.vscode/*
 function_lister.py
