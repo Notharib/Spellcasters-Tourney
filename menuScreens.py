@@ -4,7 +4,7 @@ import requests
 
 from time import sleep
 
-# from menuClasses import Pointer, TextBox
+from colours import Colours
 
 '''
 Name: gameStart
@@ -26,7 +26,7 @@ def gameStart(screen):
     while running:
 
         while running:
-            screen.fill((255, 255, 255))
+            screen.fill(Colours.WHITE.value)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return False
@@ -43,9 +43,9 @@ def gameStart(screen):
                          g = privateGame(screen)
                          return g
 
-            f.render_to(screen,(50,300),textOne, (0,0,0))
-            f.render_to(screen, (100, 400), textTwo, (0, 0, 0))
-            f.render_to(screen, (100, 550), textFour, (0, 0, 0))
+            f.render_to(screen,(50,300),textOne, Colours.BLACK.value)
+            f.render_to(screen, (100, 400), textTwo, Colours.BLACK.value)
+            f.render_to(screen, (100, 550), textFour, Colours.BLACK.value)
             pygame.display.update()
         return True
 
@@ -72,7 +72,7 @@ def characterBuilder(screen):
 
     running = True
     while running:
-        screen.fill((255, 255, 255))
+        screen.fill(Colours.WHITE.value)
         currSelected = f'Selected Class: {currSelectedClass}   Selected Element: {currSelectedElement}'
 
         for event in pygame.event.get():
@@ -94,13 +94,13 @@ def characterBuilder(screen):
                 if keys[pygame.K_q]:
                     running = False
 
-            f.render_to(screen, (50, 100), currSelected, (0, 0, 0))
-            f.render_to(screen, (100, 400), clOne, (0, 0, 0))
-            f.render_to(screen, (100, 450), clTwo, (0, 0, 0))
-            f.render_to(screen, (100, 550), elOne, (0, 0, 0))
-            f.render_to(screen, (100, 600), elTwo, (0, 0, 0))
-            f.render_to(screen, (100, 650), elThree, (0, 0, 0))
-            f.render_to(screen, (100, 700), finished, (0, 0, 0))
+            f.render_to(screen, (50, 100), currSelected, Colours.BLACK.value)
+            f.render_to(screen, (100, 400), clOne, Colours.BLACK.value)
+            f.render_to(screen, (100, 450), clTwo, Colours.BLACK.value)
+            f.render_to(screen, (100, 550), elOne, Colours.BLACK.value)
+            f.render_to(screen, (100, 600), elTwo, Colours.BLACK.value)
+            f.render_to(screen, (100, 650), elThree, Colours.BLACK.value)
+            f.render_to(screen, (100, 700), finished, Colours.BLACK.value)
             pygame.display.update()
 
     character = {

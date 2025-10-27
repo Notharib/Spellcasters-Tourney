@@ -2,6 +2,8 @@ import pygame
 
 from random import randint
 
+from colours import Colours
+
 '''
 Name: Platform
 Inherits: pygame.sprite.Sprite
@@ -21,7 +23,7 @@ class Platform(pygame.sprite.Sprite):
         self.width = size[1]
         self.X = position[0]
         self.Y = position[1]
-        self.colour = (0,255,0)
+        self.colour = Colours.GREEN.value
         self.platformNo = platformNo
         self.image = pygame.Surface([self.width,self.height])
         self.image.fill(self.colour)

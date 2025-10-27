@@ -2,6 +2,18 @@ import pygame
 import math
 
 from time import time
+from enum import Enum
+
+'''
+Name: Cooldown
+Inherits: enum.Enum
+Purpose: Enumarates constants to be used in the program
+'''
+class Cooldown(Enum):
+    WATER: int = 1
+    FIRE: int = 3
+    EARTH: int = 5
+    
 
 '''
 Name: ProjectileGroup
@@ -283,11 +295,11 @@ based on the element type
 '''
 def generateCooldown(element: str) -> int:
     if element == "Fire":
-        return 3
+        return Cooldown.FIRE.value
     elif element == "Water":
-        return 1
+        return Cooldown.WATER.value
     elif element == "Earth":
-        return 5
+        return Cooldown.EARTH.value
     else:
         raise ValueError("Internal Value Error. Element Passed in:",element)
 

@@ -2,6 +2,7 @@ import requests
 import pygame
 
 from gameLogic import merge_sort
+from colours import Colours
 
 '''
 Name: Leaderboard
@@ -24,7 +25,7 @@ class Leaderboard(pygame.sprite.Sprite):
         self.Y: int = 0
         self.width: int = 400
         self.height: int = 300
-        self.colour: tuple = (0,0,255)
+        self.colour: tuple = Colours.BLUE.value
         self.image: pygame.Surface = pygame.Surface([self.width, self.height])
         self.image.fill(self.colour)
         pygame.draw.rect(self.image, self.colour, [self.X, self.Y, self.width, self.height])

@@ -1,7 +1,14 @@
 import math
 
-gravityConstant: float = 9.807
-airDensity: float = 1.225
+from enum import Enum
+
+'''
+Name: Constants
+Purpose: Enumerates the physics constants to be used throughout the program
+'''
+class Constants(Enum):
+    GRAVITY: float = 9.807
+    AIRDENSITY: float = 1.225
 
 # Free falling equations
 
@@ -12,8 +19,7 @@ Returns: float
 Purpose: Generates the time constant needed for calculating the velocity
 '''
 def timeConstant(mass: int, dragCoef: float, area: float) -> float:
-    global airDensity
-    return mass / (dragCoef * area * airDensity)
+    return mass / (dragCoef * area * Constants.AIRDENSITY.value)
 
 '''
 Name: terminalVelocity
@@ -22,8 +28,7 @@ Returns: float
 Purpose: Generates the terminal velocity of an object based off of the parameters
 '''
 def terminalVelocity(mass: int, dragCoef: float, area: float, timeCons: float) -> float:
-    global gravityConstant
-    return math.sqrt(2* gravityConstant * timeCons)
+    return math.sqrt(2* Constants.GRAVITY.value * timeCons)
 
 def averageVelocity(mass: int, dragCoef: float, area: float):
     '''

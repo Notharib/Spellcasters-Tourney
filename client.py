@@ -17,7 +17,7 @@ from Elements import *
 from Casters import *
 from projectiles import ProjectileGroup, Bullet, ConeAttack, generateCooldown
 from physics import averageVelocity
-
+from colours import Colours
 
 '''
 Name: Client
@@ -410,9 +410,8 @@ class Character(pygame.sprite.Sprite):
                 self.__timeOfLastHit = tim
                 self.__OnFire = False
         
-        if self.__grounded:
-            if updTime >= 3:
-                self.__grounded = False
+        if self.__grounded and updTime >= 3:
+            self.__grounded = False
     
     '''
     Name: takeDamage
@@ -750,10 +749,8 @@ class Character(pygame.sprite.Sprite):
     '''
     def UpdateCharacteristics(self, characteristics: dict) -> None:
         try: 
-            element: str = characteristics["element"]
-            caster: str = characteristics["caster"]
-            self.__setElement(element)
-            self.__setCaster(caster)
+            self.__setElement(characteristics["element"])
+            self.__setCaster(characteristics["caster"])
 
             self.__attackCooldown = generateCooldown(self.__Element.getType())
 
@@ -884,7 +881,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
         clientPlayer.collided = False
         plat = None
 
-        screen.fill(WHITE)
+        screen.fill(Colours.WHITE.value)
 
         tab = pygame.key.get_pressed()[pygame.K_TAB]
         if not tab:
@@ -940,12 +937,6 @@ if __name__ == '__main__':
         pygame.font.init()
         pygame.freetype.init()
         WINDOW_SIZE: tuple[int,int] = (800, 800)
-
-        RED: tuple[int,int,int] = (250, 9, 1)
-        GREEN: tuple[int,int,int] = (2, 249, 0)
-        BLUE: tuple[int,int,int] = (0, 0, 240)
-        PURPLE: tuple[int,int,int] = (160, 32, 240)
-        WHITE: tuple[int,int,int] = (255,255,255)
 
         screen = pygame.display.set_mode(WINDOW_SIZE)
         clock = pygame.time.Clock()
