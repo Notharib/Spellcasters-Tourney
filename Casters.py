@@ -17,16 +17,8 @@ class Wizard(Caster):
     def __init__(self):
         super().__init__()
         self._type = "Wizard"
-
-    '''
-    Name: ability
-    Parameters: None
-    Returns: str
-    Purpose: Method for defining the Wizard's ability
-    '''
-    def ability(self) -> str:
-        # Short for extra Damage 
-        return "eDam"
+        self._ability: str = "eDam"
+        self._HP: int = 100
 
     '''
     Name: altAttack
@@ -56,16 +48,8 @@ class Druid(Caster):
     def __init__(self):
         super().__init__()
         self._type = "Druid"
-
-    '''
-    Name: ability
-    Parameters: None
-    Returns: str
-    Purpose: Getter for the Druid's unique ability
-    '''
-    def ability(self) -> str:
-        # Short for regeneration (will double the Druid's base regeneration)
-        return "regen"
+        self._ability: str = "regen"
+        self._HP: int = 80
 
     '''
     Name: altAttack

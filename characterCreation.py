@@ -1,57 +1,6 @@
 import math
 
-# Base Character Class
-
-'''
-Name: BaseCharacter
-Purpose: Base Character class for other classes to
-inherit from
-'''
-class BaseCharacter:
-
-    '''
-    Name: __init__
-    Parameters: None
-    Returns: None
-    Purpose: Constructor to set the initial values
-    of the BaseCharacter object
-    '''
-    def __init__(self) -> None:
-        self._height: int = 40
-        self._width: int = 40
-        self._HP: int = 100
-        self._timeSinceLastHit: int = -1
-        self._RegenTime: int = -1
-        self._Regeneration = lambda time: math.exp(time)
-        self._Element = None
-        self._Caster = None
-
-    '''
-    Name: takeDamage
-    Parameters: damage:int
-    Returns: None
-    Purpose: Setter that adjusts the HP of the character
-    '''
-    def takeDamage(self, damage: int) -> None:
-        self._HP -= damage
-
-    '''
-    Name: getWidth
-    Parameters: None
-    Returns: self._width:int
-    Purpose: Getter for the character's width
-    '''
-    def getWidth(self) -> int:
-        return self._width
-
-    '''
-    Name: getHeight
-    Parameters: None
-    Returns: self._height:int
-    Purpose: Getter for the character's height
-    '''
-    def getHeight(self) -> int:
-        return self._height
+from abc import abstractmethod
 
 # Base Element Class
 
@@ -64,9 +13,19 @@ class Element:
     of the Element object
     '''
     def __init__(self) -> None:
-        self._type: str = ""
-        self._strength: str = ""
-        self._weakness: str = ""
+        self._type: str
+        self._strength: str
+        self._weakness: str
+        self._ability: str
+
+    '''
+    Name: getAbility
+    Parameters: None
+    Returns: self._ability: str
+    Purpose: Getter for the ability variable
+    '''
+    def getAbility(self) -> str:
+        return self._ability
 
     '''
     Name: getType
@@ -119,17 +78,28 @@ class Caster:
     of the Caster object
     '''
     def __init__(self) -> None:
-        self._type: str = ""
-   
+        self._type: str
+        self._ability: str
+        self._HP: int
+    
     '''
-    Name: ability
+    Name: getHP
     Parameters: None
-    Returns: None
-    Purpose: Abstract method for where the
-    Spellcaster's unique ability shall go
+    Returns self._HP: int
+    Purpose: Getter for the caster's HP
     '''
-    def ability(self) -> None:
-        pass
+    def getHP(self) -> int:
+        return self._HP
+
+    '''
+    Name: getAbility
+    Parameters: None
+    Returns: str
+    Purpose: Getter for the casters's unique ability
+    '''
+    def getAbility(self) -> str:
+        # Short for regeneration (will double the Druid's base regeneration)
+        return self._ability
 
     '''
     Name: altAttack
@@ -139,6 +109,7 @@ class Caster:
     Spellcaster's unique alternate attack
     shall go
     '''
+    @abstractmethod
     def altAttack(self) -> None:
         pass
 

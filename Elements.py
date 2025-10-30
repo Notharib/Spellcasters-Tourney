@@ -19,6 +19,7 @@ class Fire(Element):
         self._oppositeType: str = "Water"
         self._type: str = "Fire"
         self._strength: str = "Earth"
+        self._ability: str = "On Fire"
 
 '''
 Name: Water
@@ -55,3 +56,4 @@ class Earth(Element):
         self._weakness: str = "Fire"
         self._type: str = "Earth"
         self._strength: str = "Water"
+        self._ability: str = "Grounded"
