@@ -9,6 +9,7 @@ import gameLogic
 import dataStructures
 import client
 
+from logger import generateLogFile
 
 '''
 Name: LeaderboardTesting
@@ -202,7 +203,8 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Set up the unit test
         '''
-        self.player = client.Character([200,200], (0,255,100), 2)
+        logPath: str = generateLogFile("unittests")
+        self.player = client.Character([200,200], (0,255,100), 2, logPath)
 
     def test_acceptableDirection(self) -> None:
         '''
@@ -284,7 +286,9 @@ class characterTesting(unittest.TestCase):
         self.initialColour: tuple[int,int,int] = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
         self.playerID: int = random.randint(1,10)
 
-        self.character = client.Character(self.initialPosition, self.initialColour, self.playerID)
+        logPath: str = generateLogFile("unittests")
+
+        self.character = client.Character(self.initialPosition, self.initialColour, self.playerID, logPath)
 
     '''
     Name: test_correctInitialPosition

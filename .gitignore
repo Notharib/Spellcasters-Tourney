@@ -5,3 +5,4 @@ clientLogs/*
 serverLogs/*
 .vscode/*
 function_lister.py
+unittestsLogs/*
