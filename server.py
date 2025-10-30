@@ -72,7 +72,7 @@ class Platform:
     '''
     def __generateSpawnPoint(self, playerSize: int = 40) -> list[int]:
         X: int = self.position[0] + self.platformSize[0] // 2
-        Y: int = self.position[1] + playerSize
+        Y: int = self.position[1] - (playerSize + playerSize // 2)
 
         return [X, Y]
     

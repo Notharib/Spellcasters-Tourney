@@ -380,6 +380,8 @@ class Character(pygame.sprite.Sprite):
         self.collided = False
         self.__gravityEq: float = averageVelocity(self.__mass, 1.0, 0.7)
         self.__fallTime: float = self.__lastAttackTime
+        self.__jumpTime: float = self.__lastAttackTime
+        self.__dJumped: bool = False
 
         # Other Important Variables
         self.__playerID: int = playerID
@@ -402,6 +404,9 @@ class Character(pygame.sprite.Sprite):
             self.__HP += self.__regeneration(updTime)
         if self.__HP > 100:
             self.__HP = 100
+        
+        if self.collided and self.__dJumped:
+            self.__dJumped = False
         
         if self.__OnFire:
             self.takeDamage(5, cl)
@@ -440,6 +445,8 @@ class Character(pygame.sprite.Sprite):
         self.rect.y = self.Y
         self.__HP = 100
         self.__OnFire = False
+        self.__grounded = False
+        self.__fallTime = time.time()
         requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
         
         for letter in [["y", self.rect.y], ["x", self.rect.x]]:
@@ -479,6 +486,8 @@ class Character(pygame.sprite.Sprite):
     '''
     def move(self, cl, keys: list[bool]|None = None):
         try:
+            y: bool = False
+            
             if not self.__grounded:
                 if keys is None:
                     keys = pygame.key.get_pressed()
@@ -491,10 +500,19 @@ class Character(pygame.sprite.Sprite):
                     cart: str = self.__dirToCart(moves[i])
                     amount: int = self.__dirToAmount(moves[i])
 
-                    self.checkIfLegal(cart, amonut, cl)
+                    if cart == "y" and (self.collided or not self.__dJumped or (self.__jumpTime - time.time()) > 0.1):
+                        y = True
+                        self.__jumpTime = time.time()
+                        if not self.collided and not self.__dJumped:
+                            self.__dJumped = True
+
+                    self.checkIfLegal(cart, amount, cl)
                     self.__changeRect(cart, amount, cl)
 
                     i += 1
+            
+            if not y: 
+                self.gravity(cl)
                 
         except Exception as e:
             self.__charError("move", e)
@@ -507,7 +525,7 @@ class Character(pygame.sprite.Sprite):
     to the cartesian direction (x or y)
     '''
     def __dirToCart(self, direction: str) -> str:
-        if direction == "up":
+        if direction == "up" or  direction == "FIX":
             return "y"
         else:
             return "x"
@@ -520,11 +538,13 @@ class Character(pygame.sprite.Sprite):
     '''
     def __dirToAmount(self, direction: str) -> int:
         if direction == "left":
-            return -2
+            return -4
         elif direction == "right":
-            return 2
-        else:
             return 4
+        elif direction == "fix":
+            return -100
+        else:
+            return -10
 
     '''
     Name: keyCheck
@@ -541,7 +561,9 @@ class Character(pygame.sprite.Sprite):
         if keys[pygame.K_LEFT]:
             keyCheck.append("left")
         if keys[pygame.K_RIGHT]:
-            keycheck.append("right")
+            keyCheck.append("right")
+        if keys[pygame.K_t]:
+            keyCheck.append("FIX")
         
         return keyCheck
 
@@ -600,7 +622,10 @@ class Character(pygame.sprite.Sprite):
     def gravity(self, cl):
         timothy: float = time.time()
         if not self.collided:
-            self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime), cl)
+            # As the equation used calulates the falling speed based off of m/s, I have the
+            # number it gives multiplied by 40, as to make it so that 1m:40pixels 
+            # (aka the height of a player)
+            self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime) * 40, cl)
         else:
             self.__fallTime = timothy
 
@@ -654,7 +679,7 @@ class Character(pygame.sprite.Sprite):
         currTime: float = time.time()
         
         if mouseKeys[0] and (currTime - self.__lastAttackTime >= self.__attackCooldown):
-            self.__createProj(client)
+            self.__createProj(client, currTime)
     
     
     '''
@@ -663,7 +688,7 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Creates a projectile based off of the client's 
     '''
-    def __createProj(self, client) -> None:
+    def __createProj(self, client, currTime: float) -> None:
         elementType: str = self.__Element.getType()
         casterType: str = self.__Caster.getType()
 
@@ -865,6 +890,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
     leaderboard = pygame.sprite.Group()
     leaderboard.add(Leaderboard())
 
+    moving: bool = False
 
     running = True
     showLeader = False
@@ -878,6 +904,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
     # Run loop
     while running:
 
+        moving = False
         clientPlayer.collided = False
         plat = None
 
@@ -897,7 +924,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             if event.type == pygame.QUIT:
                 c.tellServerDisconn()
                 exit()
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN and not tab:
+                moving = True 
                 keys = pygame.key.get_pressed()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
@@ -913,7 +941,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             timeUpd = time.time()
 
         clientPlayer.update(c)
-        clientPlayer.gravity(c)
+
+        #clientPlayer.gravity(c)
         clientPlayer.move(c)
         clientPlayer.fire(c)
 
