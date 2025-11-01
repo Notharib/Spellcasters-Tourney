@@ -6,3 +6,5 @@ serverLogs/*
 .vscode/*
 function_lister.py
 unittestsLogs/*
+exportToHTML/*
+.idea/*

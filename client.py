@@ -7,6 +7,7 @@ import json
 import random
 import requests
 import math
+import traceback
 
 from menuScreens import gameStart, characterBuilder
 from gameLogic import getDirection, data_handling
@@ -105,7 +106,7 @@ class Client:
                     messageQueue = data_handling(data.decode(), self.__logPath)
                     
                     if not self.__recvMsg:
-                        self.__recvMsg
+                        self.__recvMsg = True
 
                     if messageQueue is not None:
                         while not messageQueue.is_empty():
@@ -167,7 +168,7 @@ class Client:
             if msg["type"] == "MOVENOTLEGAL":
                 self.__clientPlayer.illegalMove()
         except Exception as e:
-            addToLog(self.__logPath, "clientmsghandling", e)
+            addToLog(self.__logPath, "clientmsghandling", e, f" MSG: {msg}")
 
     def __kickBrokenPlayer(msgData: int) -> None:
         '''
@@ -191,10 +192,11 @@ class Client:
     Purpose: Handles a projectile being fired by an external client
     '''
     def __projectileFired(self, msgData: dict) -> None:
+        print(msgData)
         if msgData["casterType"] == "Druid":
-            Client.createBullet(msgData["spawnPoint"],msgData["direction"], msgData["playerID"], msgData["elementType"])
+            createBullet(msgData["spawnPoint"], msgData["playerID"], msgData["direction"], msgData["elementType"])
         elif msgData["casterType"] == "Wizard":
-            Client.createCone(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"])
+            createCone(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"])
 
     '''
     Name: __playerMoved
@@ -297,28 +299,6 @@ class Client:
             addToLog(self.__logPath, "claddchar", e)
 
     # Static Methods
-
-    '''
-    Name: createBullet
-    Parameters: spawnPoint: list[int], playerID: int, direction: list[int], elementType: str
-    Returns: None
-    Purpose: Static method that adds a Bullet 
-    object to the bullets pygame sprite group
-    '''
-    @staticmethod
-    def createBullet(spawnPoint: list[int], playerID: int, direction: list[int], elementType: str) -> None:
-        bullets.add(Bullet(spawnPoint, direction, playerID, elementType))
-
-    '''
-    Name: createCone
-    Parameters: spawnPoint: list[int], playerID: int, elementType: str
-    Returns: None
-    Purpose: Static method that creates a ConeAttack object in 
-    the bullets pygame sprite group
-    '''
-    @staticmethod
-    def createCone(spawnPoint: list[int], playerID: int, elementType: str) -> None:
-        bullets.add(ConeAttack(spawnPoint, playerID, elementType))
     
     '''
     Name: getPlayerPosfromID
@@ -334,6 +314,26 @@ class Client:
         
         raise Exception("PlayerID Doesn't Exist")
 
+
+'''
+Name: createBullet
+Parameters: spawnPoint: list[int], playerID: int, direction: list[int], elementType: str
+Returns: None
+Purpose: Adds a Bullet 
+object to the bullets pygame sprite group
+'''
+def createBullet(spawnPoint: list[int], playerID: int, direction: list[int], elementType: str) -> None:
+    bullets.add(Bullet(spawnPoint, direction, playerID, elementType))
+
+'''
+Name: createCone
+Parameters: spawnPoint: list[int], playerID: int, elementType: str
+Returns: None
+Purpose: Creates a ConeAttack object in 
+the bullets pygame sprite group
+'''
+def createCone(spawnPoint: list[int], playerID: int, elementType: str) -> None:
+    bullets.add(ConeAttack(spawnPoint, playerID, elementType))
 
 '''
 Name: Character
@@ -673,13 +673,16 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
     '''
-    def fire(self, client) -> None:
-        mouseKeys = pygame.mouse.get_pressed(3)
+    def fire(self, client, logPath: str) -> None:
+        try:
+            mouseKeys = pygame.mouse.get_pressed(3)
 
-        currTime: float = time.time()
-        
-        if mouseKeys[0] and (currTime - self.__lastAttackTime >= self.__attackCooldown):
-            self.__createProj(client, currTime)
+            currTime: float = time.time()
+            
+            if mouseKeys[0] and (currTime - self.__lastAttackTime >= self.__attackCooldown):
+                self.__createProj(client, currTime, logPath)
+        except Exception as e:
+            addToLog(logPath, "clPlFire", e)
     
     
     '''
@@ -688,18 +691,27 @@ class Character(pygame.sprite.Sprite):
     Returns: None
     Purpose: Creates a projectile based off of the client's 
     '''
-    def __createProj(self, client, currTime: float) -> None:
-        elementType: str = self.__Element.getType()
-        casterType: str = self.__Caster.getType()
+    def __createProj(self, client, currTime: float, logPath: str) -> None:
+        try:
+            elementType: str = self.__Element.getType()
+            casterType: str = self.__Caster.getType()
 
-        if casterType == "Wizard":
-            spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
-            direction: int = 0
-            Client.createCone(spawnPoint, self.__playerID, elementType)
-        elif casterType == "Druid":
-            spawnPoint: list[int] = [self.rect.x, self.rect.y]
-            direction: list[int] = getDirection(self)
-            Client.createBullet(spawnPoint, self.__playerID, direction, elementType)
+            print(elementType, casterType)
+        except Exception as e:
+            addToLog(logPath, "clplfiregetter", e)
+            
+        try:
+            if casterType == "Wizard":
+                spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
+                direction: int = 0
+                createCone(spawnPoint, self.__playerID, elementType)
+            elif casterType == "Druid":
+                spawnPoint: list[int] = [self.rect.x, self.rect.y]
+                direction: list[int] = getDirection([self.rect.x, self.rect.y])
+                print(direction)
+                createBullet(spawnPoint,self.__playerID, direction, elementType)
+        except Exception as e:
+            addToLog(logPath, "clplfireaddproj", e)
             
         self.__lastAttackTime = currTime
         self.__tellServerFire(spawnPoint, client, direction)
@@ -944,7 +956,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
         #clientPlayer.gravity(c)
         clientPlayer.move(c)
-        clientPlayer.fire(c)
+        clientPlayer.fire(c, logPath)
 
         platforms.draw(screen)
         bullets.draw(screen)
@@ -983,4 +995,6 @@ if __name__ == '__main__':
             publicGame(screen, clock, players, platforms, bullets, char, "public", logPath)
 
     except Exception as e:
-        addToLog(logPath, "generalclient", e)
+        tb = traceback.extract_tb(e.__traceback__)
+        line = tb[-1].lineno
+        addToLog(logPath, "generalclient", e, f" LINENO: {line}")

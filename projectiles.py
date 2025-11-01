@@ -169,11 +169,11 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     Purpose: Constructor to set the initial values
     of the Bullet object
     '''
-    def __init__(self,spawnPoint:list[int], direction:list[int], player:int, element:str, size:list[int]=[10,10],damage:int = 2):
+    def __init__(self, spawnPoint:list[int], direction:list[int], player:int, element:str, size:list[int]=[10,10],damage:int = 2):
         pygame.sprite.Sprite.__init__(self)
         Projectile.__init__(self,size, player, damage,spawnPoint, element)
         
-        self.__direction = direction
+        self.__direction = self.__directionCheck(direction)
         self.__gravity: int = lambda time: math.exp(time // 10)
         self.__updTimer: float = time()
         self.playerOrigin = player
@@ -185,6 +185,19 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         self.rect.x = self._X
         self.rect.y = self._Y
         self._ProType: int = 1
+
+    '''
+    Name: directionCheck
+    Paramaters: direction: list[int]
+    Returns: list[int]
+    Purpose: Checks that the direction is the right data type,
+    and if not, raises a TypError
+    '''
+    def __directionCheck(self, direction: list[int]) -> list[int]:
+        if type(direction) != list:
+            raise TypeError(f"Direction variable should be list type, instead got {type(direction)}. Original Direction Variable: {direction}")
+        else:
+            return direction
 
     def outOfBoundsCheck(self) -> bool:
         '''
