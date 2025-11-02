@@ -108,8 +108,6 @@ class Server:
         self. __platformSize: list[int] = [20,500]
         self.__platforms: list = []
         self.__generateArena(2)
-        # self.__platforms: list = [Platform([300,200],0),Platform([200,300],1)]
-        # self.__spawnPoints: list = [[250,250], [350,350],[450,450]]
         self.__leaderboard: dict = {}
 
     '''
@@ -160,9 +158,9 @@ class Server:
         self.__sendConnInitialInfo(conn, colour, position)
 
         # Checks if the server is now full (aka reached 10 active players)
+        self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
         self.checkIfFull()
 
-        self.__clientList.append(Client(position,colour,conn,len(self.__clientList)+1,addr))
         self.__leaderboard[len(self.__clientList)+1] = 0
         time.sleep(0.1)
         self.notifyClientsOfConn(conn,colour,position)

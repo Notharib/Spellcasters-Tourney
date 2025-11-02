@@ -4,16 +4,16 @@ from logger import addToLog, generateLogFile
 
 app = Flask(__name__)
 
-
-serverFullValue = False
-pubLeader = {}
+# Global Variables
+serverFullValue: bool = False
+pubLeader: dict = {}
 
 for i in range(1,11):
     pubLeader[str(i)] = None
 
 
 '''
-Name: serverFull
+Name: serverFullfullServer(fullValue)
 Parameters: None
 Returns: string
 Purpose: Recieves JSON data, and if in the json data it is given a fullValue, 
@@ -21,7 +21,7 @@ it changes whether the public server is recognised as full or as not full
 '''
 @app.route('/serverFull', methods=["POST"])
 def serverFull():
-    global serverFull, logPath
+    global serverFullValue, logPath
     data = request.get_json()
     fullValue = data.get("fullValue")
 
@@ -31,7 +31,7 @@ def serverFull():
         fullValue = int(fullValue)
 
     try:
-        serverFull = fullServer(fullValue)
+        serverFullValue = fullValue == 1
         confirmMesage = {"msg":"Value Changed Successfully!"}
         return jsonify(confirmMesage), 200
 

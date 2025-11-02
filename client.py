@@ -309,7 +309,7 @@ class Client:
     @staticmethod
     def getPlayerPosfromID(playerID: int) -> any:
         for player in players.sprites():
-            if player.getPlayerID() == msgData["playerID"]:
+            if player.getPlayerID() == playerID:
                 return player
         
         raise Exception("PlayerID Doesn't Exist")

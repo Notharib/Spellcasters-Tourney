@@ -162,14 +162,14 @@ class QueueTesting(unittest.TestCase):
         self.assertEqual(0, self.queue.spaces_free())
 
 
-def getActualMousePos(player:client.Character, mousePos:list[int]) -> list[int]:
+def getActualMousePos(playerPosition: list[int], mousePos:list[int]) -> list[int]:
     '''
     Name: getActualMousePos
     Parameters: player:client.Character, mousePos:list[int]
     Returns: MPVector:list[int]
     Purpose: Function just to check that the vector is functioning as intended
     '''
-    MPVector = [player.rect.x - mousePos[0], player.rect.y - mousePos[1]]
+    MPVector = [playerPosition[0] - mousePos[0], playerPosition[1] - mousePos[1]]
     try:
         hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
         divider = hyppotenuse // 10
@@ -203,8 +203,8 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Set up the unit test
         '''
-        logPath: str = generateLogFile("unittests")
-        self.player = client.Character([200,200], (0,255,100), 2, logPath)
+        self.playerPosition: list[int] = [200,200]
+        
 
     def test_acceptableDirection(self) -> None:
         '''
@@ -213,9 +213,9 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Unit test to an acceptable case
         '''
-        mousePos = [random.randint(1,self.player.X-10) for i in range(2)]
-        MPVector = gameLogic.getDirection(self.player, mousePos)
-        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+        mousePos = [random.randint(1,self.playerPosition[0]-10) for i in range(2)]
+        MPVector = gameLogic.getDirection(self.playerPosition, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.playerPosition, mousePos))
 
     def test_edgeCase(self) -> None:
         '''
@@ -224,9 +224,9 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Unit test to test a potential edge case
         '''
-        mousePos = [self.player.X -1, self.player.X -1]
-        MPVector = gameLogic.getDirection(self.player, mousePos)
-        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+        mousePos = [self.playerPosition[0] -1, self.playerPosition[0] -1]
+        MPVector = gameLogic.getDirection(self.playerPosition, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.playerPosition, mousePos))
 
     def test_Zero(self) -> None:
         '''
@@ -236,9 +236,9 @@ class getDirTests(unittest.TestCase):
         Purpose: Unit test to test that the function is able to handle when there is no difference
         between the mouse pos and the player position
         '''
-        mousePos = [self.player.X, self.player.Y]
-        MPVector = gameLogic.getDirection(self.player, mousePos)
-        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+        mousePos = [self.playerPosition[0], self.playerPosition[1]]
+        MPVector = gameLogic.getDirection(self.playerPosition, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.playerPosition, mousePos))
 
     def test_NegativeX(self) -> None:
         '''
@@ -247,9 +247,9 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Unit test to test what happens when the mousePosX is negative
         '''
-        mousePos = [-self.player.X, self.player.Y]
-        MPVector = gameLogic.getDirection(self.player, mousePos)
-        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+        mousePos = [-self.playerPosition[0], self.playerPosition[1]]
+        MPVector = gameLogic.getDirection(self.playerPosition, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.playerPosition, mousePos))
 
     def test_NegativeY(self) -> None:
         '''
@@ -258,9 +258,9 @@ class getDirTests(unittest.TestCase):
         Returns: None
         Purpose: Unit test to test what happens when the mousePosY is negative
         '''
-        mousePos = [self.player.X, self.player.Y]
-        MPVector = gameLogic.getDirection(self.player, mousePos)
-        self.assertEqual(MPVector, getActualMousePos(self.player, mousePos))
+        mousePos = [self.playerPosition[0], self.playerPosition[1]]
+        MPVector = gameLogic.getDirection(self.playerPosition, mousePos)
+        self.assertEqual(MPVector, getActualMousePos(self.playerPosition, mousePos))
 
 
 # character tests
