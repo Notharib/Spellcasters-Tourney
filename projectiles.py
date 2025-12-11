@@ -173,8 +173,9 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         pygame.sprite.Sprite.__init__(self)
         Projectile.__init__(self,size, player, damage,spawnPoint, element)
         
-        self.__direction = self.__directionCheck(direction)
         self.__gravity: int = lambda time: math.exp(time // 10)
+
+        self.__direction = self.__directionCheck(direction)
         self.__updTimer: float = time()
         self.playerOrigin = player
         self.colour = (0,0,0)
@@ -191,7 +192,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     Paramaters: direction: list[int]
     Returns: list[int]
     Purpose: Checks that the direction is the right data type,
-    and if not, raises a TypError
+    and if not, raises a TypeError
     '''
     def __directionCheck(self, direction: list[int]) -> list[int]:
         if type(direction) != list:
@@ -206,10 +207,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         Returns: bool
         Purpose: Checks whether the bullet is out of bounds
         '''
-        if (self.rect.x > 800) or (self.rect.x < 0) or (self.rect.y > 800) or (self.rect.y < 0):
-            return True
-        else:
-            return False
+        return (self.rect.x > 800) or (self.rect.x < 0) or (self.rect.y > 800) or (self.rect.y < 0)
 
     '''
     Name: update

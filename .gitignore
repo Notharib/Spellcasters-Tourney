@@ -8,3 +8,4 @@ function_lister.py
 unittestsLogs/*
 exportToHTML/*
 .idea/*
+start.sh

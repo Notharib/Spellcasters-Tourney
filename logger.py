@@ -54,6 +54,7 @@ in, to a log file
 '''
 def addToLog(logFile: str, errOrg: str, errMsg: str = "", extraInfo: str = "") -> None:
     fullMsg: str = errOrg.upper() + extraInfo + ": " + str(errMsg)
+    print(f"\nfullMsg")
     try:
         with open(logFile, 'a') as file:
             file.write(f"\n{fullMsg}")

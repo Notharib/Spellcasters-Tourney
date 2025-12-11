@@ -40,3 +40,12 @@ def averageVelocity(mass: int, dragCoef: float, area: float):
     '''
     TIMC: float = timeConstant(mass, dragCoef, area)
     return lambda time : terminalVelocity(mass, dragCoef, area, TIMC) * (1 - (TIMC / time) * (1 - math.exp(-time / TIMC)))
+
+'''
+Name: projectileSpeed
+Parameters: position: int, timeMoving: int, acceleration: float
+Returns: int
+Purpose: Uses the SUVAT equation to figure out what the current 
+'''
+def projectileSpeed(position: int, timeMoving: int, acceleration: float = Constants.GRAVITY.value) -> int:
+    return round(position + 0.5 * acceleration * (timeMoving**2)) // timeMoving
