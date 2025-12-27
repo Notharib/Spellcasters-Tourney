@@ -1,19 +1,18 @@
 import math
-import requests
-import unittest
-import random
 import json
 import pygame
 
 from dataStructures import Queue
 from logger import addToLog
 
-'''
+"""
 Name: merge_sort
 Parameters: myList:list
 Returns: list
 Purpose: Sorts an unordered list into an ordered one
-'''
+"""
+
+
 def merge_sort(myList: list) -> list:
     list_length: int = len(myList)
     if list_length == 1:
@@ -23,15 +22,18 @@ def merge_sort(myList: list) -> list:
     right: list = merge_sort(myList[mid_point:])
     return merge(left, right)
 
-'''
+
+"""
 Name: merge
 Parameters: left:list, right:list
 Returns: output:list
 Purpose: Sorts and merges two separate lists
-'''
+"""
+
+
 def merge(left: list, right: list) -> list:
     output: list = []
-    i, j= 0, 0
+    i, j = 0, 0
     while i < len(left) and j < len(right):
         if left[i] < right[j]:
             output.append(left[i])
@@ -44,17 +46,19 @@ def merge(left: list, right: list) -> list:
     return output
 
 
-'''
+"""
 Name: getDirection
 Parameters: player:object
 Returns: MPVector:list
 Purpose: Gets the direction vector that the projectile needs to move in
-'''
-def getDirection(playerPosition: list[int], mousePos: None|list[int] = None):
+"""
+
+
+def getDirection(playerPosition: list[int], mousePos: None | list[int] = None):
     if mousePos is None:
         mousePos: list[int] = pygame.mouse.get_pos()
-    
-    MPVector = [playerPosition[0] - mousePos[0], playerPosition[1]- mousePos[1]]
+
+    MPVector = [playerPosition[0] - mousePos[0], playerPosition[1] - mousePos[1]]
     try:
         hyppotenuse = math.sqrt((MPVector[0] ** 2) + (MPVector[1] ** 2))
         divider = hyppotenuse // 10
@@ -76,16 +80,17 @@ def getDirection(playerPosition: list[int], mousePos: None|list[int] = None):
         return MPVector
 
 
-'''
+"""
 Name: data_handling
 Parameters: data:str
 Returns: list[dict]
 Purpose: Handles what should initially happen with JSON data, 
 to avoid extra data errors
-'''
+"""
+
+
 def data_handling(data: str, logPath: str) -> Queue:
-    try: 
-        
+    try:
         decoder = json.JSONDecoder()
         iterator: int = 0
         retVal: Queue = Queue()
@@ -99,11 +104,11 @@ def data_handling(data: str, logPath: str) -> Queue:
         return retVal
 
     except SyntaxError as e:
-        print("Data Handling Syntax Error:",e)
+        print("Data Handling Syntax Error:", e)
         addToLog(logPath, "dataHandling", e, extraInfo=f" EXTRA INFO: {data} ")
 
     except json.JSONDecodeError as e:
-        print("Data Handling JSON Error:",e)
+        print("Data Handling JSON Error:", e)
         addToLog(logPath, "dataHandling", e, extraInfo=f" EXTRA INFO: {data} ")
 
     except Exception as e:

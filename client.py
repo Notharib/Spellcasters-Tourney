@@ -1,5 +1,5 @@
 import pygame
-import pygame.freetype 
+import pygame.freetype
 import time
 import threading
 import socket
@@ -20,41 +20,44 @@ from projectiles import ProjectileGroup, Bullet, ConeAttack, generateCooldown
 from physics import averageVelocity
 from colours import Colours
 
-'''
+"""
 Name: Client
 Purpose: To interact with the server, and to modify the players' information on the game
 as new data is sent/received from the server
-'''
+"""
+
+
 class Client:
-    '''
+    """
     Name: __init__
     Parameters: IPToConnectTo: integer, logFile: str socket: integer
     Returns: None
     Purpose: Constructor to set the initial values
     of the client object
-    '''
-    def __init__(self,IPToConnectTo: str, logFile: str, socket: int =50000) -> None:
-        self.__HOST: str = IPToConnectTo #String
-        self.__PORT: int = socket #Integer
-        self.playerID: None|int = None #Integer
-        self.__socket = None #Object?
-        self.__noOfPlatforms: int = 0 #Integer
-        self.__clientPlayer = None #String?
-        self.__leaderBoard: None|Leaderboard = None #Object
-        self.__lastMessageSent: float = time.time() #Float
+    """
+
+    def __init__(self, IPToConnectTo: str, logFile: str, socket: int = 50000) -> None:
+        self.__HOST: str = IPToConnectTo  # String
+        self.__PORT: int = socket  # Integer
+        self.playerID: None | int = None  # Integer
+        self.__socket = None  # Object?
+        self.__noOfPlatforms: int = 0  # Integer
+        self.__clientPlayer = None  # String?
+        self.__leaderBoard: None | Leaderboard = None  # Object
+        self.__lastMessageSent: float = time.time()  # Float
         self.__recvMsg: bool = False
         self.__online: bool = False
         self.__sentMsg: bool = False
         self.__logPath: str = logFile
 
-
-    '''
+    """
     Name: connect
     Parameters: None
     Returns: None
     Purpose: Connects the client object to the server, and then creates a Thread obejct that
     ensures that the server continuously listens for data from the server
-    '''
+    """
+
     def connect(self) -> None:
         print(self.__HOST, self.__PORT)
 
@@ -67,35 +70,36 @@ class Client:
             self.stopConn()
             addToLog(self.__logPath, "clientnetworkconn", e)
 
-    
     def stopConn(self) -> None:
-        '''
+        """
         Name: stopConn
         Parameters: None
         Returns: None
         Purpose: Ends the connection
-        '''
+        """
         self.__socket.shutdown()
         self.__online = False
 
-    '''
+    """
     Name: sendData
     Parameters: message: dictionary
     Returns: None
     Purpose: Converts the dictionary into JSON, and then encodes it and send the data to the server
-    '''
-    def sendData(self,message: dict) -> None:
+    """
+
+    def sendData(self, message: dict) -> None:
         strMessage: str = json.dumps(message)
         self.__socket.send(strMessage.encode())
         self.__sentMsg = True
 
-    '''
+    """
     Name: listen
     Parameters: None
     Returns: None
     Purpose: Ran through a Thread object, it listens for data being sent by the server,
     and then handles what to do with it
-    '''
+    """
+
     def listen(self) -> None:
         while True:
             data = self.__socket.recv(1024)
@@ -104,7 +108,7 @@ class Client:
             else:
                 try:
                     messageQueue = data_handling(data.decode(), self.__logPath)
-                    
+
                     if not self.__recvMsg:
                         self.__recvMsg = True
 
@@ -113,21 +117,22 @@ class Client:
                             msg = messageQueue.dequeue()
                             if msg is not None:
                                 self.__messageHandling(msg)
-                            
+
                 except json.JSONDecodeError as err:
                     print(data.decode())
-                    addToLog(self.__log, "clientnetwork", e)
-                
+                    addToLog(self.__log, "clientnetwork", err)
+
                 except ConnectionError as e:
                     self.stopConn()
                     addToLog(self.__log, "clientnetwork", e)
 
-    '''
+    """
     Name: __messageHandling
     Parameters: msg: dict
     Returns: None
     Purpose: Handles each indiviual message
-    '''
+    """
+
     def __messageHandling(self, msg: dict) -> None:
         try:
             if msg["type"] == "leaderGet":
@@ -144,7 +149,7 @@ class Client:
 
             if msg["type"] == "fire":
                 self.__projectileFired(msg["data"])
-                
+
             if msg["type"] == "movement":
                 self.__playerMoved(msg["data"])
 
@@ -171,39 +176,48 @@ class Client:
             addToLog(self.__logPath, "clientmsghandling", e, f" MSG: {msg}")
 
     def __kickBrokenPlayer(msgData: int) -> None:
-        '''
+        """
         Name:__kickBrokenPlayer
         Parameters: msgData:int
         Returns: None
         Purpose: To remove any broken players from the
         players sprite group
-        '''
+        """
         playerSprites: list = players.sprites()
         for i in range(len(players.sprites())):
             if playerSprites[i].getPlayerID() == msgData:
                 brokenPlayer = playerSprites[i]
-        
+
         players.remove(brokenPlayer)
 
-    '''
+    """
     Name: __projectileFired
     Parameters: msgData: dict
     Returns: None
     Purpose: Handles a projectile being fired by an external client
-    '''
+    """
+
     def __projectileFired(self, msgData: dict) -> None:
         print(msgData)
         if msgData["casterType"] == "Druid":
-            createBullet(msgData["spawnPoint"], msgData["playerID"], msgData["direction"], msgData["elementType"])
+            createBullet(
+                msgData["spawnPoint"],
+                msgData["playerID"],
+                msgData["direction"],
+                msgData["elementType"],
+            )
         elif msgData["casterType"] == "Wizard":
-            createCone(msgData["spawnPoint"], msgData["playerID"], msgData["elementType"])
+            createCone(
+                msgData["spawnPoint"], msgData["playerID"], msgData["elementType"]
+            )
 
-    '''
+    """
     Name: __playerMoved
     Parameters: msgData: dict
     Returns: None
     Purpose: Handles an external player moving
-    '''
+    """
+
     def __playerMoved(self, msgData: dict) -> None:
         try:
             if len(players.sprites()) == 2:
@@ -218,147 +232,178 @@ class Client:
         except Exception as e:
             addToLog(self.__logPath, "netclplayermoved", e)
 
-    '''
+    """
     Name: tellServerDisconn
     Parameters: None
     Returns: None
     Purpose: Tells the server that this client wants to disconnect
-    '''
+    """
+
     def tellServerDisconn(self) -> None:
-        msgDict = {"type":"disconn", "data":{"playerID":self.playerID}}
+        msgDict = {"type": "disconn", "data": {"playerID": self.playerID}}
         self.sendData(msgDict)
 
-    #Getters and Setters
+    # Getters and Setters
 
-    '''
+    """
     Name: getRecvMsg
     Parameters: None
     Returns: bool
     Purpose: Getter for the recvmsg variable
-    '''
+    """
+
     def getRecvMsg(self) -> bool:
         return self.__recvMsg
 
-    '''
+    """
     Name: getSentMsg
     Parameters: None
     Returns: bool
     Purpose: Getter for the sentMsg
     variable
-    '''
+    """
+
     def getSentMsg(self) -> bool:
         return self.__sentMsg
 
-    '''
+    """
     Name: getOnline
     Parameters: None
     Returns: bool
     Purpose: Getter for the online variable
-    '''
+    """
+
     def getOnline(self) -> bool:
         return self.__online
 
-    '''
+    """
     Name: setLeaderBoard
     Parameters: leaderboard:dictionary
     Returns: None
     Purpose: Setter for the leaderboard variable
-    '''
-    def setLeaderBoard(self,leaderboard: dict) -> None:
+    """
+
+    def setLeaderBoard(self, leaderboard: dict) -> None:
         self.__leaderBoard = leaderboard
 
-    '''
+    """
     Name: setClientPlayer
     Parameters: clPl: object
     Returns: None
     Purpose: Setter for the clientPlayer variable
-    '''
+    """
+
     def setClientPlayer(self, clPl):
         self.__clientPlayer = clPl
 
-    '''
+    """
     Name: createPlatform
     Parameters: data:dictionary
     Returns: None
     Purpose: Adds a Platform object to the platforms pygame sprite group
-    '''
-    def __createPlatform(self, data: dict) -> None:
-        platforms.add(Platform(data['position'],data['size'],data['platformNo']))
+    """
 
-    '''
+    def __createPlatform(self, data: dict) -> None:
+        platforms.add(Platform(data["position"], data["size"], data["platformNo"]))
+
+    """
     Name: addCharacter
     Parameters: data:dictionary
     Returns: None
     Purpose: Adds a Character object to the players pygame sprite group
-    '''
+    """
+
     def __addCharacter(self, data: dict) -> None:
         try:
-            players.add(Character(data["positionList"],data["colourTuple"],data["playerID"], self.__logPath))
+            players.add(
+                Character(
+                    data["positionList"],
+                    data["colourTuple"],
+                    data["playerID"],
+                    self.__logPath,
+                )
+            )
             print("Player created!")
         except Exception as e:
             addToLog(self.__logPath, "claddchar", e)
 
     # Static Methods
-    
-    '''
+
+    """
     Name: getPlayerPosfromID
     Parameters: playerID: int
     Returns: player: object
     Purpose: Gets the position of a playerID in the list of sprites
-    '''
+    """
+
     @staticmethod
     def getPlayerPosfromID(playerID: int) -> any:
         for player in players.sprites():
             if player.getPlayerID() == playerID:
                 return player
-        
+
         raise Exception("PlayerID Doesn't Exist")
 
 
-'''
+"""
 Name: createBullet
 Parameters: spawnPoint: list[int], playerID: int, direction: list[int], elementType: str
 Returns: None
 Purpose: Adds a Bullet 
 object to the bullets pygame sprite group
-'''
-def createBullet(spawnPoint: list[int], playerID: int, direction: list[int], elementType: str) -> None:
+"""
+
+
+def createBullet(
+    spawnPoint: list[int], playerID: int, direction: list[int], elementType: str
+) -> None:
     bullets.add(Bullet(spawnPoint, direction, playerID, elementType))
 
-'''
+
+"""
 Name: createCone
 Parameters: spawnPoint: list[int], playerID: int, elementType: str
 Returns: None
 Purpose: Creates a ConeAttack object in 
 the bullets pygame sprite group
-'''
+"""
+
+
 def createCone(spawnPoint: list[int], playerID: int, elementType: str) -> None:
     bullets.add(ConeAttack(spawnPoint, playerID, elementType))
 
-'''
+
+"""
 Name: Character
 Purpose: To manage data surrounding each player's character, and how to handle certain actions
-'''
+"""
+
+
 class Character(pygame.sprite.Sprite):
-    '''
+    """
     Name: __init__
     Parameters: position:list, colour:tuple, playerID:integer, logPath: str
     Returns: None
     Purpose: Constructor to set the initial values
     of the character object
-    '''
-    def __init__(self, position: list, colour: tuple[int,int,int], playerID: int, logPath: str) -> None:
+    """
+
+    def __init__(
+        self, position: list, colour: tuple[int, int, int], playerID: int, logPath: str
+    ) -> None:
         # Pygame Setup
         super().__init__()
         self.height: int = 40
         self.width: int = 40
         self.X: int = position[0]
         self.Y: int = position[1]
-        self.colour: tuple[int,int,int] = colour
+        self.colour: tuple[int, int, int] = colour
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(colour)
-        pygame.draw.rect(self.image,self.colour, [self.X, self.Y, self.width, self.height])
-        
+        pygame.draw.rect(
+            self.image, self.colour, [self.X, self.Y, self.width, self.height]
+        )
+
         # Combat
         self.__HP: int = 100
         self.__lastAttackTime: float = time.time()
@@ -368,14 +413,14 @@ class Character(pygame.sprite.Sprite):
         self.__Caster = None
         self.__OnFire: bool = False
         self.__grounded: bool = False
-        self.__attackCooldown: int|None = None
+        self.__attackCooldown: int | None = None
 
         # Movement
         self.rect = self.image.get_rect()
         self.rect.x = self.X
         self.rect.y = self.Y
         self.__mass: int = random.randint(60, 90)
-        self.lastPos = [self.X,self.Y]
+        self.lastPos = [self.X, self.Y]
         self.lastLegalPos = self.lastPos
         self.collided = False
         self.__gravityEq: float = averageVelocity(self.__mass, 1.0, 0.7)
@@ -390,41 +435,45 @@ class Character(pygame.sprite.Sprite):
 
     # Update Functions
 
-    '''
+    """
     Name: update
     Parameters: None
     Returns: None
     Purpose: Updates certain variables each tick
-    '''
+    """
+
     def update(self, cl) -> None:
         tim = time.time()
         updTime = tim - self.__timeOfLastHit
-        
+
         if self.__HP != 100 and self.__HP < 100 and not self.__OnFire:
             self.__HP += self.__regeneration(updTime)
         if self.__HP > 100:
             self.__HP = 100
-        
+
         if self.collided and self.__dJumped:
             self.__dJumped = False
-        
+
         if self.__OnFire:
             self.takeDamage(5, cl)
-            
+
             if updTime >= 5:
                 self.__timeOfLastHit = tim
                 self.__OnFire = False
-        
+
         if self.__grounded and updTime >= 3:
             self.__grounded = False
-    
-    '''
+
+    """
     Name: takeDamage
     Parameters: damage: int, fireEl: bool
     Returns: None
     Purpose: Setter for the client's health
-    '''
-    def takeDamage(self, damage: int, cl, fireEl: bool = False, earthEl: bool = False) -> None:
+    """
+
+    def takeDamage(
+        self, damage: int, cl, fireEl: bool = False, earthEl: bool = False
+    ) -> None:
         self.__HP -= damage
         self.__OnFire = fireEl
         self.__grounded = earthEl
@@ -434,12 +483,13 @@ class Character(pygame.sprite.Sprite):
         else:
             self.__timeOfLastHit = time.time()
 
-    '''
+    """
     Name: __charDeath
     Parameters: cl: Client
     Returns: None
     Purpose: Handles what to do when a character dies
-    '''
+    """
+
     def __charDeath(self, cl) -> None:
         self.rect.x = self.X
         self.rect.y = self.Y
@@ -447,28 +497,36 @@ class Character(pygame.sprite.Sprite):
         self.__OnFire = False
         self.__grounded = False
         self.__fallTime = time.time()
-        requests.post(url="http://127.0.0.1:5000/publicLeaderUpd", json={"playerID":self.__playerID})
-        
+        requests.post(
+            url="http://127.0.0.1:5000/publicLeaderUpd",
+            json={"playerID": self.__playerID},
+        )
+
         for letter in [["y", self.rect.y], ["x", self.rect.x]]:
             moveMsg: dict = {
                 "type": "movement",
                 "data": {
-                    "playerID", self.__playerID,
-                    "direction", letter[0],
-                    "movedTo", letter[1],
-                    "collided", self.collided
-                }
+                    "playerID",
+                    self.__playerID,
+                    "direction",
+                    letter[0],
+                    "movedTo",
+                    letter[1],
+                    "collided",
+                    self.collided,
+                },
             }
             cl.sendData(moveMsg)
             time.sleep(0.01)
 
-    '''
+    """
     Name: charError
     Parameters: errorFunc: str, error: str
     Returns: None
     Purpose: Allows the log file to specify whether it was the client
     player that errored or an external player
-    '''
+    """
+
     def __charError(self, errorFunc: str, error: str) -> None:
         if self.__clientPlayer:
             addToLog(self.__logPath, f"clpl{errorFunc}", error)
@@ -477,17 +535,18 @@ class Character(pygame.sprite.Sprite):
 
     # Movement Functions
 
-    '''
+    """
     Name: move
     Parameters: cl:object, keys:list[bool]|None
     Returns: None
     Purpose: Changes the position of the sprite position based upon what key is being pressed
     by a pre-determined amount
-    '''
-    def move(self, cl, keys: list[bool]|None = None):
+    """
+
+    def move(self, cl, keys: list[bool] | None = None):
         try:
             y: bool = False
-            
+
             if not self.__grounded:
                 if keys is None:
                     keys = pygame.key.get_pressed()
@@ -500,7 +559,11 @@ class Character(pygame.sprite.Sprite):
                     cart: str = self.__dirToCart(moves[i])
                     amount: int = self.__dirToAmount(moves[i])
 
-                    if cart == "y" and (self.collided or not self.__dJumped or (self.__jumpTime - time.time()) > 0.1):
+                    if cart == "y" and (
+                        self.collided
+                        or not self.__dJumped
+                        or (self.__jumpTime - time.time()) > 0.1
+                    ):
                         y = True
                         self.__jumpTime = time.time()
                         if not self.collided and not self.__dJumped:
@@ -510,32 +573,34 @@ class Character(pygame.sprite.Sprite):
                     self.__changeRect(cart, amount, cl)
 
                     i += 1
-            
-            if not y: 
+
+            if not y:
                 self.gravity(cl)
-                
+
         except Exception as e:
             self.__charError("move", e)
-    
-    '''
+
+    """
     Name: dirToCart
     Parameters: direction: str
     Returns: str
     Purpose: Converts the direction (left, right, or up)
     to the cartesian direction (x or y)
-    '''
+    """
+
     def __dirToCart(self, direction: str) -> str:
-        if direction == "up" or  direction == "FIX":
+        if direction == "up" or direction == "FIX":
             return "y"
         else:
             return "x"
 
-    '''
+    """
     Name: dirToAmount
     Parameters: direction: str
     Returns: int
     Purpose: Converts the direction (left, right or up)
-    '''
+    """
+
     def __dirToAmount(self, direction: str) -> int:
         if direction == "left":
             return -4
@@ -546,16 +611,17 @@ class Character(pygame.sprite.Sprite):
         else:
             return -10
 
-    '''
+    """
     Name: keyCheck
     Parameters: keys: list[bool]
     Returns: list[str]
     Purpose: Returns a list of the movement keys that are
     currently being pressed
-    '''
+    """
+
     def __keyCheck(self, keys: list[bool]) -> list[str]:
         keyCheck: list[str] = []
-        
+
         if keys[pygame.K_UP]:
             keyCheck.append("up")
         if keys[pygame.K_LEFT]:
@@ -564,15 +630,16 @@ class Character(pygame.sprite.Sprite):
             keyCheck.append("right")
         if keys[pygame.K_t]:
             keyCheck.append("FIX")
-        
+
         return keyCheck
 
-    '''
+    """
     Name: __changeRect
     Parameters: direction: str, amount: int, cl: Client
     Returns: None
     Purpose: Changes the character's internal rect
-    '''
+    """
+
     def __changeRect(self, direction: str, amount: int, cl) -> None:
         if direction == "y" or direction == "x":
             if direction == "y":
@@ -581,29 +648,32 @@ class Character(pygame.sprite.Sprite):
             elif direction == "x":
                 self.rect.x += amount
                 movedTo: int = self.rect.x
-            
+
             moveMessage: dict = {
                 "type": "movement",
                 "data": {
                     "playerID": self.__playerID,
-                    "direction": direction, 
+                    "direction": direction,
                     "movedTo": movedTo,
-                    "collided": self.collided
-                }
+                    "collided": self.collided,
+                },
             }
             cl.sendData(moveMessage)
             self.lastPos = [self.rect.x, self.rect.y]
             time.sleep(0.01)
             self.__outOfBoundsCheck(cl)
         else:
-            raise ValueError(f"Internal Rect Change Value, Expecgted direction to be 'x' or 'y', got {direction}")
+            raise ValueError(
+                f"Internal Rect Change Value, Expecgted direction to be 'x' or 'y', got {direction}"
+            )
 
-    '''
+    """
     Name: __outOfBoundsCheck
     Parameters: None
     Returns: None
     Purpose: Checks if the character has moved out of bounds, and handles what to do if they have
-    '''
+    """
+
     def __outOfBoundsCheck(self, cl) -> None:
         if self.rect.y >= 800:
             self.__charDeath(cl)
@@ -612,85 +682,99 @@ class Character(pygame.sprite.Sprite):
         elif self.rect.x >= 800:
             self.__charDeath(cl)
 
-    '''
+    """
     Name: gravity
     Parameters: cl:object
     Returns: None
     Purpose: Adjusts the position of the character rect if the player 
     is not on a platform
-    '''
+    """
+
     def gravity(self, cl):
         timothy: float = time.time()
         if not self.collided:
             # As the equation used calulates the falling speed based off of m/s, I have the
-            # number it gives multiplied by 40, as to make it so that 1m:40pixels 
+            # number it gives multiplied by 40, as to make it so that 1m:40pixels
             # (aka the height of a player)
-            self.__changeRect("y", self.__gravityEq(timothy-self.__fallTime) * 40, cl)
+            self.__changeRect("y", self.__gravityEq(timothy - self.__fallTime) * 40, cl)
         else:
             self.__fallTime = timothy
 
-    '''
+    """
     Name: legalMove
     Parameters: None
     Returns: None
     Purpose: Setter for the lastLegalPos variable
-    '''
+    """
+
     def legalMove(self):
         self.lastLegalPos = self.lastPos
 
-    '''
+    """
     Name: illegalMove
     Parameters: None
     Returns: None
     Purpose: Reacts to being told by the server that the last legal move was 
     actually illegal
-    '''
+    """
+
     def illegalMove(self):
-        if (not onPlat(self,platforms)) and self.collided:
+        if (not onPlat(self, platforms)) and self.collided:
             self.lastPos = self.lastLegalPos
             self.rect.x = self.lastPos[0]
             self.rect.y = self.lastPos[1]
         else:
             self.legalMove()
 
-    '''
+    """
     Name: checkIfLegal
     Parameters: direction: string, amount:integer, client:object
     Returns: boolean
     Purpose: Sends a request to the server to check if a move was legal
-    '''
+    """
+
     def checkIfLegal(self, direction: str, amount: int, client) -> bool:
-        checkIfLegalDict = {"type": "legalCheck", "data":{"direction":direction, "amount":amount, "playerID":self.__playerID}}
+        checkIfLegalDict = {
+            "type": "legalCheck",
+            "data": {
+                "direction": direction,
+                "amount": amount,
+                "playerID": self.__playerID,
+            },
+        }
         client.sendData(checkIfLegalDict)
         time.sleep(0.01)
         return True
 
     # Combat Functions
 
-    '''
+    """
     Name: fire
     Parameters: client:object
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
-    '''
+    """
+
     def fire(self, client, logPath: str) -> None:
         try:
             mouseKeys = pygame.mouse.get_pressed(3)
 
             currTime: float = time.time()
-            
-            if mouseKeys[0] and (currTime - self.__lastAttackTime >= self.__attackCooldown):
+
+            if mouseKeys[0] and (
+                currTime - self.__lastAttackTime >= self.__attackCooldown
+            ):
                 self.__createProj(client, currTime, logPath)
         except Exception as e:
             addToLog(logPath, "clPlFire", e)
-    
-    
-    '''
+
+    """
     Name: createProj
     Parameters: client: object
     Returns: None
     Purpose: Creates a projectile based off of the client's 
-    '''
+    """
+
     def __createProj(self, client, currTime: float, logPath: str) -> None:
         try:
             elementType: str = self.__Element.getType()
@@ -699,61 +783,66 @@ class Character(pygame.sprite.Sprite):
             print(elementType, casterType)
         except Exception as e:
             addToLog(logPath, "clplfiregetter", e)
-            
+
         try:
             if casterType == "Wizard":
-                spawnPoint: list[int] = [self.rect.x-20, self.rect.y]
+                spawnPoint: list[int] = [self.rect.x - 20, self.rect.y]
                 direction: int = 0
                 createCone(spawnPoint, self.__playerID, elementType)
             elif casterType == "Druid":
                 spawnPoint: list[int] = [self.rect.x, self.rect.y]
                 direction: list[int] = getDirection([self.rect.x, self.rect.y])
                 print(direction)
-                createBullet(spawnPoint,self.__playerID, direction, elementType)
+                createBullet(spawnPoint, self.__playerID, direction, elementType)
         except Exception as e:
             addToLog(logPath, "clplfireaddproj", e)
-            
+
         self.__lastAttackTime = currTime
         self.__tellServerFire(spawnPoint, client, direction)
 
-    '''
+    """
     Name: __tellServerFire
     Parameters: spawnPoint:list[int], client:object, direction: list[int]|int
     Returns: None
     Purpose: Sends a message to ther server that the player has created a bullet object
-    '''
-    def __tellServerFire(self, spawnPoint:list[int], client, direction: list[int]|int) -> None:
+    """
+
+    def __tellServerFire(
+        self, spawnPoint: list[int], client, direction: list[int] | int
+    ) -> None:
         msgDict = {
-                    "type": "fire",
-                    "data": {
-                            "playerID": self.__playerID,
-                            "casterType": self.__Caster.getType(),
-                            "elementType": self.__Element.getType(),
-                            "spawnPoint": spawnPoint,
-                            "direction": direction
-                        }
-                }
+            "type": "fire",
+            "data": {
+                "playerID": self.__playerID,
+                "casterType": self.__Caster.getType(),
+                "elementType": self.__Element.getType(),
+                "spawnPoint": spawnPoint,
+                "direction": direction,
+            },
+        }
 
         client.sendData(msgDict)
 
     # Getters and Setters
 
-    '''
+    """
     Name: setClientPlayer
     Paramaters: None
     Returns: None
     Purpose: Sets the character's clientPlayer variable
     to True
-    '''
+    """
+
     def setClientPlayer(self) -> None:
         self.__clientPlayer = True
 
-    '''
+    """
     Name: setCaster
     Parameters: caster:str
     Returns: None
     Purpose: Setter for the Character Caster
-    '''
+    """
+
     def __setCaster(self, caster: str) -> None:
         if caster == "Wizard":
             self.__Caster = Wizard()
@@ -762,12 +851,13 @@ class Character(pygame.sprite.Sprite):
         else:
             raise ValueError(f"Internal Value Error: Incorrect Caster Type ({caster})")
 
-    '''
+    """
     Name: setElement
     Parameters: element: str
     Returns: None
     Purpose: Setter for the Character Element
-    '''
+    """
+
     def __setElement(self, element: str) -> None:
         if element == "Water":
             self.__Element = Water()
@@ -776,16 +866,19 @@ class Character(pygame.sprite.Sprite):
         elif element == "Earth":
             self.__Element = Earth()
         else:
-            raise ValueError(f"Internal Value Error: Incorrect Element Type ({element})")
+            raise ValueError(
+                f"Internal Value Error: Incorrect Element Type ({element})"
+            )
 
-    '''
+    """
     Name: UpdateCharacteristics
     Parameters: characteristics: dict
     Returns: None
     Purpose: Sets the character's characteristics
-    '''
+    """
+
     def UpdateCharacteristics(self, characteristics: dict) -> None:
-        try: 
+        try:
             self.__setElement(characteristics["element"])
             self.__setCaster(characteristics["caster"])
 
@@ -794,32 +887,35 @@ class Character(pygame.sprite.Sprite):
         except Exception as e:
             self.__charError("updchar", e)
 
-    '''
+    """
     Name: getPos
     Parameters: None
     Returns: list[int]
     Purpose: Getter for the character's position
-    '''
+    """
+
     def getPos(self) -> list[int]:
         return [self.rect.x, self.rect.y]
 
-    '''
+    """
     Name: getPlayerID
     Parameters: None
     Returns: self.__playerID
     Purpose: Getter for the playerID variable
-    '''
+    """
+
     def getPlayerID(self) -> int:
         return self.__playerID
 
     # Static Methods
 
-    '''
+    """
     Name: platformCollide
     Parameters: platforms|object, players:object, clientPlayer:object
     Returns: bool
     Purpose: Platoform + player collision handling
-    '''
+    """
+
     @staticmethod
     def platformCollide(platforms, players, clientPlayer) -> bool:
         # Sprite group collision handling; handles collisions between platforms and players
@@ -830,37 +926,47 @@ class Character(pygame.sprite.Sprite):
                     return True
         return False
 
-    '''
+    """
     Name: platformCollide
     Parameters: platforms|object, players:object, clientPlayer:object
     Returns: bool
     Purpose: Platoform + player collision handling
-    '''
+    """
+
     @staticmethod
     def projectileCollide(bullets, players, clientPlayer):
         pHit = pygame.sprite.groupcollide(bullets, players, False, False)
         for b, p_list in pHit.items():
             for pl in p_list:
                 if pl.getPlayerID() != b.getPlayerOrigin() and pl == clientPlayer:
-                    
                     if b.getElement() == "Fire":
                         clientPlayer.takeDamage(b.getDamage(), fireEl=True)
                     elif b.getElement() == "Earth":
                         clientPlayer.takeDamage(b.getDamage(), earthEl=True)
-                    
+
                     bullets.remove(b)
-        
+
         return bullets, clientPlayer
 
 
-'''
+"""
 Name: publicGame
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, serverType: str, logFile: str
 Returns: None
 Purpose: Handles the data for the player to be able to play on the public server
-'''
-def publicGame(screen, clock, players, platforms, bullets, char: dict, serverType: str, logFile: str) -> None:
+"""
 
+
+def publicGame(
+    screen,
+    clock,
+    players,
+    platforms,
+    bullets,
+    char: dict,
+    serverType: str,
+    logFile: str,
+) -> None:
     # Creates an instance of the client object and connects it to the server
     c = Client("127.0.0.1", logFile)
     c.connect()
@@ -868,8 +974,8 @@ def publicGame(screen, clock, players, platforms, bullets, char: dict, serverTyp
     time.sleep(2)
 
     print(char)
-    
-    '''
+
+    """
     After a certain amount of time has passed, the server will have sent 
     all the neccessary information required
     for the player to be able to join the server. And the first message 
@@ -877,7 +983,7 @@ def publicGame(screen, clock, players, platforms, bullets, char: dict, serverTyp
     that the client will need to create its own player, 
     so this then sets the clientPlayer variable to the first object
     in the players sprite group
-    '''
+    """
 
     clientPlayer = players.sprites()[0]
     c.setClientPlayer(clientPlayer)
@@ -886,18 +992,21 @@ def publicGame(screen, clock, players, platforms, bullets, char: dict, serverTyp
 
     time.sleep(1)
 
-    # Runs the platformInfo functio, which will send data to the server 
+    # Runs the platformInfo functio, which will send data to the server
     # with information about the platforms if the player's playerID is 1
     platformInfo(platforms, c, clientPlayer)
 
-    mainRunLoop(clientPlayer, screen,clock,platforms,bullets,char,c, serverType)
+    mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, serverType)
 
-'''
+
+"""
 Name: mainRunLoop
 Parameters: screen:object, clock:object, players:object, bullets: object, char:dictionary, c:object
 Returns: None
 Purpose: Main run loop for the game
-'''
+"""
+
+
 def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, serverType):
     leaderboard = pygame.sprite.Group()
     leaderboard.add(Leaderboard())
@@ -906,7 +1015,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
     running = True
     showLeader = False
-    
+
     f = pygame.freetype.SysFont("Comic Sans MS", 24)
     f.origin = True
 
@@ -915,10 +1024,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
 
     # Run loop
     while running:
-
         moving = False
         clientPlayer.collided = False
-        plat = None
 
         screen.fill(Colours.WHITE.value)
 
@@ -937,47 +1044,52 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
                 c.tellServerDisconn()
                 exit()
             if event.type == pygame.KEYDOWN and not tab:
-                moving = True 
+                moving = True
                 keys = pygame.key.get_pressed()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
-        clientPlayer.collided = Character.platformCollide(platforms, players, clientPlayer)
+        clientPlayer.collided = Character.platformCollide(
+            platforms, players, clientPlayer
+        )
 
-        bullets, clientPlayer = Character.projectileCollide(bullets, players, clientPlayer)
+        bullets, clientPlayer = Character.projectileCollide(
+            bullets, players, clientPlayer
+        )
 
         bullets.update()
-        
-        if (time.time()-leaderUpd) >= 30:
+
+        if (time.time() - leaderUpd) >= 30:
             leaderboard.update(getLeaderboard(serverType))
-            timeUpd = time.time()
+            leaderUpd = time.time()
 
         clientPlayer.update(c)
 
-        #clientPlayer.gravity(c)
+        # clientPlayer.gravity(c)
         clientPlayer.move(c)
         clientPlayer.fire(c, logPath)
 
         platforms.draw(screen)
         bullets.draw(screen)
         players.draw(screen)
-        
+
         if showLeader:
             leaderboard.draw(screen)
-            f.render_to(screen,(200,25), leaderText, (0,0,0))
+            f.render_to(screen, (200, 25), leaderText, (0, 0, 0))
 
         clock.tick(60)
         pygame.display.update()
     exit()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logPath: str = generateLogFile("client")
 
     try:
         pygame.display.init()
         pygame.font.init()
         pygame.freetype.init()
-        WINDOW_SIZE: tuple[int,int] = (800, 800)
+        WINDOW_SIZE: tuple[int, int] = (800, 800)
 
         screen = pygame.display.set_mode(WINDOW_SIZE)
         clock = pygame.time.Clock()
@@ -992,9 +1104,12 @@ if __name__ == '__main__':
         beginInfo = gameStart(screen)
 
         if beginInfo["type"] == "publicGame":
-            publicGame(screen, clock, players, platforms, bullets, char, "public", logPath)
+            publicGame(
+                screen, clock, players, platforms, bullets, char, "public", logPath
+            )
 
     except Exception as e:
         tb = traceback.extract_tb(e.__traceback__)
         line = tb[-1].lineno
         addToLog(logPath, "generalclient", e, f" LINENO: {line}")
+
