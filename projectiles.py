@@ -1,8 +1,9 @@
 import pygame
-import math
 
 from time import time
 from enum import Enum
+
+from physics import projectileSpeed
 
 """
 Name: Cooldown
@@ -228,8 +229,6 @@ class Bullet(pygame.sprite.Sprite, Projectile):
         pygame.sprite.Sprite.__init__(self)
         Projectile.__init__(self, size, player, damage, spawnPoint, element)
 
-        self.__gravity: int = lambda time: math.exp(time // 10)
-
         self.__direction = self.__directionCheck(direction)
         self.__updTimer: float = time()
         self.playerOrigin = player
@@ -255,7 +254,7 @@ class Bullet(pygame.sprite.Sprite, Projectile):
     """
 
     def __directionCheck(self, direction: list[int]) -> list[int]:
-        if type(direction) is list:
+        if type(direction) is not list:
             raise TypeError(
                 f"Direction variable should be list type, instead got {type(direction)}. Original Direction Variable: {direction}"
             )
@@ -293,7 +292,9 @@ class Bullet(pygame.sprite.Sprite, Projectile):
             self.rect.y -= self.__direction[1]
 
         if (int(self.__updTimer - tempTime)) % 1 == 0:
-            self.__direction[1] -= self.__gravity(int(self.__updTimer - tempTime))
+            self.__direction[1] -= projectileSpeed(
+                self.rect.x, self.__updTimer - tempTime
+            )
 
 
 """

@@ -62,20 +62,130 @@ class Platform:
     def __init__(
         self,
         position: list[int],
-        platformId: int,
+        platformNo: int,
         colour: tuple[int, int, int] = (0, 255, 0),
         platformSize: list[int] = [20, 500],
     ):
-        self.position: list[int] = position
-        self.colour: tuple[int, int, int] = colour
-        self.platformSize: list[int] = platformSize
-        self.platformId: int = platformId
+        self.__position: list[int] = position
+        self.__colour: tuple[int, int, int] = colour
+        self.__platformSize: list[int] = platformSize
+        self.__platformNo: int = platformNo
         self.__spawnPoint: list[int] = self.__generateSpawnPoint()
 
-        self.top: None | int = None
-        self.bottom: None | int = None
-        self.left: None | int = None
-        self.right: None | int = None
+        self.__top: None | int = None
+        self.__bottom: None | int = None
+        self.__left: None | int = None
+        self.__right: None | int = None
+
+    """
+    Name: getPosition
+    Parameters: None
+    Returns: self.__position: list[int]
+    Purpose: Getter for position variable
+    """
+
+    def getPosition(self) -> list[int]:
+        return self.__position
+
+    """
+    Name: getSize
+    Parameters: None
+    Returns: self.__platformSize: list[int]
+    Purpose: Getter for size variable
+    """
+
+    def getSize(self) -> list[int]:
+        return self.__platformSize
+
+    """
+    Name: getPlatformNo
+    Parameters: None
+    Returns: self.__platformNo:int
+    Purpose: Getter for platformNo variable
+    """
+
+    def getPlatformNo(self) -> int:
+        return self.__platformNo
+
+    """
+    Name: getTop
+    Parameters: None
+    Returns: self.__top
+    Purpose: Getter for top variable
+    """
+
+    def getTop(self) -> None | int:
+        return self.__top
+
+    """
+    Name: getBottom
+    Parameters: None
+    Returns: self.__
+    Purpose: Getter for bottom variable
+    """
+
+    def getBottom(self) -> None | int:
+        return self.__bottom
+
+    """
+    Name: getLeft
+    Parameters: None
+    Returns: self.__left
+    Purpose: Getter for left variable
+    """
+
+    def getLeft(self) -> None | int:
+        return self.___left
+
+    """
+    Name: getRight
+    Parameters: None
+    Returns: self.__right
+    Purpose: Getter for right variable
+    """
+
+    def getRight(self) -> None | int:
+        return self.__right
+
+    """
+    Name: setTop
+    Parameters: top:int
+    Returns: None
+    Purpose: Setter for top variable
+    """
+
+    def setTop(self, top: int) -> None:
+        self.__top = top
+
+    """
+    Name: setBottom
+    Parameters: bottom:int 
+    Returns: None
+    Purpose: Setter for bottom variable
+    """
+
+    def setBottom(self, bottom: int) -> None:
+        self.__bottom = bottom
+
+    """
+    Name: setLeft
+    Parameters: left:int
+    Returns: None
+    Purpose: Setter for left variable
+    """
+
+    def setLeft(self, left: int) -> None:
+        self.__left = left
+
+    """
+    Name: setRight
+    Parameters: right: int
+    Returns: None
+    Purpose: Setter for right variable
+    """
+
+    def setRight(self, right: int) -> None:
+        self.__right = right
 
     """
     Name: generateSpawnPoint
@@ -228,7 +338,7 @@ class Server:
         print(playerIDMessage)
         conn.send(playerIDMessage.encode())
         time.sleep(0.1)
-        self.createStage(conn)
+        self.__createStage(conn)
 
         if len(self.__clientList) != 0:
             self.createAlreadyJoinedPlayers(conn)
@@ -287,14 +397,14 @@ class Server:
     Purpose: Sends all the platform information to the newly joined client
     """
 
-    def createStage(self, connection) -> None:
+    def __createStage(self, connection) -> None:
         for platform in self.__platforms:
             posMsgDic: dict = {
                 "type": "createPlat",
                 "data": {
-                    "position": platform.position,
-                    "size": platform.platformSize,
-                    "platformNo": platform.platformId,
+                    "position": platform.getPosition(),
+                    "size": platform.getSize(),
+                    "platformNo": platform.getPlatformNo(),
                 },
             }
             positionMessage = json.dumps(posMsgDic)
@@ -311,9 +421,7 @@ class Server:
     """
 
     def tellClientsOfDisconn(self, clientToDisconn: int) -> None:
-        msg = requests.post(
-            url="http://127.0.0.1:5000/serverFull", json={"fullValue": "0"}
-        )
+        requests.post(url="http://127.0.0.1:5000/serverFull", json={"fullValue": "0"})
         for client in self.__clientList:
             if client != self.__clientList[clientToDisconn] and client is not None:
                 messageDict = {"type": "disconn", "data": {"playerID": clientToDisconn}}
@@ -352,7 +460,7 @@ class Server:
 
     def checkIfFull(self) -> None:
         if len(self.__clientList) == 10:
-            msg = requests.post(
+            requests.post(
                 url="http://127.0.0.1:5000/serverFull", json={"fullValue": "1"}
             )
 
@@ -439,10 +547,10 @@ class Server:
         """
         iterator = 0
         for platform in msgData:
-            self.__platforms[iterator].top = platform["platformTop"]
-            self.__platforms[iterator].bottom = platform["platformBottom"]
-            self.__platforms[iterator].left = platform["platformLeft"]
-            self.__platforms[iterator].right = platform["platformRight"]
+            self.__platforms[iterator].setTop(platform["platformTop"])
+            self.__platforms[iterator].setBottom(platform["platformBottom"])
+            self.__platforms[iterator].setLeft(platform["platformLeft"])
+            self.__platforms[iterator].setRight(platform["platformRight"])
             iterator += 1
 
     def __legalCheck(self, msgData: dict) -> None:
@@ -461,22 +569,24 @@ class Server:
             else:
                 if msgData["direction"] == "y":
                     if (
-                        platform.top >= clientMove.position[1] - msgData["amount"]
-                        or platform.top <= clientMove.position[1] - msgData["amount"]
-                    ) and closestPlat.top - platform.top < 0:
+                        platform.getTop() >= clientMove.position[1] - msgData["amount"]
+                        or platform.getTop()
+                        <= clientMove.position[1] - msgData["amount"]
+                    ) and closestPlat.getTop() - platform.getTop() < 0:
                         closestPlat = platform
                 else:
                     if (
-                        platform.top >= clientMove.position[0] - msgData["amount"]
-                        or platform.top <= clientMove.position[0] - msgData["amount"]
-                    ) and closestPlat.top - platform.top < 0:
+                        platform.getTop() >= clientMove.position[0] - msgData["amount"]
+                        or platform.getTop()
+                        <= clientMove.position[0] - msgData["amount"]
+                    ) and closestPlat.getTop() - platform.getTop() < 0:
                         closestPlat = platform
 
         if closestPlat is not None:
             if msgData["direction"] == "y":
                 if (
                     clientMove.position[1] - msgData["amount"]
-                    <= closestPlat.position[1] + closestPlat.platformSize[0]
+                    <= closestPlat.getPosition()[1] + closestPlat.getSize()[0]
                 ):
                     clientMove.sendData({"type": "MOVENOTLEGAL"})
                 else:
@@ -484,9 +594,9 @@ class Server:
             else:
                 if (
                     clientMove.position[0] - msgData["amount"] + clientMove.size[0]
-                    == closestPlat.position[0]
+                    == closestPlat.getPosition()[0]
                     or clientMove.position[0] - msgData["amount"]
-                    <= closestPlat.position[0] + closestPlat.platformSize[1]
+                    <= closestPlat.getPosition()[0] + closestPlat.getSize()[1]
                 ):
                     clientMove.sendData({"type": "MOVENOTLEGAL"})
                 else:
@@ -539,4 +649,3 @@ if __name__ == "__main__":
 
     server = Server(logPath)
     server.start()
-
