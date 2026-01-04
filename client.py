@@ -39,7 +39,7 @@ class Client:
     def __init__(self, IPToConnectTo: str, logFile: str, socket: int = 50000) -> None:
         self.__HOST: str = IPToConnectTo  # String
         self.__PORT: int = socket  # Integer
-        self.playerID: None | int = None  # Integer
+        self.__playerID: None | int = None  # Integer
         self.__socket = None  # Object?
         self.__noOfPlatforms: int = 0  # Integer
         self.__clientPlayer = None  # String?
@@ -140,7 +140,7 @@ class Client:
 
             if msg["type"] == "playerID":
                 print("client player created")
-                self.playerID = msg["data"]["playerID"]
+                self.__playerID = msg["data"]["playerID"]
                 self.__addCharacter(msg["data"])
 
             if msg["type"] == "playerJoin":
@@ -240,7 +240,7 @@ class Client:
     """
 
     def tellServerDisconn(self) -> None:
-        msgDict = {"type": "disconn", "data": {"playerID": self.playerID}}
+        msgDict = {"type": "disconn", "data": {"playerID": self.__playerID}}
         self.sendData(msgDict)
 
     # Getters and Setters
@@ -420,9 +420,9 @@ class Character(pygame.sprite.Sprite):
         self.rect.x = self.X
         self.rect.y = self.Y
         self.__mass: int = random.randint(60, 90)
-        self.lastPos = [self.X, self.Y]
-        self.lastLegalPos = self.lastPos
-        self.collided = False
+        self.__lastPos = [self.X, self.Y]
+        self.__lastLegalPos = self.__lastPos
+        self.__collided = False
         self.__gravityEq: float = averageVelocity(self.__mass, 1.0, 0.7)
         self.__fallTime: float = self.__lastAttackTime
         self.__jumpTime: float = self.__lastAttackTime
@@ -506,14 +506,10 @@ class Character(pygame.sprite.Sprite):
             moveMsg: dict = {
                 "type": "movement",
                 "data": {
-                    "playerID",
-                    self.__playerID,
-                    "direction",
-                    letter[0],
-                    "movedTo",
-                    letter[1],
-                    "collided",
-                    self.collided,
+                    "playerID": self.__playerID,
+                    "direction": letter[0],
+                    "movedTo": letter[1],
+                    "collided": self.__collided,
                 },
             }
             cl.sendData(moveMsg)
@@ -655,11 +651,11 @@ class Character(pygame.sprite.Sprite):
                     "playerID": self.__playerID,
                     "direction": direction,
                     "movedTo": movedTo,
-                    "collided": self.collided,
+                    "collided": self.__collided,
                 },
             }
             cl.sendData(moveMessage)
-            self.lastPos = [self.rect.x, self.rect.y]
+            self.__lastPos = [self.rect.x, self.rect.y]
             time.sleep(0.01)
             self.__outOfBoundsCheck(cl)
         else:
@@ -708,7 +704,7 @@ class Character(pygame.sprite.Sprite):
     """
 
     def legalMove(self):
-        self.lastLegalPos = self.lastPos
+        self.__lastLegalPos = self.__lastPos
 
     """
     Name: illegalMove
@@ -719,10 +715,10 @@ class Character(pygame.sprite.Sprite):
     """
 
     def illegalMove(self):
-        if (not onPlat(self, platforms)) and self.collided:
-            self.lastPos = self.lastLegalPos
-            self.rect.x = self.lastPos[0]
-            self.rect.y = self.lastPos[1]
+        if (not onPlat(self, platforms)) and self.__collided:
+            self.__lastPos = self.__lastLegalPos
+            self.rect.x = self.__lastPos[0]
+            self.rect.y = self.__lastPos[1]
         else:
             self.legalMove()
 
@@ -907,6 +903,24 @@ class Character(pygame.sprite.Sprite):
     def getPlayerID(self) -> int:
         return self.__playerID
 
+    def getCollided(self) -> bool:
+        """
+        Name: getCollided
+        Parameters: None
+        Returns: self.__collided:bool
+        Purpose: Getter for the collided variable
+        """
+        return self.__collided
+
+    def setCollided(self, collided: bool) -> None:
+        """
+        Name: setCollided
+        Parameters: collided:bool
+        Returns: None
+        Purpose: Setter for the collided variable
+        """
+        self.__collided = collided
+
     # Static Methods
 
     """
@@ -927,10 +941,10 @@ class Character(pygame.sprite.Sprite):
         return False
 
     """
-    Name: platformCollide
-    Parameters: platforms|object, players:object, clientPlayer:object
-    Returns: bool
-    Purpose: Platoform + player collision handling
+    Name: projectileCollide
+    Parameters: bullets:object, players:object, clientPlayer:object
+    Returns: bullets, clientPlayer
+    Purpose: Bullets + player collision handling
     """
 
     @staticmethod
@@ -1049,8 +1063,8 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouseKey = pygame.mouse.get_pressed(3)
 
-        clientPlayer.collided = Character.platformCollide(
-            platforms, players, clientPlayer
+        clientPlayer.setCollided(
+            Character.platformCollide(platforms, players, clientPlayer)
         )
 
         bullets, clientPlayer = Character.projectileCollide(
@@ -1112,4 +1126,3 @@ if __name__ == "__main__":
         tb = traceback.extract_tb(e.__traceback__)
         line = tb[-1].lineno
         addToLog(logPath, "generalclient", e, f" LINENO: {line}")
-

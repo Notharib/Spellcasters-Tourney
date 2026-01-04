@@ -26,22 +26,84 @@ class Client:
     """
 
     def __init__(self, position, colour, cl, playerID, address, size=[40, 40]):
-        self.addr = address
-        self.client = cl
-        self.position = position
-        self.colour = colour
-        self.playerID = playerID
-        self.size = size
+        self.__addr: str = address
+        self.__client = cl
+        self.__position: list[int] = position
+        self.__colour: tuple[int, int, int] = colour
+        self.__playerID: int = playerID
+        self.__size: list[int] = size
 
-    """
-    Name: sendData
-    Parameters: msg:dict
-    Returns: None
-    Purpose: Sends data to the client
-    """
+    def getSize(self) -> list[int]:
+        """
+        Name: getSize
+        Parameters: None
+        Returns: self.__size
+        Purpose: Getter for the size variable
+        """
+        return self.__size
+
+    def getColour(self) -> tuple[int, int, int]:
+        """
+        Name: getColour
+        Parameters: None
+        Returns: self.__colour:tuple[int,int,int]
+        Purpose: Getter for the colour variable
+        """
+        return self.__colour
+
+    def getPosition(self) -> list[int]:
+        """
+        Name: getPosition
+        Parameters: None
+        Returns: self.__position: list[int]
+        Purpose: Getter for the position variable
+        """
+        return self.__position
+
+    def getPlayerID(self) -> int:
+        """
+        Name: getPlayerID
+        Parameters: None
+        Returns: self.__playerID:int
+        Purpose: Getter for the playerID variable
+        """
+        return self.__playerID
+
+    def getClient(self):
+        """
+        Name: getClient
+        Parameters: None
+        Returns: self.__client
+        Purpose: Getter for the client variable
+        """
+        return self.__client
+
+    def setPosition(self, position: list[int]) -> None:
+        """
+        Name: setPosition
+        Parameters: position:list[int]
+        Returns:None
+        Purpose: Setter for the position variable
+        """
+        self.__position = position
 
     def sendData(self, msg: dict) -> None:
+        """
+        Name: sendData
+        Parameters: msg:dict
+        Returns: None
+        Purpose: Sends data to the client
+        """
         self.client.send(json.dumps(msg).encode())
+
+    def sendRData(self, data) -> None:
+        """
+        Name: sendRData
+        Parameters: data:binary
+        Returns: None
+        Purpose: Send raw data to the client
+        """
+        self.client.send(data)
 
 
 """
@@ -196,8 +258,8 @@ class Platform:
     """
 
     def __generateSpawnPoint(self, playerSize: int = 40) -> list[int]:
-        X: int = self.position[0] + self.platformSize[0] // 2
-        Y: int = self.position[1] - (playerSize + playerSize // 2)
+        X: int = self.__position[0] + self.__platformSize[0] // 2
+        Y: int = self.__position[1] - (playerSize + playerSize // 2)
 
         return [X, Y]
 
@@ -380,9 +442,9 @@ class Server:
             msgDict: dict = {
                 "type": "playerJoin",
                 "data": {
-                    "playerID": client.playerID,
-                    "colourTuple": client.colour,
-                    "positionList": client.position,
+                    "playerID": client.getPlayerID(),
+                    "colourTuple": client.getColour(),
+                    "positionList": client.getPosition(),
                 },
             }
 
@@ -425,7 +487,7 @@ class Server:
         for client in self.__clientList:
             if client != self.__clientList[clientToDisconn] and client is not None:
                 messageDict = {"type": "disconn", "data": {"playerID": clientToDisconn}}
-                client.client.send(json.dumps(messageDict).encode())
+                client.sendData(messageDict)
 
     def __kickBrokenPlayer(self, conn) -> None:
         """
@@ -437,10 +499,10 @@ class Server:
         remove it
         """
         for i in range(len(self.__clientList)):
-            if self.__clientList[i].client == conn:
+            if self.__clientList[i].getClient() == conn:
                 broPl: int = i
 
-        brokenPlayerID: int = self.__clientList[broPl].playerID
+        brokenPlayerID: int = self.__clientList[broPl].getPlayerID()
 
         self.__clientList.pop(broPl)
 
@@ -569,23 +631,25 @@ class Server:
             else:
                 if msgData["direction"] == "y":
                     if (
-                        platform.getTop() >= clientMove.position[1] - msgData["amount"]
+                        platform.getTop()
+                        >= clientMove.getPosition()[1] - msgData["amount"]
                         or platform.getTop()
-                        <= clientMove.position[1] - msgData["amount"]
+                        <= clientMove.getPosition()[1] - msgData["amount"]
                     ) and closestPlat.getTop() - platform.getTop() < 0:
                         closestPlat = platform
                 else:
                     if (
-                        platform.getTop() >= clientMove.position[0] - msgData["amount"]
+                        platform.getTop()
+                        >= clientMove.getPosition()[0] - msgData["amount"]
                         or platform.getTop()
-                        <= clientMove.position[0] - msgData["amount"]
+                        <= clientMove.getPosition()[0] - msgData["amount"]
                     ) and closestPlat.getTop() - platform.getTop() < 0:
                         closestPlat = platform
 
         if closestPlat is not None:
             if msgData["direction"] == "y":
                 if (
-                    clientMove.position[1] - msgData["amount"]
+                    clientMove.getPosition()[1] - msgData["amount"]
                     <= closestPlat.getPosition()[1] + closestPlat.getSize()[0]
                 ):
                     clientMove.sendData({"type": "MOVENOTLEGAL"})
@@ -593,9 +657,11 @@ class Server:
                     clientMove.sendData({"type": "MOVELEGAL"})
             else:
                 if (
-                    clientMove.position[0] - msgData["amount"] + clientMove.size[0]
+                    clientMove.getPosition()[0]
+                    - msgData["amount"]
+                    + clientMove.getSize()[0]
                     == closestPlat.getPosition()[0]
-                    or clientMove.position[0] - msgData["amount"]
+                    or clientMove.getPosition()[0] - msgData["amount"]
                     <= closestPlat.getPosition()[0] + closestPlat.getSize()[1]
                 ):
                     clientMove.sendData({"type": "MOVENOTLEGAL"})
@@ -610,15 +676,17 @@ class Server:
         Purpose:Handles what to do if a player moves
         """
         for client in self.__clientList:
-            if client.client == conn:
-                clPos = client.playerID - 1
+            if client.getClient() == conn:
+                clPos = client.getPlayerID() - 1
+
+        pos: list[int] = self.__clientList[clPos].getPosition()
 
         if msgData["direction"] == "y":
-            self.__clientList[clPos].position[1] = msgData["movedTo"]
-            # print("changed player position")
+            pos[1] = msgData["movedTo"]
         else:
-            self.__clientList[clPos].position[0] = msgData["movedTo"]
-            # print("player position changed")
+            pos[0] = msgData["movedTo"]
+
+        self.__clientList[clPos].setPosition(pos)
 
     """
     Name: updClients
@@ -631,7 +699,7 @@ class Server:
         for client in self.__clientList:
             if (
                 client is not None
-                and client.client != conn
+                and client.getClient() != conn
                 and (
                     msgType != "platformInfo"
                     or msgType != "legalCheck"
