@@ -451,7 +451,7 @@ class Character(pygame.sprite.Sprite):
         if self.__HP > 100:
             self.__HP = 100
 
-        if self.collided and self.__dJumped:
+        if self.__collided and self.__dJumped:
             self.__dJumped = False
 
         if self.__OnFire:
@@ -556,13 +556,13 @@ class Character(pygame.sprite.Sprite):
                     amount: int = self.__dirToAmount(moves[i])
 
                     if cart == "y" and (
-                        self.collided
+                        self.__collided
                         or not self.__dJumped
                         or (self.__jumpTime - time.time()) > 0.1
                     ):
                         y = True
                         self.__jumpTime = time.time()
-                        if not self.collided and not self.__dJumped:
+                        if not self.__collided and not self.__dJumped:
                             self.__dJumped = True
 
                     self.checkIfLegal(cart, amount, cl)
@@ -688,7 +688,7 @@ class Character(pygame.sprite.Sprite):
 
     def gravity(self, cl):
         timothy: float = time.time()
-        if not self.collided:
+        if not self.__collided:
             # As the equation used calulates the falling speed based off of m/s, I have the
             # number it gives multiplied by 40, as to make it so that 1m:40pixels
             # (aka the height of a player)
@@ -1039,7 +1039,7 @@ def mainRunLoop(clientPlayer, screen, clock, platforms, bullets, char, c, server
     # Run loop
     while running:
         moving = False
-        clientPlayer.collided = False
+        clientPlayer.setCollided(False)
 
         screen.fill(Colours.WHITE.value)
 

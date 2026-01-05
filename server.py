@@ -94,7 +94,7 @@ class Client:
         Returns: None
         Purpose: Sends data to the client
         """
-        self.client.send(json.dumps(msg).encode())
+        self.__client.send(json.dumps(msg).encode())
 
     def sendRData(self, data) -> None:
         """
@@ -103,7 +103,7 @@ class Client:
         Returns: None
         Purpose: Send raw data to the client
         """
-        self.client.send(data)
+        self.__client.send(data)
 
 
 """
@@ -417,7 +417,7 @@ class Server:
         self, connection, colour: tuple[int, int, int], position: list
     ) -> None:
         for client in self.__clientList:
-            if client.client != connection:
+            if client.getClient() != connection:
                 msgDict: dict = {
                     "type": "playerJoin",
                     "data": {
@@ -426,9 +426,7 @@ class Server:
                         "positionList": position,
                     },
                 }
-
-                message = json.dumps(msgDict)
-                client.client.send(message.encode())
+                client.sendData(msgDict)
 
     """
     Name: createAlreadyJoinedPlayers
@@ -707,7 +705,7 @@ class Server:
                     or msgType != "leaderGet"
                 )
             ):
-                client.client.send(data)
+                client.sendRData(data)
 
             self.__sentMsg = True
 
